@@ -1,11 +1,15 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Facturas{% endblock %}
 
 {% block contenido %}
 
 <div class="titulo-fila">
   <h1 class="titulo">Facturas</h1>
-  <a class="button primary" href="{% url 'facturacion:facturar' %}"><span class="mif-plus"></span> Nueva factura</a>
+  {% puede_escribir "facturar" as puede_facturar %}
+  {% if puede_facturar %}
+    <a class="button primary" href="{% url 'facturacion:facturar' %}"><span class="mif-plus"></span> Nueva factura</a>
+  {% endif %}
 </div>
 
 <form class="filtros" method="get">
