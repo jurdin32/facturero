@@ -58,7 +58,7 @@ _DERECHA_FUERTE = _estilo("derecha-fuerte", 9, fontName="Helvetica-Bold", alignm
 _NOTA = _estilo("nota", 7, textColor=GRIS)
 
 
-def _logo(alto: float = 13 * mm) -> Optional[Any]:
+def _logo(alto: float = 16 * mm) -> Optional[Any]:
     try:
         encontrado = logo_de_los_reportes()
         if not encontrado:

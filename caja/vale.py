@@ -100,7 +100,7 @@ def vale(el_vale: Any) -> bytes:
         historia.append(
             Table(
                 [[marca, datos]],
-                colWidths=[45 * mm, documento.width - 45 * mm],
+                colWidths=[56 * mm, documento.width - 56 * mm],
                 style=TableStyle(
                     [
                         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),

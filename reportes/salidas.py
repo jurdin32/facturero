@@ -189,12 +189,14 @@ def pdf(tabla: Tabla, ficha: Ficha) -> bytes:
         _parrafo(ficha.periodo or tabla.subtitulo, _estilo("periodo", 7.5, textColor=GRIS)),
     ]
     encontrado = _logo()
-    marca = _imagen(encontrado[0], 13 * mm) if encontrado else None
+    # El logo es lo primero que se ve del informe: va con tamaño de sello, no de
+    # adorno. La columna que lo lleva crece con él para que no se pegue al texto.
+    marca = _imagen(encontrado[0], 18 * mm) if encontrado else None
     if marca is not None:
         historia.append(
             Table(
                 [[marca, datos]],
-                colWidths=[min(52 * mm, documento.width * 0.3), documento.width - min(52 * mm, documento.width * 0.3)],
+                colWidths=[min(62 * mm, documento.width * 0.34), documento.width - min(62 * mm, documento.width * 0.34)],
                 style=TableStyle(
                     [
                         ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
@@ -360,8 +362,8 @@ def excel(tabla: Tabla, ficha: Ficha) -> bytes:
     if encontrado is not None:
         try:
             imagen = ImagenDeExcel(BytesIO(encontrado[0]))
-            factor = 52 / max(imagen.height or 1, 1)
-            imagen.height = 52
+            factor = 72 / max(imagen.height or 1, 1)
+            imagen.height = 72
             imagen.width = max(int((imagen.width or 1) * factor), 1)
             hoja.add_image(imagen, "A1")
         except Exception:  # noqa: BLE001 - un logo ilegible no rompe la hoja
