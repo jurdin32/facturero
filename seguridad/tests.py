@@ -358,7 +358,7 @@ class PruebasDeLasOpciones(TestCase):
             "grupo": "Sistema",
             "orden": "99",
             "url": "/merma/",
-            "icono": "storage",
+            "icono": "database",
             "en_menu": "on",
             "activo": "on",
         }
@@ -412,7 +412,7 @@ class PruebasDeLasOpciones(TestCase):
     def test_la_opción_nueva_sale_en_el_menú(self) -> None:
         Opcion.objects.create(
             clave="merma", nombre="Merma de bodega", grupo="Sistema",
-            url="/merma/", icono="storage", orden=99,
+            url="/merma/", icono="database", orden=99,
         )
 
         pagina = self.client.get("/").content.decode()

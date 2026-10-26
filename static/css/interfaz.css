@@ -4193,8 +4193,8 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 .orden-item {
   display: flex;
   align-items: center;
-  gap: var(--e3);
-  padding: var(--e2) var(--e3);
+  gap: var(--e2);
+  padding: 6px var(--e3);
   border: 1px solid var(--linea);
   border-radius: var(--radio-s);
   background: var(--hoja);
@@ -4214,9 +4214,31 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   border-radius: var(--radio-s);
   color: var(--tinta-2);
 }
-.orden-texto { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
-.orden-texto strong { font-weight: 600; color: var(--tinta); }
-.orden-texto small { color: var(--tinta-3); overflow-wrap: anywhere; }
+/* Nombre y dirección en la misma línea: la fila entera ocupa lo que un renglón y
+ * las flechas quedan siempre a la derecha, alineadas de una fila a otra. */
+.orden-texto {
+  display: flex;
+  flex: 1;
+  align-items: baseline;
+  gap: var(--e2);
+  min-width: 0;
+}
+.orden-texto strong { font-weight: 600; color: var(--tinta); white-space: nowrap; }
+.orden-texto small {
+  color: var(--tinta-3);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.orden-acciones {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  margin-left: auto;
+  flex: none;
+}
+.orden-acciones form { margin: 0; display: flex; }
 
 /* Metro deja las `section` al ancho de su texto; aquí cada apartado ocupa toda
  * la columna y el aire lo pone la rejilla, no un margen doble. */
@@ -5028,8 +5050,6 @@ body.con-modal { overflow: hidden; }
  * Subir o bajar una opción de puesto: dos botones cuadrados al final de la fila,
  * para no tener que arrastrar ni escribir números.
  */
-.orden-item .orden-flechas { margin: 0; display: flex; }
-
 .boton-flecha {
   display: inline-flex;
   align-items: center;
@@ -5051,7 +5071,9 @@ body.con-modal { overflow: hidden; }
   color: var(--marca-osc);
 }
 
-.boton-flecha:disabled { opacity: 0; pointer-events: none; }
+/* La que no aplica se queda a la vista, apagada: así se ve que la fila
+ * está en un extremo y las flechas no bailan de una fila a otra. */
+.boton-flecha:disabled { opacity: .3; cursor: default; pointer-events: none; }
 .boton-flecha .mif-arrow-up { font-size: 12px; }
 
 /* La columna «Orden» de la lista de opciones: dos flechas seguidas. Van

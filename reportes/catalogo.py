@@ -225,7 +225,7 @@ REPORTES: tuple[Reporte, ...] = (
             "registró."
         ),
         construir=consultas.inventario_movimientos,
-        icono="storage",
+        icono="database",
     ),
     Reporte(
         clave="inventario_existencias",

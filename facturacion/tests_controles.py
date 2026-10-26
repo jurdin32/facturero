@@ -239,6 +239,15 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
             "/seguridad/usuarios/", "/seguridad/opciones/", "/seguridad/opciones/nueva/",
         ]
         pedidos: set[str] = set()
+
+        # Los iconos de las opciones salen de la base de datos: se piden con
+        # `mif-{{ icono }}` y no aparecen escritos en ninguna plantilla, así que
+        # hay que mirarlos aparte.
+        from personalize_options.models import Opcion
+
+        for icono in Opcion.objects.exclude(icono="").values_list("icono", flat=True):
+            pedidos.add(icono)
+
         for ruta in rutas:
             pedidos.update(re.findall(r"mif-([a-z0-9-]+)", self._pagina(ruta)))
         # La entrada se mira sin sesión, que con sesión manda al tablero.

@@ -47,30 +47,32 @@
               <span class="mif-menu"></span>
             </span>
             <span class="orden-icono">
-              <span class="mif-{{ opcion_menu.icono|default:'file' }}" aria-hidden="true"></span>
+              <span class="mif-{{ opcion_menu.icono|default:'file-text' }}" aria-hidden="true"></span>
             </span>
             <span class="orden-texto">
               <strong>{{ opcion_menu.nombre }}</strong>
               <small class="cifra">{{ opcion_menu.url|default:"Enlace fijo del menú" }}</small>
             </span>
-            <form class="orden-flechas" method="post"
-                  action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'arriba' %}">
-              {% csrf_token %}
-              <button type="submit" class="boton-flecha" title="Subir «{{ opcion_menu.nombre }}»"
-                      {% if forloop.first or not puede_cambiar %}disabled{% endif %}>
-                <span class="mif-arrow-up" aria-hidden="true"></span>
-                <span class="oculto-visual">Subir</span>
-              </button>
-            </form>
-            <form class="orden-flechas" method="post"
-                  action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'abajo' %}">
-              {% csrf_token %}
-              <button type="submit" class="boton-flecha" title="Bajar «{{ opcion_menu.nombre }}»"
-                      {% if forloop.last or not puede_cambiar %}disabled{% endif %}>
-                <span class="mif-arrow-down" aria-hidden="true"></span>
-                <span class="oculto-visual">Bajar</span>
-              </button>
-            </form>
+            <span class="orden-acciones">
+              <form method="post"
+                    action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'arriba' %}">
+                {% csrf_token %}
+                <button type="submit" class="boton-flecha" title="Subir «{{ opcion_menu.nombre }}»"
+                        {% if forloop.first or not puede_cambiar %}disabled{% endif %}>
+                  <span class="mif-arrow-up" aria-hidden="true"></span>
+                  <span class="oculto-visual">Subir</span>
+                </button>
+              </form>
+              <form method="post"
+                    action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'abajo' %}">
+                {% csrf_token %}
+                <button type="submit" class="boton-flecha" title="Bajar «{{ opcion_menu.nombre }}»"
+                        {% if forloop.last or not puede_cambiar %}disabled{% endif %}>
+                  <span class="mif-arrow-down" aria-hidden="true"></span>
+                  <span class="oculto-visual">Bajar</span>
+                </button>
+              </form>
+            </span>
           </li>
         {% endfor %}
       </ul>
