@@ -38,7 +38,6 @@ WorkingDirectory=__PROYECTO__
 Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
-EnvironmentFile=-__PROYECTO__/.env
 # Permite consultar la API (/api/tasks) sin credenciales. Solo tiene sentido
 # porque el panel escucha en 127.0.0.1; si lo expone, quite esta línea.
 Environment="FLOWER_UNAUTHENTICATED_API=1"

@@ -42,7 +42,7 @@ urlpatterns = [
     path("inventario/", include("inventario.urls")),
 
     # Contabilidad: plan de cuentas, asientos, estados financieros y anexos SRI.
-    path("contabilidad/", include("contabilidad.urls")),
+    path("contabilidad/", include("conta_ec.django.urls")),
 
     # Apertura, movimientos y cierre de caja por usuario.
     path("caja/", include("caja.urls")),

@@ -19,7 +19,7 @@ from django.shortcuts import render
 from personalize_options.decoradores import requiere_lectura
 from personalize_options.permisos import de_la_peticion
 
-from contabilidad.models import Cuenta
+from conta_ec.django.models import Cuenta
 from factec.django import conf
 
 from facturero.marco import marco

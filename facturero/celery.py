@@ -30,10 +30,13 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "facturero.settings")
 app = Celery("facturero")
 
 # La configuración de Celery vive aquí, no en settings.py: es cosa del worker, no
-# del proyecto. El broker se puede cambiar con la variable de entorno
-# CELERY_BROKER_URL; el resto son los valores con los que se probó.
+# del proyecto. No hay archivos `.env`: el broker es el Redis del propio servidor
+# (con contraseña, la de la propia URL) y el resto son los valores con los que se
+# probó.
+BROKER = "redis://127.0.0.1:6379/0"
+
 app.conf.update(
-    broker_url=os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"),
+    broker_url=BROKER,
     timezone="America/Guayaquil",
     enable_utc=True,
     # Los eventos alimentan el panel de Flower sin arrancar el worker con «-E».

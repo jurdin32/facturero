@@ -4949,3 +4949,77 @@ body.con-modal { overflow: hidden; }
 .bloque .row + .acciones-fila,
 .bloque .filtros + .acciones-fila { margin-top: var(--e5); }
 .bloque .acciones-fila + .acciones-fila { margin-top: var(--e3); }
+
+/* ------------------------------------------------------ ajustes de la app
+ * Una fila por ajuste: a la izquierda el nombre —que es la clave que lee el
+ * código, en mono para que se vea que no es texto corriente— y para qué sirve;
+ * a la derecha el valor, que es lo único que se escribe. Sin rejilla de campos
+ * la descripción quedaba pegada al control de al lado.
+ */
+.ajustes { display: flex; flex-direction: column; }
+
+.ajuste {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(190px, 340px);
+  gap: var(--e3) var(--e5);
+  align-items: center;
+  padding: var(--e3) 0;
+  border-top: 1px solid var(--linea);
+}
+
+.ajuste:first-child { border-top: 0; padding-top: 0; }
+.ajuste:last-child { padding-bottom: 0; }
+
+/* Quién declara los ajustes del bloque: en mono y en gris, al lado del título,
+ * para que dos bloques del mismo nombre (los dos «Seguridad») se distingan. */
+.bloque-origen {
+  margin-left: var(--e2);
+  font-family: var(--mono);
+  font-size: var(--texto-xs);
+  font-weight: 500;
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--tinta-4);
+}
+
+/* El nombre del ajuste es código: va en mono y sin negrita de titular. */
+.ajuste .etiqueta {
+  margin-bottom: 2px;
+  font-family: var(--mono);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta);
+  letter-spacing: 0;
+}
+
+.ajuste .ayuda { margin: 0; }
+
+.ajuste-campo { display: flex; justify-content: flex-end; align-items: center; gap: var(--e2); }
+.ajuste-campo > input[type="text"],
+.ajuste-campo > input[type="number"],
+.ajuste-campo > select { width: 100%; margin: 0; }
+.ajuste-campo > input.campo-angosto { max-width: 120px; margin-left: auto; }
+
+/* El sí/no de un ajuste: la casilla y su «Sí» en la misma línea. */
+.interruptor { display: inline-flex; align-items: center; gap: var(--e2); margin: 0; cursor: pointer; }
+.interruptor input[type="checkbox"] { margin: 0; }
+.interruptor span { font-size: var(--texto-s); color: var(--tinta-2); }
+
+/* Lo que no se edita (un secreto) se dice, no se enseña. */
+.ajuste-fijo {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border: 1px dashed var(--linea);
+  border-radius: var(--radio-s);
+  font-size: var(--texto-s);
+  color: var(--tinta-4);
+  background: #f9fafb;
+}
+
+/* En una pantalla estrecha, el valor pasa debajo del nombre. */
+@media (max-width: 760px) {
+  .ajuste { grid-template-columns: minmax(0, 1fr); }
+  .ajuste-campo { justify-content: flex-start; }
+}

@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import re
 from datetime import timedelta
+from pathlib import Path as Ruta
 
 from django.contrib.auth.models import User
 from django.test import TestCase, override_settings
@@ -381,12 +382,40 @@ class PruebasDeLosAjustes(TestCase):
             "superusuarios_todo",
             "bloqueo_inactividad_minutos",
             "inventario_descontar_al_facturar",
-            "contabilidad_contabilizar_al_autorizar",
-            "contabilidad_periodo_automatico",
-            "sri_ambiente",
-            "sri_guardar_xml",
         ):
             self.assertIn(clave, claves, clave)
+
+    def test_los_ajustes_de_la_contabilidad_van_en_la_tabla_de_su_paquete(self) -> None:
+        # Igual que el SRI: cada paquete con su tabla.
+        from conta_ec.django.models import AjusteDeLaContabilidad
+        from personalize_options.models import Ajuste
+
+        suyos = set(AjusteDeLaContabilidad.objects.values_list("clave", flat=True))
+        self.assertIn("contabilidad_contabilizar_al_autorizar", suyos)
+        self.assertIn("contabilidad_periodo_automatico", suyos)
+        self.assertEqual(
+            list(
+                Ajuste.objects.filter(clave__startswith="contabilidad_").values_list(
+                    "clave", flat=True
+                )
+            ),
+            [],
+        )
+
+    def test_los_ajustes_del_sri_van_en_la_tabla_de_su_paquete(self) -> None:
+        # Los paquetes son independientes: `factec` guarda lo suyo en su tabla y
+        # no en la del proyecto.
+        from factec.django.models import AjusteDelSri
+        from personalize_options.models import Ajuste
+
+        suyos = set(AjusteDelSri.objects.values_list("clave", flat=True))
+        for clave in ("sri_ambiente", "sri_guardar_xml", "sri_guardar_archivos"):
+            self.assertIn(clave, suyos, clave)
+
+        self.assertEqual(
+            list(Ajuste.objects.filter(clave__startswith="sri_").values_list("clave", flat=True)),
+            [],
+        )
 
     def test_el_valor_sale_de_la_base(self) -> None:
         from personalize_options import ajustes
@@ -465,18 +494,109 @@ class PruebasDelAdminDeLaSeguridad(TestCase):
         ajuste = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
         respuesta = self.client.post(
             f"/admin/personalize_options/ajuste/{ajuste.pk}/change/",
-            {
-                "clave": ajuste.clave,
-                "valor": "30",
-                "tipo": ajuste.tipo,
-                "grupo": ajuste.grupo,
-                "descripcion": ajuste.descripcion,
-                "orden": ajuste.orden,
-                "editable": "on",
-            },
+            {"valor": "30"},
             follow=True,
         )
 
         self.assertEqual(respuesta.status_code, 200)
         ajuste.refresh_from_db()
         self.assertEqual(ajuste.valor, "30")
+
+    def test_la_clave_de_un_ajuste_no_se_puede_renombrar(self) -> None:
+        # La clave es la que lee el código: en el admin sólo se cambia el valor.
+        from personalize_options.models import Ajuste
+
+        ajuste = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
+        formulario = self.client.get(
+            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/"
+        ).content.decode()
+
+        self.assertNotIn('name="clave"', formulario)
+        self.assertIn('name="valor"', formulario)
+
+        # Aunque se mande otra clave, se ignora.
+        self.client.post(
+            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/",
+            {"clave": "otra_cosa", "valor": "20"},
+            follow=True,
+        )
+        self.assertTrue(Ajuste.objects.filter(clave="bloqueo_inactividad_minutos").exists())
+        self.assertFalse(Ajuste.objects.filter(clave="otra_cosa").exists())
+
+    def test_cada_ajuste_dice_de_que_paquete_viene(self) -> None:
+        from personalize_options.models import Ajuste
+
+        origenes = dict(Ajuste.objects.values_list("clave", "origen"))
+
+        self.assertEqual(origenes["modo"], "personalize_options")
+        self.assertEqual(origenes["inventario_descontar_al_facturar"], "inventario")
+        self.assertEqual(origenes["bloqueo_inactividad_minutos"], "seguridad")
+        # Ninguno se queda sin dueño.
+        self.assertNotIn("", origenes.values())
+
+    def test_un_ajuste_que_ya_existe_conserva_su_valor_al_migrar(self) -> None:
+        from personalize_options import ajustes as registro
+        from personalize_options.models import Ajuste
+
+        Ajuste.objects.filter(clave="bloqueo_inactividad_minutos").update(valor="45")
+        registro.sembrar()
+
+        fila = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
+        self.assertEqual(fila.valor, "45")
+        self.assertEqual(fila.origen, "seguridad")
+
+
+class PruebasSinArchivosDeEntorno(TestCase):
+    """La configuración está en la base: no hay `.env` en ninguna parte.
+
+    Si alguien vuelve a meter un archivo de entorno —o el código empieza a leer
+    variables—, esta prueba lo dice antes de que llegue al servidor.
+    """
+
+    def test_no_hay_archivos_de_entorno(self) -> None:
+        from django.conf import settings
+
+        base = Ruta(settings.BASE_DIR)
+        encontrados = [
+            str(ruta.relative_to(base))
+            for ruta in base.rglob("*")
+            if ruta.is_file()
+            and ruta.name in {".env", "env.ejemplo"}
+            and ".venv" not in ruta.parts
+        ]
+        self.assertEqual(encontrados, [])
+
+    def test_los_servicios_no_cargan_ningun_entorno(self) -> None:
+        from django.conf import settings
+
+        base = Ruta(settings.BASE_DIR) / "deploy" / "systemd"
+        for unidad in base.glob("*.service"):
+            texto = unidad.read_text(encoding="utf-8")
+            self.assertNotIn("EnvironmentFile", texto, unidad.name)
+            self.assertNotIn(".env", texto, unidad.name)
+
+    def test_el_codigo_del_proyecto_no_lee_variables_de_entorno(self) -> None:
+        from django.conf import settings
+
+        base = Ruta(settings.BASE_DIR)
+        for archivo in base.rglob("*.py"):
+            if any(parte in {".venv", "migrations", "build", "dist"}
+                   for parte in archivo.parts):
+                continue
+            if archivo == Ruta(__file__):
+                continue
+            texto = archivo.read_text(encoding="utf-8")
+            self.assertNotRegex(
+                texto,
+                r"(?m)^[^#\n]*(?:os\.environ\s*\[|os\.getenv\()",
+                archivo.as_posix(),
+            )
+            self.assertNotIn("from dotenv", texto, archivo.as_posix())
+
+    def test_el_paquete_del_sri_no_lee_variables_de_entorno(self) -> None:
+        import factec.django.conf as conf
+
+        ruta = Ruta(conf.__file__)
+        texto = ruta.read_text(encoding="utf-8")
+        self.assertNotIn("os.environ", texto)
+        self.assertNotIn("getenv", texto)

@@ -639,3 +639,130 @@ class PruebasDeLasCategorias(TestCase):
         opcion.refresh_from_db()
         self.assertEqual(opcion.grupo, "Reportes")
         self.assertEqual(opcion.categoria_nombre, "Reportes")
+
+
+class PruebasDeLosAjustes(TestCase):
+    """La configuración de la aplicación, sin pasar por el admin.
+
+    Es lo que antes iba en `settings.py`: se ve en una pantalla, agrupada, y se
+    cambia con el permiso de escritura. Quien sólo puede leer, lee.
+    """
+
+    def setUp(self) -> None:
+        self.jefe = User.objects.create_superuser(
+            "jefe-ajustes", "jefe@ejemplo.ec", "clave-larga-123"
+        )
+
+    def _entrar(self, usuario: User) -> None:
+        self.client.force_login(usuario)
+        self.client.get("/")  # la sesión necesita una vuelta
+
+    def test_la_pantalla_enseña_los_ajustes_de_la_base(self) -> None:
+        from personalize_options.models import Ajuste
+
+        self._entrar(self.jefe)
+        pagina = self.client.get("/seguridad/ajustes/")
+
+        self.assertEqual(pagina.status_code, 200)
+        texto = _texto(pagina.content.decode())
+        for ajuste in Ajuste.objects.filter(editable=True)[:6]:
+            self.assertIn(ajuste.clave, texto)
+
+    def test_cada_bloque_dice_que_paquete_declara_sus_ajustes(self) -> None:
+        self._entrar(self.jefe)
+        texto = _texto(self.client.get("/seguridad/ajustes/").content.decode())
+
+        # Los del paquete de permisos, los del SRI y los de cada aplicación.
+        for origen in ("personalize_options", "factec", "inventario", "seguridad"):
+            self.assertIn(origen, texto, origen)
+
+    def test_la_clave_no_es_un_campo_que_se_escriba(self) -> None:
+        # El nombre del ajuste es el que lee el código: aquí sólo se escribe el
+        # valor.
+        self._entrar(self.jefe)
+        texto = self.client.get("/seguridad/ajustes/").content.decode()
+
+        self.assertNotIn('name="clave" value="bloqueo_inactividad_minutos" type="text"', texto)
+        self.assertIn('name="valor-bloqueo_inactividad_minutos"', texto)
+
+    def test_guardar_cambia_el_ajuste_y_lo_deja_en_la_base(self) -> None:
+        from personalize_options import ajustes as registro
+        from personalize_options.models import Ajuste
+
+        self._entrar(self.jefe)
+        antes = Ajuste.objects.get(clave="bloqueo_inactividad_minutos").valor
+        respuesta = self.client.post(
+            "/seguridad/ajustes/",
+            {"clave": ["bloqueo_inactividad_minutos"], "valor-bloqueo_inactividad_minutos": "45"},
+            follow=True,
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(
+            Ajuste.objects.get(clave="bloqueo_inactividad_minutos").valor, "45"
+        )
+        self.assertNotEqual(antes, "45")
+        registro._leidos_de_la_base.cache_clear()
+
+    def test_un_booleano_se_guarda_como_si_o_no(self) -> None:
+        from personalize_options.models import Ajuste
+
+        self._entrar(self.jefe)
+        self.client.post(
+            "/seguridad/ajustes/",
+            {"clave": ["inventario_descontar_al_facturar"]},
+            follow=True,
+        )
+
+        self.assertEqual(
+            Ajuste.objects.get(clave="inventario_descontar_al_facturar").valor, "no"
+        )
+
+    def test_los_ajustes_del_sri_no_salen_aqui(self) -> None:
+        # El SRI es otro paquete y tiene su tabla y su pantalla en el admin: en
+        # esta no se mezclan.
+        self._entrar(self.jefe)
+        texto = self.client.get("/seguridad/ajustes/").content.decode()
+
+        self.assertNotIn("sri_ambiente", texto)
+        self.assertNotIn("sri_clave_cifrado", texto)
+
+    def test_un_ajuste_de_solo_lectura_no_se_toca(self) -> None:
+        from personalize_options.models import Ajuste
+
+        objeto = Ajuste.objects.get(clave="modo")
+        Ajuste.objects.filter(pk=objeto.pk).update(editable=False)
+
+        self._entrar(self.jefe)
+        self.client.post(
+            "/seguridad/ajustes/",
+            {"clave": ["modo"], "valor-modo": "inventado"},
+            follow=True,
+        )
+
+        self.assertEqual(Ajuste.objects.get(clave="modo").valor, objeto.valor)
+
+    @override_settings(PERSONALIZE_OPTIONS=CERRADO)
+    def test_quien_solo_lee_no_guarda(self) -> None:
+        from personalize_options.models import Ajuste
+
+        mirón = User.objects.create_user("mirón", password="clave-larga-123")
+        _rol_con("sólo mira", mirón, ajustes=Nivel.LECTURA)
+        self._entrar(mirón)
+
+        self.assertEqual(self.client.get("/seguridad/ajustes/").status_code, 200)
+        self.client.post(
+            "/seguridad/ajustes/",
+            {"clave": ["bloqueo_inactividad_minutos"], "valor-bloqueo_inactividad_minutos": "99"},
+        )
+        self.assertNotEqual(
+            Ajuste.objects.get(clave="bloqueo_inactividad_minutos").valor, "99"
+        )
+
+    @override_settings(PERSONALIZE_OPTIONS=CERRADO)
+    def test_sin_el_permiso_no_se_entra(self) -> None:
+        nadie = User.objects.create_user("nadie", password="clave-larga-123")
+        _rol_con("otros temas", nadie, clientes=Nivel.LECTURA)
+        self._entrar(nadie)
+
+        self.assertEqual(self.client.get("/seguridad/ajustes/").status_code, 403)

@@ -34,7 +34,6 @@ WorkingDirectory=__PROYECTO__
 Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
-EnvironmentFile=-__PROYECTO__/.env
 
 # systemd crea /var/lib/facturero y lo deja a nombre del usuario del servicio:
 # ahí va el calendario de beat, sin tener que darle permisos a mano.

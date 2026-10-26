@@ -205,6 +205,29 @@ SECCIONES: tuple[dict[str, Any], ...] = (
         ),
     },
     {
+        "clave": "ajustes",
+        "titulo": "Ajustes de la aplicación",
+        "capturas": (),
+        "resumen": (
+            "La configuración que antes se escribía en el archivo de ajustes del proyecto: el "
+            "modo de los permisos, el bloqueo de la pantalla, el ambiente del SRI, si se "
+            "descuenta el inventario al facturar o si se contabiliza al autorizar. Vive en la "
+            "base de datos y se cambia desde aquí: cada paquete declara sus ajustes y la "
+            "migración los siembra."
+        ),
+        "pasos": (
+            "Abra «Sistema → Ajustes de la aplicación».",
+            "Cada bloque dice qué paquete lo declara —personalize_options, factec, inventario, "
+            "seguridad…— y para qué sirve cada ajuste.",
+            "Escriba el valor nuevo (sí/no, un número o un texto) y pulse «Guardar los ajustes»: "
+            "vale al momento, sin reiniciar nada.",
+            "El nombre del ajuste no se escribe: es la clave con la que lo lee el código y viene "
+            "de la declaración del paquete.",
+            "Los secretos, como la clave que cifra la contraseña del certificado, se guardan y "
+            "se muestran ocultos: se ven, no se copian.",
+        ),
+    },
+    {
         "clave": "configuracion",
         "titulo": "Configuración del SRI",
         "capturas": ("configuracion",),
@@ -287,6 +310,10 @@ QUE_HACE: dict[str, str] = {
         "Los cuadres ya cerrados, para aprobarlos o dejarlos observados con su nota."
     ),
     "vales_caja": "Los vales de caja: cobrar un faltante o sacar efectivo a cuenta de alguien.",
+    "ajustes": (
+        "La configuración de la aplicación: el modo de los permisos, el bloqueo de la "
+        "pantalla, el ambiente del SRI y lo demás que antes iba en settings.py."
+    ),
     "estado_inicial": "El punto de partida de la contabilidad: activo, pasivo y patrimonio.",
     "plan_cuentas": "Las cuentas contables, con su grupo, su naturaleza y sus jerarquías.",
     "contabilidad": "El resumen del mes: movimiento, resultado y avisos del cierre.",

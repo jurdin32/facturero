@@ -47,7 +47,6 @@ Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
 # Secretos fuera del código (opcional): SRI_CLAVE_CIFRADO, CELERY_BROKER_URL…
-EnvironmentFile=-__PROYECTO__/.env
 
 # Ejecuta las tareas del paquete: sri_fe.emitir_comprobante,
 # sri_fe.consultar_autorizacion, sri_fe.reintentar_pendientes y

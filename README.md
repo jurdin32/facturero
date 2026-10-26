@@ -11,6 +11,7 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
 |---|---|
 | [`factec`](https://github.com/jurdin32/factec) | Firma XAdES, envío y autorización en el SRI, modelos de los comprobantes, RIDE. |
 | [`personalize_options`](https://github.com/jurdin32/personalize_options) | Roles y permisos de lectura/escritura por opción, con sus propias tablas. |
+| [`conta_ec`](https://github.com/jurdin32/conta_ec) | Contabilidad: plan de cuentas, asientos, libros, estados financieros, compras, anexos del SRI (ATS y RDEP), con sus tablas y sus ajustes. |
 
 ## Qué trae
 
@@ -49,7 +50,8 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Los dos paquetes de la casa, en modo editable si los va a tocar:
-pip install -e ~/Desktop/Scripts/factec -e ~/Desktop/Scripts/personalize_options
+pip install -e ~/Desktop/Scripts/factec -e ~/Desktop/Scripts/personalize_options \
+            -e ~/Desktop/Scripts/conta_ec
 
 python manage.py migrate
 python manage.py cargar_codigos_retencion     # el catálogo de retenciones del SRI
@@ -78,8 +80,14 @@ descuenta el inventario, si se contabiliza al autorizar— vive en la tabla de
 - al terminar `migrate` la señal `post_migrate` los **siembra** con su valor de
   serie, sin pisar lo que ya esté puesto: basta con añadir el paquete a
   `INSTALLED_APPS` y migrar;
-- se cambian desde el **admin** (Seguridad → Ajustes) y valen al momento, sin
-  reiniciar.
+- cada paquete se lleva **su propia tabla** de ajustes (`sri_fe_ajustedelsri`,
+  `conta_ec_ajustedelacontabilidad`) y su entrada en el admin; los paquetes no
+  dependen unos de otros para guardar su configuración;
+- de la declaración viene todo menos el **valor**: la clave, el tipo, el grupo y
+  para qué sirve se refrescan al migrar, así que no se escriben a mano;
+- se cambian desde el **admin** (Seguridad → Ajustes, Facturación electrónica →
+  Ajustes del SRI, Contabilidad → Ajustes de la contabilidad) y valen al momento,
+  sin reiniciar.
 
 ```python
 # inventario/apps.py
@@ -94,9 +102,10 @@ from personalize_options import ajustes
 ajustes.booleano("inventario_descontar_al_facturar")   # lee de la base
 ```
 
-El único secreto fuera de la base es la clave que cifra la contraseña del
-certificado: va en la variable de entorno `SRI_CLAVE_CIFRADO` (si no está, se usa
-el ajuste `sri_clave_cifrado`, que no se edita desde la aplicación).
+No hay archivos `.env` ni variables de entorno: el mismo código y la misma base
+sirven en local y en el servidor. La clave que cifra la contraseña del certificado
+es un ajuste de sólo lectura (`sri_clave_cifrado`), que se guarda pero no se enseña
+ni se edita.
 
 ## Permisos
 
@@ -119,9 +128,9 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **306 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
-supervisión de los cuadres y los vales, los reportes en sus tres salidas, los
-períodos, los permisos y el menú.
+Son **327 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+supervisión de los cuadres y los vales, la contabilidad del paquete `conta_ec`,
+los reportes en sus tres salidas, los períodos, los permisos y el menú.
 
 Todos los **PDF** —los reportes, el acta de cierre y los vales— salen de
 **plantillas HTML** y de la hoja de estilo de imprenta `static/css/papel.css`,

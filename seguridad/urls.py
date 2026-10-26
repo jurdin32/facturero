@@ -18,6 +18,8 @@ urlpatterns = [
     path("usuarios/nuevo/", views.usuario_nuevo, name="usuario_nuevo"),
     path("usuarios/<int:pk>/", views.usuario, name="usuario"),
     path("usuarios/<int:pk>/datos/", views.usuario_datos, name="usuario_datos"),
+    # La configuración de la aplicación: lo que antes estaba en settings.py.
+    path("ajustes/", views.ajustes, name="ajustes"),
     path("opciones/", views.opciones, name="opciones"),
     path("opciones/ordenar/", views.ordenar_menu, name="ordenar_menu"),
     path(

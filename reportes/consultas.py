@@ -32,8 +32,8 @@ from factec.django.models import (
     TipoComprobante,
 )
 
-from contabilidad import informes
-from contabilidad.models import Compra, Cuenta
+from conta_ec.django import informes
+from conta_ec.django.models import Compra, Cuenta
 from inventario.models import Movimiento, TipoMovimiento
 
 from facturero.documentos_sri import ESTADOS

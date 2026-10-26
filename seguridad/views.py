@@ -47,6 +47,7 @@ from .forms import (
 
 __all__ = [
     "accion",
+    "ajustes",
     "accion_opcion",
     "guardar_orden_menu",
     "opcion",
@@ -379,6 +380,99 @@ def _roles_que_la_tienen():
         .values("opcion")
         .annotate(cuantos=Count("pk"))
         .values("cuantos")
+    )
+
+
+@login_required
+@requiere_lectura("ajustes")
+def ajustes(request: HttpRequest) -> HttpResponse:
+    """La configuración de la aplicación, sin pasar por el admin.
+
+    Son los ajustes que antes vivían en ``settings.py``: el modo de los permisos, el
+    bloqueo de la pantalla, el ambiente del SRI, si se descuenta el inventario o si
+    se contabiliza al autorizar. Cada paquete los declara y aquí se cambian.
+    """
+    from personalize_options import ajustes as registro
+    from personalize_options.models import Ajuste
+
+    if request.method == "POST":
+        exigir_escritura(request, "ajustes")
+        cambiados = 0
+        for clave in request.POST.getlist("clave"):
+            objeto = Ajuste.objects.filter(clave=clave, editable=True).first()
+            if objeto is None:
+                continue
+            nuevo = (request.POST.get(f"valor-{clave}") or "").strip()
+            if objeto.tipo == Ajuste.Tipo.BOOLEANO:
+                nuevo = "si" if request.POST.get(f"valor-{clave}") else "no"
+            if nuevo != objeto.valor:
+                objeto.valor = nuevo
+                objeto.save(update_fields=["valor", "actualizado"])
+                cambiados += 1
+        registro._leidos_de_la_base.cache_clear()
+        if cambiados:
+            messages.success(
+                request,
+                f"Se guardaron {cambiados} ajuste{'s' if cambiados != 1 else ''}.",
+            )
+        else:
+            messages.info(request, "No había nada que cambiar.")
+        return redirect("seguridad:ajustes")
+
+    # Los declarados por los paquetes, y los que estén en la base aunque ya no se
+    # declaren (para no esconder nada).
+    declarados = {ajuste.clave for ajuste in registro.todos()}
+    for fila in Ajuste.objects.all():
+        if fila.clave not in declarados:
+            registro.registrar(
+                registro.AjusteDeSerie(
+                    fila.clave,
+                    fila.valor,
+                    tipo=fila.tipo,
+                    grupo=fila.grupo or "General",
+                    descripcion=fila.descripcion,
+                    orden=fila.orden,
+                    editable=fila.editable,
+                    origen=fila.origen or "la base",
+                )
+            )
+    guardados = {fila.clave: fila for fila in Ajuste.objects.all()}
+
+    # Se agrupa por quien los declara y, dentro, por grupo: los de
+    # ``personalize_options`` aparte de los de ``factec`` y de los de cada
+    # aplicación del proyecto.
+    bloques: List[Dict[str, Any]] = []
+    for declarado in registro.todos():
+        fila = guardados.get(declarado.clave)
+        if fila is None:
+            continue
+        nombre = fila.grupo or declarado.grupo or "General"
+        origen = fila.origen or declarado.origen or "personalize_options"
+        if not bloques or (bloques[-1]["origen"], bloques[-1]["nombre"]) != (
+            origen,
+            nombre,
+        ):
+            bloques.append({"origen": origen, "nombre": nombre, "ajustes": []})
+        bloques[-1]["ajustes"].append(
+            {
+                "clave": fila.clave,
+                "valor": fila.valor,
+                "tipo": fila.tipo,
+                "descripcion": fila.descripcion,
+                "editable": fila.editable,
+                "si": fila.como_valor is True,
+            }
+        )
+
+    return render(
+        request,
+        "seguridad/ajustes.html",
+        {
+            **marco(request),
+            "bloques": bloques,
+            "cuantos": len(guardados),
+            "origenes": sorted({bloque["origen"] for bloque in bloques}),
+        },
     )
 
 

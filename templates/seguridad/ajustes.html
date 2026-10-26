@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Ajustes de la aplicación{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+La configuración que antes vivía en settings.py. Cada ajuste trae su clave —que
+es la que lee el código, así que no se cambia desde aquí—, para qué sirve, y su
+valor, que es lo único que se escribe. Se agrupan por quien los declara y,
+dentro, por tema.
+{% endcomment %}
+
+{% puede_escribir "ajustes" as puede_cambiar %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Ajustes de la aplicación</h1>
+    <p class="subtitulo">
+      Lo que se puede cambiar sin tocar código · {{ cuantos }} ajuste{{ cuantos|pluralize }}
+    </p>
+  </div>
+</div>
+
+<form method="post" novalidate>
+  {% csrf_token %}
+
+  {% for bloque in bloques %}
+    <section class="bloque">
+      <h2 class="bloque-titulo">
+        {{ bloque.nombre }}
+        <span class="bloque-origen" title="Quién declara estos ajustes">{{ bloque.origen }}</span>
+      </h2>
+
+      <div class="ajustes">
+        {% for ajuste in bloque.ajustes %}
+          <div class="ajuste">
+            <div class="ajuste-datos">
+              <label class="etiqueta" for="valor-{{ ajuste.clave }}">{{ ajuste.clave }}</label>
+              {% if ajuste.descripcion %}
+                <p class="ayuda">{{ ajuste.descripcion }}</p>
+              {% endif %}
+            </div>
+            <div class="ajuste-campo">
+              <input type="hidden" name="clave" value="{{ ajuste.clave }}">
+              {% if not ajuste.editable %}
+                {# Un secreto no se enseña: el valor está en la base y no sale. #}
+                <span class="ajuste-fijo">
+                  <span class="mif-lock" aria-hidden="true"></span> Guardado, oculto
+                </span>
+              {% elif ajuste.tipo == 'booleano' %}
+                <label class="interruptor">
+                  <input type="checkbox" name="valor-{{ ajuste.clave }}" id="valor-{{ ajuste.clave }}"
+                         {% if ajuste.si %}checked{% endif %}
+                         {% if not puede_cambiar %}disabled{% endif %}>
+                  <span>Sí</span>
+                </label>
+              {% elif ajuste.tipo == 'entero' %}
+                <input type="number" class="campo-angosto" name="valor-{{ ajuste.clave }}"
+                       id="valor-{{ ajuste.clave }}" value="{{ ajuste.valor }}"
+                       {% if not puede_cambiar %}readonly{% endif %}>
+              {% else %}
+                <input type="text" name="valor-{{ ajuste.clave }}" id="valor-{{ ajuste.clave }}"
+                       value="{{ ajuste.valor }}"
+                       {% if not puede_cambiar %}readonly{% endif %}>
+              {% endif %}
+            </div>
+          </div>
+        {% endfor %}
+      </div>
+    </section>
+  {% empty %}
+    <div class="bloque">
+      <div class="vacio">
+        <p>No hay ajustes declarados.</p>
+        <p class="tenue">
+          Los declara cada aplicación en su configuración y se siembran al migrar.
+        </p>
+      </div>
+    </div>
+  {% endfor %}
+
+  {% if puede_cambiar and bloques %}
+    <div class="acciones-fila acciones-separadas">
+      <button type="submit" class="button primary">
+        <span class="mif-checkmark" aria-hidden="true"></span> Guardar los ajustes
+      </button>
+    </div>
+  {% elif bloques %}
+    <p class="ayuda">Para cambiar los ajustes hace falta el permiso de escritura de «Ajustes de la aplicación».</p>
+  {% endif %}
+</form>
+
+{% endblock %}

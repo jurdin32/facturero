@@ -13,8 +13,9 @@ contabiliza al autorizar— vive en la **base de datos**, en la tabla de ajustes
 * al terminar ``migrate`` quedan sembrados con su valor de serie;
 * se cambian desde el admin (Seguridad → Ajustes) y valen al momento.
 
-El único secreto fuera de la base es la clave de cifrado del certificado, que
-puede venir en la variable de entorno ``SRI_CLAVE_CIFRADO``.
+No se usan archivos ``.env`` ni variables de entorno: el mismo código y la misma
+base sirven en local y en el servidor. La clave de cifrado del certificado es un
+ajuste de sólo lectura (``sri_clave_cifrado``), que no se enseña en pantalla.
 """
 from pathlib import Path
 
@@ -51,8 +52,9 @@ INSTALLED_APPS = [
     'comprobantes',
     'catalogos',
     'inventario',
-    # El plan de cuentas, los asientos, los estados financieros y los anexos del SRI.
-    'contabilidad',
+    # El plan de cuentas, los asientos, los estados financieros y los anexos del
+    # SRI: paquete conta_ec, con sus tablas y sus ajustes.
+    'conta_ec.django',
     # Apertura, movimientos y cierre de caja por usuario.
     'caja',
     'configuracion',
