@@ -4558,3 +4558,65 @@ body.con-modal { overflow: hidden; }
 .manual-mapa td { white-space: normal; }
 .manual-mapa td:first-child { font-weight: 600; }
 .manual-mapa td.cifra { white-space: nowrap; color: var(--tinta-3); }
+
+/* ------------------------------------------------------------- el móvil
+ *
+ * En el teléfono la pantalla manda: nada se sale a lo ancho, los títulos y sus
+ * botones se apilan, y lo que no cabe en una tabla se desplaza dentro de su caja
+ * en vez de arrastrar toda la página. Va al final para ganar a lo de arriba sin
+ * tener que tocar cada regla.
+ */
+@media (max-width: 640px) {
+  html, body { max-width: 100%; overflow-x: hidden; }
+
+  /* Las imágenes y las tablas nunca son más anchas que la pantalla. */
+  img, svg, video, canvas { max-width: 100%; height: auto; }
+
+  /* Menos aire en los bordes: en 360 px cada píxel cuenta. */
+  .contenido { padding: var(--e3) var(--e3) var(--e5); }
+  .hoja { padding: var(--e3); border-radius: var(--radio-s); }
+  .bloque { padding: var(--e3); }
+
+  /* El título y sus botones, uno debajo del otro y a lo ancho. */
+  .titulo-fila { flex-direction: column; align-items: stretch; gap: var(--e3); }
+  .titulo-fila .titulo-acciones { margin-left: 0; flex-wrap: wrap; }
+  .titulo-fila .titulo-acciones .button { flex: 1 1 auto; justify-content: center; }
+  .titulo { font-size: var(--texto-titulo); }
+  .subtitulo { font-size: var(--texto-base); }
+
+  /* La barra: el nombre del emisor se recorta, no empuja. */
+  .barra { padding: var(--e2) var(--e3); row-gap: var(--e2); }
+  .barra .emisor-nombre { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .barra .cabecera-lado { margin-left: auto; }
+
+  /* Las dos columnas (contenido y lateral) pasan a una. */
+  .columnas { display: block; }
+  .columna-lateral { margin-top: var(--e4); }
+
+  /* Las tablas se desplazan dentro de su caja, no arrastran la página. */
+  .desliza { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+  .desliza > table { min-width: 520px; }
+  .manual-mapa, .totales { min-width: 0 !important; }
+
+  /* Filtros y cifras, a una columna. */
+  .filtros .filtro-boton { padding-top: var(--e2); }
+  .reporte-metricas { grid-template-columns: 1fr 1fr; gap: var(--e2); }
+  .metrica { padding: var(--e2) var(--e3); }
+  .metrica-valor { font-size: var(--texto-base); }
+  .reporte-tarjeta { padding: var(--e3); }
+  .reporte-tarjeta-acciones .button { flex: 1 1 auto; justify-content: center; }
+
+  /* Los pasos y el índice del manual, en una sola columna. */
+  .manual-indice ol { columns: 1; }
+  .manual-captura { border-radius: var(--radio-s); }
+
+  /* El pie: el emisor arriba y el ambiente debajo. */
+  .pie { flex-direction: column; align-items: flex-start; gap: var(--e2); }
+  .pie-derecha { margin-left: 0; }
+}
+
+@media (max-width: 420px) {
+  .reporte-metricas { grid-template-columns: 1fr; }
+  .desliza > table { min-width: 460px; }
+  .barra .ambiente { display: none; }
+}
