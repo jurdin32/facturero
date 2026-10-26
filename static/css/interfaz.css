@@ -4655,3 +4655,11 @@ body.con-modal { overflow: hidden; }
   .dato-cifra { font-size: 1rem; }
   .dato-etiqueta, .dato-pie { font-size: 12px; }
 }
+
+/* Cuando el lateral se esconde, la rejilla del armazón se queda con una sola
+ * columna. Sin esto quedaba el hueco de los 248 px del lateral y el contenido se
+ * apretaba contra el borde: era lo que hacía ver mal el tablero en el teléfono. */
+@media (max-width: 991px) {
+  .marco { grid-template-columns: minmax(0, 1fr); }
+  .columna { width: 100%; min-width: 0; }
+}
