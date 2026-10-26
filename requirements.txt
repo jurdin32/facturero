@@ -19,8 +19,11 @@ factec==1.11.8
 personalize_options==1.1.0
 
 # ------------------------------------------------- los reportes y los archivos
-# PDF del acta de cierre y de los reportes, y las hojas de Excel.
-reportlab==5.1.0
+# Los PDF (reportes, acta de cierre y vales) se arman con HTML y CSS y los
+# convierte WeasyPrint. Necesita las bibliotecas Pango del sistema: en macOS
+# `brew install pango`, en Debian/Ubuntu `apt install libpango-1.0-0 libpangoft2-1.0-0`.
+weasyprint==70.0
+reportlab==5.1.0       # lo que usa WeasyPrint por dentro
 openpyxl==3.1.5
 # Las imágenes del logo dentro del PDF y del Excel.
 pillow==13.0.0

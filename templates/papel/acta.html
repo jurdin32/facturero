@@ -1,0 +1,108 @@
+{% comment %}
+El acta de cierre de caja: quién llevó el turno, cuándo lo abrió y lo cerró, lo que
+entró y salió, el desglose de lo contado, la revisión y las firmas.
+{% endcomment %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Acta de cierre de caja · {{ cajero }}</title>
+  <style>{{ hoja|safe }}</style>
+</head>
+<body>
+
+  <header class="encabezado">
+    {% if logo %}<img class="logo" src="{{ logo }}" alt="{{ empresa }}">{% endif %}
+    <p class="empresa">{{ empresa }}</p>
+    {% if ruc %}<p class="ruc">RUC {{ ruc }}</p>{% endif %}
+    <h1 class="titulo">ACTA DE CIERRE DE CAJA</h1>
+    <p class="periodo">Turno de {{ cajero }}</p>
+  </header>
+
+  {% if completo %}
+    <table class="acta-datos">
+      <tbody>
+        <tr><th>Abierta</th><td>{{ abierta }}</td><th>Cerrada</th><td>{{ cerrada }}</td></tr>
+        <tr><th>Saldo inicial</th><td>{{ saldo_inicial }}</td><th>Efectivo contado</th><td>{{ contado }}</td></tr>
+        <tr><th>Ingresos</th><td>{{ ingresos }}</td><th>Egresos</th><td>{{ egresos }}</td></tr>
+        <tr><th>Saldo esperado</th><td>{{ esperado }}</td><th>Diferencia</th><td>{{ diferencia }}</td></tr>
+      </tbody>
+    </table>
+  {% else %}
+    {# La copia del cajero: sólo cuándo llevó el turno y lo que contó. #}
+    <table class="acta-datos">
+      <tbody>
+        <tr><th>Abierta</th><td>{{ abierta }}</td><th>Cerrada</th><td>{{ cerrada }}</td></tr>
+      </tbody>
+    </table>
+  {% endif %}
+
+  <h2 class="seccion">Desglose del efectivo contado</h2>
+  <table class="datos">
+    <thead>
+      <tr><th>Billetes y monedas</th><th class="col-derecha">Cantidad</th><th class="col-derecha">Subtotal</th></tr>
+    </thead>
+    <tbody>
+      {% for renglon in desglose %}
+        <tr>
+          <td class="cifra">{{ renglon.valor }}</td>
+          <td class="col-derecha cifra">{{ renglon.cantidad }}</td>
+          <td class="col-derecha cifra">{{ renglon.subtotal }}</td>
+        </tr>
+      {% empty %}
+        <tr><td>Sin desglose registrado</td><td class="col-derecha">—</td><td class="col-derecha cifra">{{ contado }}</td></tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><td>Total contado</td><td></td><td class="col-derecha cifra">{{ contado }}</td></tr>
+    </tfoot>
+  </table>
+
+  {% if movimientos %}
+    <h2 class="seccion">Movimientos del turno</h2>
+    <table class="datos">
+      <thead>
+        <tr>
+          <th>Hora</th><th>Tipo</th><th>Concepto</th><th>Referencia</th><th class="col-derecha">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for movimiento in movimientos %}
+          <tr>
+            <td class="cifra">{{ movimiento.hora }}</td>
+            <td>{{ movimiento.tipo }}</td>
+            <td>{{ movimiento.concepto }}</td>
+            <td>{{ movimiento.referencia }}</td>
+            <td class="col-derecha cifra">{{ movimiento.importe }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
+  {% if observaciones %}
+    <h2 class="seccion">Observaciones del cierre</h2>
+    <p>{{ observaciones }}</p>
+  {% endif %}
+
+  {% if completo %}
+    <p class="aviso {{ clase_diferencia }}">{{ juicio }}</p>
+
+    {% if revision %}
+      <p class="aviso"><strong>Revisión:</strong> {{ revision }}</p>
+      {% if nota_revision %}<p class="aviso">{{ nota_revision }}</p>{% endif %}
+    {% endif %}
+
+    {% for vale in vales %}
+      <p class="aviso"><strong>Vale {{ vale.numero }}:</strong> {{ vale.texto }}</p>
+    {% endfor %}
+  {% endif %}
+
+  <table class="firmas">
+    <tr>
+      <td>Quien cierra la caja</td>
+      <td>Quien revisa</td>
+    </tr>
+  </table>
+
+</body>
+</html>

@@ -285,3 +285,49 @@ class PruebasDelMapaDeOpciones(TestCase):
         documentadas = sum(len(opciones) for _categoria, opciones in manual.mapa_de_opciones())
 
         self.assertEqual(documentadas, len(registro.todas(solo_activas=True)))
+
+
+class PruebasDeLosPapeles(TestCase):
+    """Todo lo que se imprime sale de plantillas HTML, no de dibujos a mano."""
+
+    def test_las_plantillas_del_papel_existen(self) -> None:
+        from django.template.loader import get_template
+
+        for nombre in ("papel/reporte.html", "papel/acta.html", "papel/vale.html"):
+            self.assertIsNotNone(get_template(nombre), nombre)
+
+    def test_la_hoja_de_estilo_del_papel_se_lee(self) -> None:
+        from facturero.papel import hoja_de_estilo
+
+        hoja = hoja_de_estilo()
+        self.assertIn("@page", hoja)
+        self.assertIn("counter(page)", hoja)
+
+    def test_el_informe_es_html_convertido(self) -> None:
+        from django.template.loader import render_to_string
+
+        from .tabla import Columna, Tabla
+
+        tabla = Tabla(
+            titulo="Prueba",
+            columnas=(Columna("Cuenta"), Columna("Valor", "dinero")),
+            filas=[("Caja", 10)],
+        )
+        ficha = salidas.Ficha(empresa="Empresa de prueba", ruc="1799999999001")
+
+        html = render_to_string(
+            "papel/reporte.html",
+            {
+                "hoja": "",
+                "ficha": ficha,
+                "tabla": tabla,
+                "columnas": [{"titulo": "Cuenta", "alinear": "izquierda", "parte": 50.0}],
+                "totales": None,
+                "logo": None,
+                "ancha": False,
+            },
+        )
+
+        self.assertIn("Empresa de prueba", html)
+        self.assertIn("RUC 1799999999001", html)
+        self.assertIn("Cuenta", html)

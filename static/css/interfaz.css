@@ -4870,3 +4870,72 @@ body.con-modal { overflow: hidden; }
   gap: var(--e3);
   flex-wrap: wrap;
 }
+
+/* --------------------------------------------------------- las pestañas
+ *
+ * Para filtrar un listado sin depender de ningún control que haya que montar:
+ * enlaces con la dirección ya filtrada. La activa se marca con una línea.
+ */
+
+.pestanas {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e1);
+  margin-bottom: var(--e5);
+  border-bottom: 1px solid var(--linea);
+}
+.pestana {
+  padding: var(--e3) var(--e4);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-3);
+  text-decoration: none;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+}
+.pestana:hover { color: var(--marca); }
+.pestana.activa { color: var(--marca); border-bottom-color: var(--marca); }
+
+/* --------------------------------------------- la tabla de los cuadres
+ *
+ * Una tabla, no fichas: caben muchas cajas y se leen de un vistazo. Las cifras
+ * a la derecha y en columna, que es como se comparan.
+ */
+
+.tabla-revision { width: 100%; min-width: 620px; }
+.tabla-revision th,
+.tabla-revision td { vertical-align: middle; }
+.tabla-revision .col-acciones { white-space: nowrap; }
+.tabla-revision .col-acciones .button { margin: 0 var(--e1) var(--e1) 0; }
+.tabla-revision .chip { margin-bottom: var(--e1); }
+
+@media (max-width: 1100px) {
+  .tabla-revision .col-opcional { display: none; }
+  .tabla-revision { min-width: 0; }
+}
+
+/* Una caja que sigue abierta: se ve en la tabla, pero no se revisa todavía. */
+.fila-abierta td { background: var(--marca-tinte); }
+
+/* Las pestañas del segundo grupo son más pequeñas: mando el período. */
+.pestanas-suaves { border-bottom: 0; margin-top: calc(var(--e2) * -1); }
+.pestanas-suaves .pestana { padding: var(--e2) var(--e3); font-weight: 500; }
+
+/* La columna del turno lleva el nombre y las fechas: no se parte en dos letras. */
+.tabla-revision td:first-child,
+.tabla-revision th:first-child { min-width: 165px; }
+.tabla-revision td:nth-child(6) { min-width: 140px; }
+
+/* En pantalla justa los botones de la fila se apilan: en horizontal se comen el
+   ancho de la tabla y la empujan fuera. */
+@media (max-width: 1100px) {
+  .tabla-revision .col-acciones { white-space: normal; }
+  .tabla-revision .col-acciones .button {
+    display: block;
+    width: 100%;
+    margin: 0 0 var(--e1) 0;
+  }
+  .tabla-revision td:first-child,
+  .tabla-revision th:first-child { min-width: 130px; }
+  .tabla-revision td:nth-child(6) { min-width: 120px; }
+}

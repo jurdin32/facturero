@@ -165,8 +165,10 @@ SECCIONES: tuple[dict[str, Any], ...] = (
             "los cuadres, se dejan observados y se cobran los faltantes con vales."
         ),
         "pasos": (
-            "Abra «Supervisión → Revisión de caja». Salen los turnos ya cerrados; el filtro de "
-            "arriba separa lo que sigue sin revisar de lo aprobado y lo observado.",
+            "Abra «Supervisión → Revisión de caja». La pantalla abre en el día de hoy —las cajas "
+            "abiertas ahora y las que ya se cerraron—; con las pestañas de arriba se va a la "
+            "semana, al mes o a todo el historial, y con las de abajo se separa lo que sigue sin "
+            "revisar de lo aprobado y lo observado.",
             "Mire el cuadre: saldo inicial, ingresos, egresos, esperado, contado y lo que falta. "
             "Si el cajero contó billete por billete, «Desglose de lo contado» lo abre.",
             "Escriba una nota si hace falta y pulse «Aprobar el cuadre» o «Dejar observado». El "

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from datetime import timedelta
 from decimal import Decimal
 from typing import Any, Optional
 
@@ -9,8 +10,10 @@ from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied, ValidationError
 from django.db.models import Q
+from django.urls import reverse
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils import timezone
 from personalize_options import permisos
 from personalize_options.decoradores import exigir_escritura, requiere_lectura
 
@@ -152,8 +155,9 @@ def acta(request: HttpRequest, pk: int) -> HttpResponse:
     quien = permisos.de_la_peticion(request)
     if not (quien.puede_leer("caja") or quien.puede_leer("revision_caja")):
         raise PermissionDenied("No tiene permiso para ver el acta de caja.")
-
-    from django.utils import timezone
+    # El cajero recibe la copia con lo que contó; los saldos y la diferencia son
+    # de quien supervisa.
+    completo = quien.puede_leer("revision_caja")
 
     sesion = get_object_or_404(
         SesionCaja.objects.select_related("usuario"), pk=pk
@@ -164,7 +168,9 @@ def acta(request: HttpRequest, pk: int) -> HttpResponse:
         )
         return redirect("caja:tablero")
 
-    contenido = acta_pdf(sesion, sesion.movimientos.select_related("usuario"))
+    contenido = acta_pdf(
+        sesion, sesion.movimientos.select_related("usuario"), completo=completo
+    )
     respuesta = HttpResponse(contenido, content_type="application/pdf")
     nombre = (
         f"acta-caja-{sesion.usuario.get_username()}-"
@@ -178,22 +184,32 @@ def acta(request: HttpRequest, pk: int) -> HttpResponse:
 # ------------------------------------------------- la revisión de los cuadres
 
 
+#: Los períodos con los que se mira el historial de la supervisión.
+PERIODOS = (
+    ("hoy", "Hoy"),
+    ("semana", "Últimos 7 días"),
+    ("mes", "Este mes"),
+    ("todo", "Todo el historial"),
+)
+
+
 @login_required
 @requiere_lectura("revision_caja")
 def revision(request: HttpRequest) -> HttpResponse:
-    """Los cuadres de caja cerrados, para revisarlos y aprobarlos uno por uno.
+    """Las cajas del período, para revisar los cuadres.
 
-    Enseña lo que hay que mirar —esperado, contado, diferencia y el desglose— y deja
-    aprobar el cuadre o dejarlo observado con su nota. Los faltantes se pueden cobrar
-    con un vale desde la misma fila.
+    Las cajas se abren y se cierran todos los días, así que la pantalla abre en el
+    **día de hoy** —las que están abiertas ahora y las que ya se cerraron— y desde
+    ahí se puede retroceder: la semana, el mes o todo el historial. Enseña lo que hay
+    que mirar (esperado, contado y diferencia) y deja aprobar el cuadre o dejarlo
+    observado con su nota; los faltantes se cobran con un vale desde la misma fila.
     """
     from .models import ValeCaja
 
+    desde = request.GET.get("desde") or "hoy"
+    if desde not in dict(PERIODOS):
+        desde = "hoy"
     estado = request.GET.get("revision") or ""
-    cerradas = SesionCaja.objects.filter(estado=SesionCaja.Estado.CERRADA.value)
-    if estado in {"sin_revisar", "aprobada", "observada"}:
-        cerradas = cerradas.filter(revision=estado)
-    cerradas = cerradas.select_related("usuario", "revisada_por").order_by("-cerrada_en")
 
     if request.method == "POST":
         exigir_escritura(request, "revision_caja")
@@ -210,11 +226,29 @@ def revision(request: HttpRequest) -> HttpResponse:
         except ValidationError as error:
             for mensaje in error.messages:
                 messages.error(request, mensaje)
-        return redirect("supervision:cuadres")
+        return redirect(f"{reverse('supervision:cuadres')}?desde={desde}")
+
+    hoy = timezone.localdate()
+    limite = {
+        "hoy": hoy,
+        "semana": hoy - timedelta(days=7),
+        "mes": hoy.replace(day=1),
+    }.get(desde)
+
+    sesiones = SesionCaja.objects.select_related("usuario", "revisada_por")
+    if limite is not None:
+        # Vale la caja que se abrió en el período o la que se cerró en él: un turno
+        # que empieza a las once de la noche y termina de madrugada cuenta igual.
+        sesiones = sesiones.filter(
+            Q(abierta_en__date__gte=limite) | Q(cerrada_en__date__gte=limite)
+        )
+    if estado in {"sin_revisar", "aprobada", "observada"}:
+        sesiones = sesiones.filter(estado=SesionCaja.Estado.CERRADA.value, revision=estado)
+    sesiones = sesiones.order_by("-abierta_en")
 
     def _cuadre(sesion: SesionCaja) -> dict[str, Any]:
-        """Lo que la ficha necesita: el faltante y cuánto queda por cobrar de él."""
-        faltante = -sesion.diferencia if sesion.diferencia < 0 else Decimal("0")
+        """Lo que la fila necesita: el faltante y cuánto queda por cobrar de él."""
+        faltante = -sesion.diferencia if sesion.cerrada_en and sesion.diferencia < 0 else Decimal("0")
         vales = list(sesion.vales.exclude(estado=ValeCaja.Estado.ANULADO.value))
         cubierto = sum((vale.importe for vale in vales), Decimal("0"))
         return {
@@ -224,18 +258,19 @@ def revision(request: HttpRequest) -> HttpResponse:
             "por_cobrar": (faltante - cubierto) if faltante > cubierto else None,
         }
 
-    cuadres = [_cuadre(sesion) for sesion in cerradas[:60]]
-    pendientes = [
-        _cuadre(sesion) for sesion in cerradas if sesion.revision == "sin_revisar"
-    ]
+    cuadres = [_cuadre(sesion) for sesion in sesiones[:80]]
+    cerradas = [fila for fila in cuadres if fila["sesion"].cerrada_en]
+    pendientes = [fila for fila in cerradas if fila["sesion"].revision == "sin_revisar"]
     return render(
         request,
         "caja/revision.html",
         {
             **marco(request),
             "cuadres": cuadres,
-            "filtros": {"revision": estado},
+            "filtros": {"revision": estado, "desde": desde},
+            "periodos": PERIODOS,
             "cuantos": len(cuadres),
+            "abiertas": sum(1 for fila in cuadres if not fila["sesion"].cerrada_en),
             "por_revisar": len(pendientes),
             "con_faltante": sum(1 for fila in pendientes if fila["faltante"]),
         },

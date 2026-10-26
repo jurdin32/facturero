@@ -5,8 +5,10 @@ encabezado: el logo —el del emisor o, si no hay, el de Factiz—, la empresa y
 RUC, el nombre del reporte, el período, quién lo pidió y cuándo se generó. Al pie
 van las notas del reporte: de qué norma sale el dato y qué se dejó fuera.
 
-El PDF se arma con ReportLab, que no necesita nada instalado en el sistema, y el
-Excel con openpyxl: los dos son bibliotecas de Python que viajan con el proyecto.
+El PDF sale de **HTML**: la plantilla ``papel/reporte.html`` y la hoja de estilo de
+imprenta ``static/css/papel.css``, convertidas con WeasyPrint (ver
+``facturero.papel``). El Excel se arma con openpyxl, que —como WeasyPrint— es una
+biblioteca de Python que viaja con el proyecto.
 """
 
 from __future__ import annotations
@@ -15,40 +17,18 @@ from dataclasses import dataclass, field
 from datetime import date, datetime
 from io import BytesIO
 from typing import Any, Optional, Sequence
-from xml.sax.saxutils import escape
 
 from openpyxl import Workbook
 from openpyxl.drawing.image import Image as ImagenDeExcel
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from django.utils import timezone
-from reportlab.lib import colors
-from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
-from reportlab.lib.pagesizes import A4, landscape
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import mm
-from reportlab.lib.utils import ImageReader
-from reportlab.platypus import (
-    Image,
-    KeepTogether,
-    Paragraph,
-    SimpleDocTemplate,
-    Spacer,
-    Table,
-    TableStyle,
-)
 
-from .marca import logo_de_los_reportes
+from facturero.papel import logo_en_linea, papel
+
 from .tabla import Tabla, dinero
 
 __all__ = ["Ficha", "excel", "pdf"]
-
-#: Los colores de la casa, los mismos del CSS (``--marca``, ``--marca-osc``).
-MARCA = colors.HexColor("#1570EF")
-MARCA_OSCURA = colors.HexColor("#175CD3")
-TINTE = colors.HexColor("#EFF8FF")
-LINEA = colors.HexColor("#D6DCE5")
-GRIS = colors.HexColor("#667085")
 
 MARCA_EXCEL = "1570EF"
 TINTE_EXCEL = "EFF8FF"
@@ -78,233 +58,50 @@ class Ficha:
 # ------------------------------------------------------------------- ayudas
 
 
-def _imagen(contenido: bytes, alto: float) -> Optional[Any]:
-    """La imagen escalada a ese alto, conservando la proporción. ``None`` si no se puede."""
+def _logo_en_bytes() -> Optional[tuple[bytes, str]]:
+    """El logo del emisor o el de Factiz, en bytes: es lo que pide openpyxl."""
     try:
-        lector = ImageReader(BytesIO(contenido))
-        ancho_px, alto_px = lector.getSize()
-        if not ancho_px or not alto_px:
-            return None
-        return Image(BytesIO(contenido), width=alto * ancho_px / alto_px, height=alto)
-    except Exception:  # noqa: BLE001 - un logo roto no puede tumbar el reporte
-        return None
+        from .marca import logo_de_los_reportes
 
-
-def _logo() -> Optional[tuple[bytes, str]]:
-    try:
         return logo_de_los_reportes()
-    except Exception:  # noqa: BLE001 - idem
+    except Exception:  # noqa: BLE001 - un logo roto no puede tumbar la hoja
         return None
 
 
-# --------------------------------------------------------------------- PDF
+def _anchos(tabla: Tabla) -> list[float]:
+    """El peso de cada columna, en proporción, para repartir el ancho de la hoja.
 
-
-def _estilo(nombre: str, tamano: float, **extra: Any) -> ParagraphStyle:
-    base = {"fontName": "Helvetica", "fontSize": tamano, "leading": tamano + 1.6}
-    base.update(extra)
-    return ParagraphStyle(nombre, **base)
-
-
-_CELDA = _estilo("celda", 6.9)
-_CELDA_DERECHA = _estilo("celda-derecha", 6.9, alignment=TA_RIGHT)
-_CELDA_CENTRO = _estilo("celda-centro", 6.9, alignment=TA_CENTER)
-_CABECERA = _estilo("cabecera", 6.6, textColor=colors.white, fontName="Helvetica-Bold", alignment=TA_LEFT)
-_CABECERA_DERECHA = _estilo("cabecera-derecha", 6.6, textColor=colors.white, fontName="Helvetica-Bold", alignment=TA_RIGHT)
-_TOTAL = _estilo("total", 7.2, fontName="Helvetica-Bold")
-_TOTAL_DERECHA = _estilo("total-derecha", 7.2, fontName="Helvetica-Bold", alignment=TA_RIGHT)
-
-
-def _parrafo(texto: Any, estilo: ParagraphStyle) -> Paragraph:
-    return Paragraph(escape(str(texto)), estilo)
-
-
-def _parrafo_de(columna: Any, valor: Any) -> Paragraph:
-    estilo = {
-        "derecha": _CELDA_DERECHA,
-        "centro": _CELDA_CENTRO,
-    }.get(columna.alinear(), _CELDA)
-    return _parrafo(columna.formatear(valor), estilo)
-
-
-def _anchos(tabla: Tabla, disponible: float) -> list[float]:
-    """El ancho de cada columna, repartiendo el de la hoja según su peso."""
+    En HTML es el navegador —o WeasyPrint— el que reparte: aquí sólo se le dice
+    cuánto pesa cada columna, y el mínimo de legibilidad lo pone el CSS.
+    """
     pesos = [max(columna.ancho, 0.4) for columna in tabla.columnas]
     total = sum(pesos) or 1
-    anchos = [disponible * peso / total for peso in pesos]
-    # Ninguna columna baja de 13 mm: si no, el texto se rompe letra a letra.
-    minimo = 13 * mm
-    if any(ancho < minimo for ancho in anchos):
-        justos = sum(1 for ancho in anchos if ancho < minimo)
-        holgados = [ancho for ancho in anchos if ancho >= minimo]
-        sobra = disponible - minimo * justos
-        escala = (sobra / sum(holgados)) if holgados and sobra > 0 else 0
-        anchos = [minimo if ancho < minimo else ancho * escala for ancho in anchos]
-    return anchos
+    return [peso / total for peso in pesos]
 
 
 def pdf(tabla: Tabla, ficha: Ficha) -> bytes:
-    """El reporte en PDF, con su encabezado de marca y sus notas al pie."""
+    """El reporte en PDF, con su encabezado de marca y sus notas al pie.
+
+    Se arma con la plantilla ``papel/reporte.html``: el mismo HTML y el mismo CSS
+    de imprenta que el acta de caja y los vales.
+    """
     ancha = len(tabla.columnas) > 6
-    pagina = landscape(A4) if ancha else A4
-    buffer = BytesIO()
-    documento = SimpleDocTemplate(
-        buffer,
-        pagesize=pagina,
-        leftMargin=12 * mm,
-        rightMargin=12 * mm,
-        topMargin=12 * mm,
-        bottomMargin=15 * mm,
-        title=f"{ficha.titulo or tabla.titulo} · {ficha.periodo or tabla.subtitulo}",
-        author=ficha.empresa or "Factiz",
-        subject="Reporte",
-        creator="Factiz",
-    )
-
-    pie_izquierda = (
-        f"Generado por {ficha.usuario or 'el sistema'} el {ficha.cuando}"
-        if ficha.usuario
-        else f"Generado el {ficha.cuando}"
-    )
-
-    def al_pie(lienzo: Any, _documento: Any) -> None:
-        lienzo.saveState()
-        lienzo.setStrokeColor(LINEA)
-        lienzo.setLineWidth(0.4)
-        lienzo.line(12 * mm, 11 * mm, pagina[0] - 12 * mm, 11 * mm)
-        lienzo.setFont("Helvetica", 6.5)
-        lienzo.setFillColor(GRIS)
-        lienzo.drawString(12 * mm, 7 * mm, pie_izquierda)
-        lienzo.drawRightString(pagina[0] - 12 * mm, 7 * mm, f"Página {lienzo.getPageNumber()}")
-        lienzo.restoreState()
-
-    historia: list[Any] = []
-
-    # --- el encabezado: el logo a la izquierda y los datos a la derecha
-    datos = [
-        _parrafo(ficha.empresa or "Sin configuración del emisor", _estilo("emp", 9, fontName="Helvetica-Bold")),
-        _parrafo(f"RUC {ficha.ruc}" if ficha.ruc else "", _estilo("ruc", 7, textColor=GRIS)),
-        Spacer(1, 2 * mm),
-        _parrafo(tabla.titulo, _estilo("titulo", 12, fontName="Helvetica-Bold", textColor=MARCA_OSCURA)),
-        _parrafo(ficha.periodo or tabla.subtitulo, _estilo("periodo", 7.5, textColor=GRIS)),
+    piezas = _anchos(tabla)
+    columnas = [
+        {"titulo": columna.titulo, "alinear": columna.alinear(), "parte": round(pieza * 100, 2)}
+        for columna, pieza in zip(tabla.columnas, piezas)
     ]
-    encontrado = _logo()
-    # El logo es lo primero que se ve del informe: va con tamaño de sello, no de
-    # adorno. La columna que lo lleva crece con él para que no se pegue al texto.
-    marca = _imagen(encontrado[0], 18 * mm) if encontrado else None
-    if marca is not None:
-        historia.append(
-            Table(
-                [[marca, datos]],
-                colWidths=[min(62 * mm, documento.width * 0.34), documento.width - min(62 * mm, documento.width * 0.34)],
-                style=TableStyle(
-                    [
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 0),
-                        ("BOTTOMPADDING", (0, 0), (0, 0), 0),
-                    ]
-                ),
-            )
-        )
-    else:
-        historia.append(Table([[datos]], colWidths=[documento.width], style=TableStyle([("LEFTPADDING", (0, 0), (-1, -1), 0)])))
-    historia.append(Spacer(1, 3 * mm))
-
-    # --- las cifras destacadas
-    if ficha.resumen:
-        celdas = [
-            [
-                Paragraph(f"<font size=6 color='#667085'>{escape(etiqueta.upper())}</font><br/><b>{escape(valor)}</b>", _CELDA)
-                for etiqueta, valor in ficha.resumen
-            ]
-        ]
-        historia.append(
-            Table(
-                celdas,
-                colWidths=[documento.width / len(ficha.resumen)] * len(ficha.resumen),
-                style=TableStyle(
-                    [
-                        ("BACKGROUND", (0, 0), (-1, -1), TINTE),
-                        ("BOX", (0, 0), (-1, -1), 0.4, LINEA),
-                        ("INNERGRID", (0, 0), (-1, -1), 0.3, colors.white),
-                        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-                        ("TOPPADDING", (0, 0), (-1, -1), 2.4),
-                        ("BOTTOMPADDING", (0, 0), (-1, -1), 2.4),
-                        ("LEFTPADDING", (0, 0), (-1, -1), 4),
-                    ]
-                ),
-            )
-        )
-        historia.append(Spacer(1, 3 * mm))
-
-    # --- la tabla
-    if tabla.vacia:
-        historia.append(_parrafo(tabla.sin_datos, _estilo("vacio", 8, textColor=GRIS)))
-    else:
-        cabecera = [
-            _parrafo(
-                columna.titulo,
-                _CABECERA_DERECHA if columna.alinear() == "derecha" else _CABECERA,
-            )
-            for columna in tabla.columnas
-        ]
-        cuerpo = [cabecera]
-        for fila in tabla.filas:
-            cuerpo.append([_parrafo_de(columna, valor) for columna, valor in zip(tabla.columnas, fila)])
-        if tabla.totales is not None:
-            cuerpo.append(
-                [
-                    _parrafo(
-                        columna.formatear(valor) if valor not in (None, "") else "",
-                        _TOTAL_DERECHA if columna.alinear() == "derecha" else _TOTAL,
-                    )
-                    for columna, valor in zip(tabla.columnas, tabla.totales)
-                ]
-            )
-
-        estilo = [
-            ("BACKGROUND", (0, 0), (-1, 0), MARCA),
-            ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
-            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
-            ("TOPPADDING", (0, 0), (-1, -1), 2),
-            ("BOTTOMPADDING", (0, 0), (-1, -1), 2),
-            ("LEFTPADDING", (0, 0), (-1, -1), 3),
-            ("RIGHTPADDING", (0, 0), (-1, -1), 3),
-            ("LINEBELOW", (0, 0), (-1, -2), 0.25, LINEA),
-            ("BOX", (0, 0), (-1, -1), 0.4, LINEA),
-        ]
-        for indice in range(1, len(cuerpo)):
-            if indice % 2 == 0:
-                estilo.append(("BACKGROUND", (0, indice), (-1, indice), TINTE))
-        if tabla.totales is not None:
-            estilo += [
-                ("LINEABOVE", (0, -1), (-1, -1), 0.8, MARCA),
-                ("BACKGROUND", (0, -1), (-1, -1), TINTE),
-            ]
-        historia.append(
-            Table(
-                cuerpo,
-                colWidths=_anchos(tabla, documento.width),
-                repeatRows=1,
-                style=TableStyle(estilo),
-            )
-        )
-
-    # --- las notas, al pie del reporte
-    if ficha.notas:
-        notas = [Paragraph(f"— {escape(nota)}", _estilo("nota", 6.4, textColor=GRIS)) for nota in ficha.notas]
-        notas.append(
-            Paragraph(
-                "Documento generado por el sistema. Los valores provienen de los comprobantes "
-                "electrónicos autorizados y de los asientos contabilizados.",
-                _estilo("nota-final", 6.4, textColor=GRIS),
-            )
-        )
-        historia.append(Spacer(1, 3.5 * mm))
-        historia.append(KeepTogether(notas))
-
-    documento.build(historia, onFirstPage=al_pie, onLaterPages=al_pie)
-    return buffer.getvalue()
+    return papel(
+        "papel/reporte.html",
+        {
+            "ficha": ficha,
+            "tabla": tabla,
+            "columnas": columnas,
+            "totales": tabla.renglon_de_totales() or None,
+            "logo": logo_en_linea(),
+            "ancha": ancha,
+        },
+    )
 
 
 # ------------------------------------------------------------------- Excel
@@ -358,7 +155,7 @@ def excel(tabla: Tabla, ficha: Ficha) -> bytes:
     borde = Border(left=fino, right=fino, top=fino, bottom=fino)
 
     # --- el logo, en la esquina
-    encontrado = _logo()
+    encontrado = _logo_en_bytes()
     if encontrado is not None:
         try:
             imagen = ImagenDeExcel(BytesIO(encontrado[0]))

@@ -6,6 +6,7 @@ se cobre con un vale que nace pendiente, se cobra o se anula —sin que el vale 
 inventar más faltante del que hubo—.
 """
 
+from datetime import timedelta
 from decimal import Decimal
 
 from django.contrib.auth import get_user_model
@@ -83,7 +84,7 @@ class RevisionDelCuadre(BaseDeCaja):
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "Revisión de caja")
-        self.assertContains(respuesta, "Falta")
+        self.assertContains(respuesta, "Diferencia")
 
     def test_aprobar_desde_la_pantalla(self) -> None:
         self.entrar(self.supervisor)
@@ -381,3 +382,63 @@ class ElValeEnPapel(BaseDeCaja):
                 self.cliente.get(reverse("supervision:vale_pdf", args=[self.vale.pk])).status_code,
                 403,
             )
+
+
+class ElHistorialDeLasCajas(BaseDeCaja):
+    """Las cajas son diarias: la pantalla abre en hoy y el historial está al lado."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.entrar(self.supervisor)
+
+        # Un turno de la semana pasada, ya cerrado.
+        vieja = servicios.abrir(self.cajero, Decimal("10.00"))
+        servicios.cerrar(vieja, Decimal("10.00"))
+        hace_una_semana = timezone.now() - timedelta(days=7)
+        SesionCaja.objects.filter(pk=vieja.pk).update(
+            abierta_en=hace_una_semana, cerrada_en=hace_una_semana
+        )
+        self.vieja = SesionCaja.objects.get(pk=vieja.pk)
+
+        # Y una caja abierta ahora mismo.
+        self.abierta = servicios.abrir(self.supervisor, Decimal("20.00"))
+
+    def test_por_defecto_sale_el_dia_de_hoy(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:cuadres"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, self.abierta.usuario.get_username())
+        # La del cajero, cerrada hoy, también.
+        self.assertContains(respuesta, self.sesion.usuario.get_username())
+        # La de la semana pasada, no.
+        self.assertNotContains(respuesta, f'data-sesion="{self.vieja.pk}"')
+
+    def test_la_caja_abierta_sale_como_en_curso(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:cuadres"))
+
+        self.assertContains(respuesta, "En curso")
+        self.assertContains(respuesta, "Sin cerrar")
+
+    def test_el_historial_la_trae(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:cuadres"), {"desde": "todo"})
+
+        self.assertContains(respuesta, f'data-sesion="{self.vieja.pk}"')
+
+    def test_la_semana_trae_la_de_hace_siete_dias(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:cuadres"), {"desde": "semana"})
+
+        self.assertContains(respuesta, f'data-sesion="{self.vieja.pk}"')
+
+    def test_un_periodo_inventado_cae_en_hoy(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:cuadres"), {"desde": "ayer"})
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotContains(respuesta, f'data-sesion="{self.vieja.pk}"')
+
+    def test_filtrar_por_revision_deja_fuera_la_caja_abierta(self) -> None:
+        respuesta = self.cliente.get(
+            reverse("supervision:cuadres"), {"revision": "sin_revisar", "desde": "todo"}
+        )
+
+        self.assertNotContains(respuesta, "En curso")
+        self.assertContains(respuesta, f'data-sesion="{self.sesion.pk}"')

@@ -6,7 +6,7 @@ from decimal import Decimal
 
 from django.contrib.auth import get_user_model
 from django.core.exceptions import ValidationError
-from django.test import TestCase
+from django.test import Client, TestCase
 
 from . import servicios
 from .models import MovimientoCaja, SesionCaja
@@ -166,3 +166,79 @@ class DesgloseYCierreTests(TestCase):
         respuesta = self.client.get(f"/caja/acta/{sesion.pk}/")
 
         self.assertEqual(respuesta.status_code, 200)
+
+
+class LasDosCopiasDelActa(TestCase):
+    """El acta se imprime entera para quien supervisa y sin saldos para el cajero."""
+
+    def setUp(self) -> None:
+        self.cajero = get_user_model().objects.create_user("cajero-acta", password="x")
+        self.jefe = get_user_model().objects.create_user("jefe-acta", password="y")
+        self.jefe.is_superuser = True
+        self.jefe.save()
+
+        self.sesion = servicios.abrir(self.cajero, Decimal("50.00"))
+        servicios.registrar_movimiento(
+            self.sesion,
+            self.cajero,
+            tipo="ingreso",
+            concepto="cobro",
+            importe=Decimal("30.00"),
+        )
+        servicios.cerrar(self.sesion, Decimal("70.00"), "faltaron diez")
+        self.sesion.refresh_from_db()
+
+        self.client = Client(SERVER_NAME="localhost")
+
+    def test_el_cajero_recibe_la_copia_sin_saldos(self) -> None:
+        from unittest.mock import patch
+
+        from django.test import override_settings
+
+        from personalize_options.models import Nivel, Permiso, Rol
+
+        # Un cajero de verdad: sólo el permiso de su caja, nada de supervisión.
+        rol = Rol.objects.create(nombre="Cajero")
+        rol.usuarios.add(self.cajero)
+        Permiso.objects.create(rol=rol, opcion="caja", nivel=Nivel.LECTURA.value)
+
+        self.client.force_login(self.cajero)
+        with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
+            with patch("caja.views.acta_pdf", return_value=b"%PDF-1.4") as falso:
+                respuesta = self.client.get(f"/caja/acta/{self.sesion.pk}/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertFalse(falso.call_args.kwargs["completo"])
+
+    def test_la_supervision_recibe_el_acta_entera(self) -> None:
+        from unittest.mock import patch
+
+        from django.test import override_settings
+
+        self.client.force_login(self.jefe)
+        with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
+            with patch("caja.views.acta_pdf", return_value=b"%PDF-1.4") as falso:
+                respuesta = self.client.get(f"/caja/acta/{self.sesion.pk}/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertTrue(falso.call_args.kwargs["completo"])
+
+    def test_la_copia_del_cajero_solo_lleva_el_desglose(self) -> None:
+        from unittest.mock import patch
+
+        from .acta import acta
+
+        with patch("caja.acta.papel", return_value=b"%PDF-1.4") as falso:
+            acta(self.sesion, self.sesion.movimientos.all(), completo=False)
+
+        contexto = falso.call_args.args[1]
+        self.assertFalse(contexto["completo"])
+        self.assertEqual(contexto["movimientos"], [])
+
+    def test_la_copia_del_cajero_se_genera_igual(self) -> None:
+        from .acta import acta
+
+        contenido = acta(self.sesion, self.sesion.movimientos.all(), completo=False)
+
+        self.assertTrue(contenido.startswith(b"%PDF"))
+        self.assertGreater(len(contenido), 3000)

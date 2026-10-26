@@ -45,26 +45,14 @@ cuenta de alguien. Es pantalla de supervisión, no del cajero.
   </div>
 </div>
 
-<form class="filtros filtros-cortos" method="get">
-  <div class="row">
-    <div class="cell-12 cell-md-6 cell-lg-4">
-      <div class="filtro">
-        <label class="etiqueta" for="estado">Estado</label>
-        <select class="select" name="estado" id="estado" data-role="select">
-          <option value="">Todos</option>
-          {% for clave, nombre in estados %}
-            <option value="{{ clave }}" {% if filtros.estado == clave %}selected{% endif %}>{{ nombre }}</option>
-          {% endfor %}
-        </select>
-      </div>
-    </div>
-    <div class="cell-12 cell-md-4 cell-lg-2">
-      <div class="filtro filtro-boton">
-        <button type="submit" class="button primary"><span class="mif-search" aria-hidden="true"></span> Filtrar</button>
-      </div>
-    </div>
-  </div>
-</form>
+<nav class="pestanas" aria-label="Filtrar los vales">
+  <a class="pestana {% if not filtros.estado %}activa{% endif %}"
+     href="{% url 'supervision:vales' %}">Todos</a>
+  {% for clave, nombre in estados %}
+    <a class="pestana {% if filtros.estado == clave %}activa{% endif %}"
+       href="{% url 'supervision:vales' %}?estado={{ clave }}">{{ nombre }}{{ nombre|pluralize:"s" }}</a>
+  {% endfor %}
+</nav>
 
 <section class="bloque">
   <h2 class="bloque-titulo">Libro de vales</h2>

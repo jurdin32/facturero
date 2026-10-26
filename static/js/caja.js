@@ -101,7 +101,21 @@
     var abrirBoton = evento.target.closest("[data-abrir-modal]");
     if (abrirBoton) {
       evento.preventDefault();
-      abrir(document.getElementById(abrirBoton.getAttribute("data-abrir-modal")), abrirBoton);
+      var ventana = document.getElementById(abrirBoton.getAttribute("data-abrir-modal"));
+      // La ventana de la revisión es una sola para toda la tabla: el botón de
+      // cada fila le dice de qué turno se trata.
+      var sesion = abrirBoton.getAttribute("data-sesion");
+      if (ventana && sesion) {
+        var campo = ventana.querySelector('input[name="sesion"]');
+        if (campo) {
+          campo.value = sesion;
+        }
+        var nota = ventana.querySelector('textarea[name="nota"]');
+        if (nota) {
+          nota.value = "";
+        }
+      }
+      abrir(ventana, abrirBoton);
       return;
     }
 

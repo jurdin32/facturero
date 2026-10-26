@@ -5,10 +5,11 @@
 {% block contenido %}
 
 {% comment %}
-La revisión de los cuadres vive aparte de la caja del turno, porque no es del
-cajero: aquí entra quien supervisa. Cada turno cerrado es una ficha con sus
-cifras, con aire entre ellas, y al pie lo único que se puede hacer: aprobarlo,
-dejarlo observado o cobrar el faltante con un vale.
+La revisión de los cuadres, en una tabla: un renglón por turno cerrado, con lo
+esperado, lo contado y la diferencia. Caben muchos más que en fichas, que es lo
+que hace falta cuando hay decenas de cajas. La revisión de un turno se hace en la
+ventana que abre «Revisar», y el filtro son pestañas: no dependen de ningún
+control que haya que montar.
 {% endcomment %}
 
 {% puede_escribir "revision_caja" as puede_revisar %}
@@ -18,7 +19,9 @@ dejarlo observado o cobrar el faltante con un vale.
   <div>
     <h1 class="titulo">Revisión de caja</h1>
     <p class="subtitulo">
-      Los turnos que ya se cerraron, para aprobarlos o dejarlos observados.
+      {{ abiertas }} caja{{ abiertas|pluralize }} abierta{{ abiertas|pluralize }} ahora ·
+      {{ por_revisar }} cuadre{{ por_revisar|pluralize }} por revisar ·
+      {{ con_faltante }} con faltante
     </p>
   </div>
   <div class="titulo-acciones">
@@ -28,186 +31,163 @@ dejarlo observado o cobrar el faltante con un vale.
   </div>
 </div>
 
-<div class="row">
-  <div class="cell-12 cell-md-6">
-    <div class="bloque bloque-dato">
-      <span class="etiqueta">Cuadres por revisar</span>
-      <p class="cifra">{{ por_revisar }}</p>
-    </div>
-  </div>
-  <div class="cell-12 cell-md-6">
-    <div class="bloque bloque-dato">
-      <span class="etiqueta">Con faltante</span>
-      <p class="cifra {% if con_faltante %}sale{% endif %}">{{ con_faltante }}</p>
-    </div>
-  </div>
-</div>
+{% comment %}
+El período va primero: las cajas se abren y se cierran todos los días, así que la
+pantalla abre en el día de hoy y el historial queda a un clic.
+{% endcomment %}
+<nav class="pestanas" aria-label="Elegir el período">
+  {% for clave, nombre in periodos %}
+    <a class="pestana {% if filtros.desde == clave %}activa{% endif %}"
+       href="{% url 'supervision:cuadres' %}?desde={{ clave }}{% if filtros.revision %}&revision={{ filtros.revision }}{% endif %}">{{ nombre }}</a>
+  {% endfor %}
+</nav>
 
-<form class="filtros filtros-cortos" method="get">
-  <div class="row">
-    <div class="cell-12 cell-md-6 cell-lg-4">
-      <div class="filtro">
-        <label class="etiqueta" for="revision">Revisión</label>
-        <select class="select" name="revision" id="revision" data-role="select">
-          <option value="">Todas</option>
-          <option value="sin_revisar" {% if filtros.revision == 'sin_revisar' %}selected{% endif %}>Sin revisar</option>
-          <option value="aprobada" {% if filtros.revision == 'aprobada' %}selected{% endif %}>Aprobadas</option>
-          <option value="observada" {% if filtros.revision == 'observada' %}selected{% endif %}>Observadas</option>
-        </select>
-      </div>
-    </div>
-    <div class="cell-12 cell-md-4 cell-lg-2">
-      <div class="filtro filtro-boton">
-        <button type="submit" class="button primary"><span class="mif-search" aria-hidden="true"></span> Filtrar</button>
-      </div>
-    </div>
-  </div>
-</form>
+<nav class="pestanas pestanas-suaves" aria-label="Filtrar por revisión">
+  <a class="pestana {% if not filtros.revision %}activa{% endif %}"
+     href="{% url 'supervision:cuadres' %}?desde={{ filtros.desde }}">Todas</a>
+  <a class="pestana {% if filtros.revision == 'sin_revisar' %}activa{% endif %}"
+     href="{% url 'supervision:cuadres' %}?desde={{ filtros.desde }}&revision=sin_revisar">Sin revisar</a>
+  <a class="pestana {% if filtros.revision == 'aprobada' %}activa{% endif %}"
+     href="{% url 'supervision:cuadres' %}?desde={{ filtros.desde }}&revision=aprobada">Aprobadas</a>
+  <a class="pestana {% if filtros.revision == 'observada' %}activa{% endif %}"
+     href="{% url 'supervision:cuadres' %}?desde={{ filtros.desde }}&revision=observada">Observadas</a>
+</nav>
 
-{% for fila in cuadres %}
-  {% with sesion=fila.sesion %}
-    <section class="bloque cuadre">
-      <header class="cuadre-cabecera">
-        <div class="cuadre-quien">
-          <h2 class="bloque-titulo">Turno de {{ sesion.usuario.get_full_name|default:sesion.usuario.get_username }}</h2>
-          <p class="ayuda">
-            {{ sesion.abierta_en|date:"d/m/Y H:i" }} — {{ sesion.cerrada_en|date:"d/m/Y H:i" }}
-            {% if sesion.revisada_por %}
-              · revisada por {{ sesion.revisada_por.get_full_name|default:sesion.revisada_por.get_username }}
-              el {{ sesion.revisada_en|date:"d/m/Y H:i" }}
-            {% endif %}
-          </p>
-        </div>
-        <div class="cuadre-estado">
-          <span class="chip {% if sesion.revision == 'aprobada' %}success{% elif sesion.revision == 'observada' %}alert{% else %}warning{% endif %}">
-            <span class="label">{{ sesion.get_revision_display }}</span>
-          </span>
-          <a class="button small" href="{% url 'caja:acta' sesion.pk %}" target="_blank" rel="noopener">
-            <span class="mif-description" aria-hidden="true"></span> Acta en PDF
-          </a>
-        </div>
+<section class="bloque">
+  {% if cuadres %}
+    <div class="desliza">
+      <table class="table libro tabla-revision">
+        <thead>
+          <tr>
+            <th>Turno</th>
+            <th class="col-opcional">Cerrada</th>
+            <th class="col-dato">Esperado</th>
+            <th class="col-dato">Contado</th>
+            <th class="col-dato">Diferencia</th>
+            <th>Revisión</th>
+            <th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in cuadres %}
+            {% with sesion=fila.sesion %}
+              <tr{% if not sesion.cerrada_en %} class="fila-abierta"{% endif %}>
+                <td>
+                  {{ sesion.usuario.get_full_name|default:sesion.usuario.get_username }}
+                  <br>
+                  <span class="tenue">{{ sesion.abierta_en|date:"d/m/Y H:i" }}</span>
+                  {% if fila.vales %}
+                    <br>
+                    <span class="tenue">
+                      Vale{{ fila.vales|length|pluralize }}:
+                      {% for vale in fila.vales %}{{ vale.numero }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="col-opcional">
+                  {% if sesion.cerrada_en %}{{ sesion.cerrada_en|date:"d/m/Y H:i" }}{% else %}—{% endif %}
+                </td>
+                <td class="col-dato cifra">{{ sesion.saldo_esperado|floatformat:2 }}</td>
+                <td class="col-dato cifra">
+                  {% if sesion.cerrada_en %}{{ sesion.saldo_declarado|floatformat:2 }}{% else %}—{% endif %}
+                </td>
+                <td class="col-dato cifra {% if sesion.diferencia %}sale{% endif %}">
+                  {% if sesion.cerrada_en %}{{ sesion.diferencia|floatformat:2 }}{% else %}—{% endif %}
+                </td>
+                <td>
+                  {% if sesion.cerrada_en %}
+                    <span class="chip {% if sesion.revision == 'aprobada' %}success{% elif sesion.revision == 'observada' %}alert{% else %}warning{% endif %}">
+                      <span class="label">{{ sesion.get_revision_display }}</span>
+                    </span>
+                    {% if sesion.revisada_por %}
+                      <br>
+                      <span class="tenue">
+                        {{ sesion.revisada_por.get_full_name|default:sesion.revisada_por.get_username }}
+                        · {{ sesion.revisada_en|date:"d/m/Y H:i" }}
+                      </span>
+                    {% endif %}
+                    {% if sesion.nota_revision %}
+                      <br><span class="tenue">{{ sesion.nota_revision }}</span>
+                    {% endif %}
+                  {% else %}
+                    <span class="chip info"><span class="label">En curso</span></span>
+                  {% endif %}
+                </td>
+                <td class="col-acciones">
+                  {% if not sesion.cerrada_en %}
+                    <span class="tenue">Sin cerrar</span>
+                  {% else %}
+                    {% if puede_revisar %}
+                      <button type="button" class="button small primary"
+                              data-abrir-modal="modal-revision"
+                              data-sesion="{{ sesion.pk }}">
+                        <span class="mif-checkmark" aria-hidden="true"></span> Revisar
+                      </button>
+                    {% endif %}
+                    {% if puede_vales and fila.por_cobrar %}
+                      <a class="button small" href="{% url 'supervision:vale_de_la_sesion' sesion.pk %}">
+                        <span class="mif-money" aria-hidden="true"></span> Vale {{ fila.por_cobrar|floatformat:2 }}
+                      </a>
+                    {% endif %}
+                    <a class="button small" href="{% url 'caja:acta' sesion.pk %}" target="_blank" rel="noopener">
+                      <span class="mif-description" aria-hidden="true"></span> Acta
+                    </a>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endwith %}
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="vacio caja-vacio">
+      <p>No hay cajas en ese período.</p>
+      <p class="tenue">
+        Pruebe con otro período en las pestañas de arriba: los turnos aparecen en
+        cuanto el cajero abre su caja.
+      </p>
+    </div>
+  {% endif %}
+</section>
+
+{% if puede_revisar %}
+  <div class="modal-caja" id="modal-revision" hidden>
+    <div class="modal-caja-panel" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-revision">
+      <header class="modal-caja-cabecera">
+        <h2 class="modal-caja-titulo" id="titulo-modal-revision">
+          <span class="mif-checkmark" aria-hidden="true"></span> Revisar el cuadre
+        </h2>
+        <button type="button" class="modal-caja-cerrar" data-cerrar-modal aria-label="Cerrar la ventana">
+          <span class="mif-cancel" aria-hidden="true"></span>
+        </button>
       </header>
-
-      <div class="cuadre-cifras">
-        <div class="cuadre-cifra">
-          <span class="etiqueta">Saldo inicial</span>
-          <p class="cifra">{{ sesion.saldo_inicial|floatformat:2 }}</p>
-        </div>
-        <div class="cuadre-cifra">
-          <span class="etiqueta">Ingresos</span>
-          <p class="cifra entra">{{ sesion.total_ingresos|floatformat:2 }}</p>
-        </div>
-        <div class="cuadre-cifra">
-          <span class="etiqueta">Egresos</span>
-          <p class="cifra sale">{{ sesion.total_egresos|floatformat:2 }}</p>
-        </div>
-        <div class="cuadre-cifra">
-          <span class="etiqueta">Esperado</span>
-          <p class="cifra">{{ sesion.saldo_esperado|floatformat:2 }}</p>
-        </div>
-        <div class="cuadre-cifra">
-          <span class="etiqueta">Contado</span>
-          <p class="cifra">{{ sesion.saldo_declarado|floatformat:2 }}</p>
-        </div>
-        {% if fila.faltante %}
-          <div class="cuadre-cifra cuadre-cifra-falta">
-            <span class="etiqueta">Falta</span>
-            <p class="cifra sale">{{ fila.faltante|floatformat:2 }}</p>
-          </div>
-        {% else %}
-          <div class="cuadre-cifra">
-            <span class="etiqueta">Diferencia</span>
-            <p class="cifra {% if sesion.diferencia %}sale{% endif %}">{{ sesion.diferencia|floatformat:2 }}</p>
-          </div>
-        {% endif %}
-      </div>
-
-      {% if sesion.desglose %}
-        <details class="cuadre-desglose">
-          <summary>Desglose de lo contado</summary>
-          <div class="desliza">
-            <table class="table small libro">
-              <thead>
-                <tr>
-                  <th>Billetes y monedas</th>
-                  <th class="col-dato">Cantidad</th>
-                  <th class="col-dato">Subtotal</th>
-                </tr>
-              </thead>
-              <tbody>
-                {% for renglon in sesion.renglones_del_desglose %}{% if renglon.cantidad %}
-                  <tr>
-                    <td class="cifra">{{ renglon.valor|floatformat:2 }}</td>
-                    <td class="col-dato cifra">{{ renglon.cantidad }}</td>
-                    <td class="col-dato cifra">{{ renglon.subtotal|floatformat:2 }}</td>
-                  </tr>
-                {% endif %}{% endfor %}
-              </tbody>
-            </table>
-          </div>
-        </details>
-      {% endif %}
-
-      {% if sesion.observaciones_cierre or sesion.nota_revision or fila.vales %}
-        <div class="cuadre-notas">
-          {% if sesion.observaciones_cierre %}
-            <p class="ayuda"><strong>Dijo el cajero:</strong> {{ sesion.observaciones_cierre }}</p>
-          {% endif %}
-          {% if sesion.nota_revision %}
-            <p class="ayuda"><strong>Nota de la revisión:</strong> {{ sesion.nota_revision }}</p>
-          {% endif %}
-          {% if fila.vales %}
+      <form method="post" novalidate class="modal-caja-formulario">
+        {% csrf_token %}
+        <input type="hidden" name="sesion" value="">
+        <div class="modal-caja-cuerpo">
+          <div class="campo-caja">
+            <label class="etiqueta" for="nota-revision">Nota de la revisión</label>
+            <textarea name="nota" id="nota-revision" rows="3" data-role="textarea"
+                      placeholder="Lo que haya que dejar dicho (opcional)"></textarea>
             <p class="ayuda">
-              Vales de esta caja:
-              {% for vale in fila.vales %}
-                <span class="chip {% if vale.estado == 'cobrado' %}success{% elif vale.estado == 'anulado' %}dark{% else %}warning{% endif %}">
-                  <span class="label">{{ vale.numero }} · {{ vale.importe|floatformat:2 }} · {{ vale.get_estado_display }}</span>
-                </span>
-                <a class="enlace" href="{% url 'supervision:vale_pdf' vale.pk %}" target="_blank" rel="noopener">imprimir</a>
-              {% endfor %}
+              Aprobar deja el cuadre por bueno; observarlo lo deja marcado para que se
+              corrija. En los dos casos queda anotado quién lo revisó y cuándo.
             </p>
-          {% endif %}
-        </div>
-      {% endif %}
-
-      <footer class="cuadre-pie">
-        {% if puede_revisar %}
-          <form method="post" class="cuadre-revision">
-            {% csrf_token %}
-            <input type="hidden" name="sesion" value="{{ sesion.pk }}">
-            <input type="text" name="nota" class="campo-nota" maxlength="300"
-                   aria-label="Nota de la revisión"
-                   placeholder="Nota de la revisión (opcional)">
-            <div class="acciones-fila">
-              <button type="submit" name="decision" value="aprobada" class="button success">
-                <span class="mif-checkmark" aria-hidden="true"></span> Aprobar el cuadre
-              </button>
-              <button type="submit" name="decision" value="observada" class="button outline alert">
-                <span class="mif-warning" aria-hidden="true"></span> Dejar observado
-              </button>
-            </div>
-          </form>
-        {% else %}
-          <p class="ayuda">Para aprobar o dejar observado un cuadre hace falta el permiso de escritura de la revisión.</p>
-        {% endif %}
-
-        {% if puede_vales and fila.por_cobrar %}
-          <div class="acciones-fila">
-            <a class="button primary" href="{% url 'supervision:vale_de_la_sesion' sesion.pk %}">
-              <span class="mif-money" aria-hidden="true"></span> Cobrar {{ fila.por_cobrar|floatformat:2 }} con un vale
-            </a>
           </div>
-        {% endif %}
-      </footer>
-    </section>
-  {% endwith %}
-{% empty %}
-  <div class="bloque">
-    <div class="vacio">
-      <p>No hay cuadres que revisar con ese filtro.</p>
-      <p class="tenue">Los turnos aparecen aquí en cuanto el cajero cierra su caja.</p>
+        </div>
+        <footer class="modal-caja-pie">
+          <button type="button" class="button dark outline" data-cerrar-modal>Cancelar</button>
+          <button type="submit" name="decision" value="observada" class="button outline alert">
+            <span class="mif-warning" aria-hidden="true"></span> Dejar observado
+          </button>
+          <button type="submit" name="decision" value="aprobada" class="button success">
+            <span class="mif-checkmark" aria-hidden="true"></span> Aprobar el cuadre
+          </button>
+        </footer>
+      </form>
     </div>
   </div>
-{% endfor %}
+{% endif %}
 
 {% endblock %}

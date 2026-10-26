@@ -1,0 +1,62 @@
+{% comment %}
+El vale de caja: el papel que se firma para sacar efectivo del turno o cobrar un
+faltante. Importe, responsable, motivo y las dos firmas.
+{% endcomment %}<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <title>Vale de caja {{ numero }}</title>
+  <style>{{ hoja|safe }}</style>
+</head>
+<body>
+
+  <header class="encabezado">
+    {% if logo %}<img class="logo" src="{{ logo }}" alt="{{ empresa }}">{% endif %}
+    <p class="empresa">{{ empresa }}</p>
+    {% if ruc %}<p class="ruc">RUC {{ ruc }}</p>{% endif %}
+    <h1 class="titulo">VALE DE CAJA</h1>
+    <p class="periodo">N.º {{ numero }}</p>
+  </header>
+
+  <table class="vale-importe">
+    <tr>
+      <td class="tipo">{{ tipo }}</td>
+      <td class="cifra">$ {{ importe }}</td>
+    </tr>
+  </table>
+
+  <table class="acta-datos">
+    <tbody>
+      <tr><th>Fecha</th><td>{{ fecha }}</td><th>Estado</th><td>{{ estado }}</td></tr>
+      <tr><th>Responsable</th><td>{{ responsable }}</td><th>Caja del turno</th><td>{{ turno }}</td></tr>
+      <tr><th>Emitido por</th><td>{{ emitido_por }}</td><th>Cobrado el</th><td>{{ cobrado_el }}</td></tr>
+    </tbody>
+  </table>
+
+  <div class="vale-motivo">
+    <h2>Motivo</h2>
+    <p>{{ motivo }}</p>
+    {% if nota %}
+      <h2>Nota</h2>
+      <p>{{ nota }}</p>
+    {% endif %}
+  </div>
+
+  {% if cuadre %}
+    <p class="vale-nota">Cuadre de ese turno: {{ cuadre }}.</p>
+  {% endif %}
+
+  <p class="vale-nota">
+    Este vale respalda el movimiento de efectivo descrito arriba. Se firma por
+    duplicado: una copia queda en la caja y la otra en poder del responsable.
+  </p>
+
+  <table class="firmas">
+    <tr>
+      <td>Quien autoriza</td>
+      <td>{{ responsable }}</td>
+    </tr>
+  </table>
+
+</body>
+</html>

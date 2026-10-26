@@ -90,14 +90,21 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **284 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+Son **301 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
 supervisión de los cuadres y los vales, los reportes en sus tres salidas, los
 períodos, los permisos y el menú.
+
+Todos los **PDF** —los reportes, el acta de cierre y los vales— salen de
+**plantillas HTML** y de la hoja de estilo de imprenta `static/css/papel.css`,
+convertidas con WeasyPrint (`facturero/papel.py`). Así lo impreso y lo que se ve
+en pantalla se escribe una sola vez.
 
 ## En producción
 
 - `deploy/systemd/` trae los servicios del worker, el reloj de Celery y Flower, con
   `env.ejemplo` para las variables.
+- WeasyPrint necesita las bibliotecas **Pango** del sistema: en macOS
+  `brew install pango`, en Debian/Ubuntu `apt install libpango-1.0-0 libpangoft2-1.0-0`.
 - El certificado del emisor y la contraseña se guardan cifrados en la base; el archivo
   `.p12`, la base y la carpeta `media/` **no van al repositorio** (están en `.gitignore`).
 - Los estáticos se sirven con `collectstatic`; en desarrollo los sirve Django.
