@@ -50,7 +50,7 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Los tres paquetes de la casa, desde sus repositorios:
-pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.1" \
+pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.2" \
             "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.2" \
             "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.0"
 

@@ -4,7 +4,7 @@
 # la versión que está probada:
 #
 #   pip install -r requirements.txt
-#   pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.1" \
+#   pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.2" \
 #               "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.2" \
 #               "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.0"
 #
@@ -21,7 +21,7 @@ Django==6.1.2
 
 # ----------------------------------------------------- los paquetes de la casa
 # factec: firma, envío y consulta al SRI, y los modelos de los comprobantes.
-factec==1.12.1
+factec==1.12.2
 # personalize_options: roles y permisos por opción, con las tablas del paquete.
 personalize_options==1.2.2
 # conta_ec: contabilidad (plan de cuentas, asientos, estados y anexos del SRI),
