@@ -431,3 +431,52 @@ class PruebasDeLosAjustes(TestCase):
             "CELERY_BROKER_URL",
         ):
             self.assertNotIn(nombre + " =", texto, nombre)
+
+
+class PruebasDelAdminDeLaSeguridad(TestCase):
+    """Las pantallas del admin del paquete abren y cuentan bien."""
+
+    def setUp(self) -> None:
+        from django.contrib.auth import get_user_model
+
+        self.jefe = get_user_model().objects.create_superuser(
+            "admin-ajustes", "admin@ejemplo.ec", "clave-larga-123"
+        )
+        self.client.force_login(self.jefe)
+
+    def test_las_pantallas_del_paquete_abren(self) -> None:
+        for url in (
+            "/admin/personalize_options/opcion/",
+            "/admin/personalize_options/ajuste/",
+            "/admin/personalize_options/rol/",
+            "/admin/personalize_options/categoria/",
+        ):
+            self.assertEqual(self.client.get(url).status_code, 200, url)
+
+    def test_la_columna_de_roles_se_puede_ordenar(self) -> None:
+        # El permiso guarda la clave de la opción, no una foránea: el conteo va
+        # con una subconsulta y el orden por esa columna tiene que resolver.
+        self.assertEqual(self.client.get("/admin/personalize_options/opcion/?o=1").status_code, 200)
+        self.assertEqual(self.client.get("/admin/personalize_options/opcion/?o=-1").status_code, 200)
+
+    def test_los_ajustes_se_editan(self) -> None:
+        from personalize_options.models import Ajuste
+
+        ajuste = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
+        respuesta = self.client.post(
+            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/",
+            {
+                "clave": ajuste.clave,
+                "valor": "30",
+                "tipo": ajuste.tipo,
+                "grupo": ajuste.grupo,
+                "descripcion": ajuste.descripcion,
+                "orden": ajuste.orden,
+                "editable": "on",
+            },
+            follow=True,
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        ajuste.refresh_from_db()
+        self.assertEqual(ajuste.valor, "30")
