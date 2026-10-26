@@ -155,5 +155,6 @@ def manual_del_sistema(request: HttpRequest) -> HttpResponse:
             **marco(request),
             "secciones": manual.secciones(),
             "indice": manual.INDICE,
+            "mapa": manual.mapa_de_opciones(),
         },
     )

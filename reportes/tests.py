@@ -262,3 +262,26 @@ class PruebasDelLogotipo(TestCase):
         hoja = salidas.excel(tabla, ficha)
         self.assertTrue(hoja.startswith(b"PK"))
         self.assertGreater(len(hoja), 3000)
+
+
+class PruebasDelMapaDeOpciones(TestCase):
+    """Ninguna opción del menú se queda sin documentar."""
+
+    def test_todas_las_opciones_tienen_su_explicacion(self) -> None:
+        mapa = manual.mapa_de_opciones()
+
+        self.assertTrue(mapa)
+        sin_texto = [
+            opcion["nombre"]
+            for _categoria, opciones in mapa
+            for opcion in opciones
+            if not opcion["que"]
+        ]
+        self.assertEqual(sin_texto, [], f"sin explicación: {sin_texto}")
+
+    def test_el_mapa_cubre_todas_las_opciones_activas(self) -> None:
+        from personalize_options import opciones as registro
+
+        documentadas = sum(len(opciones) for _categoria, opciones in manual.mapa_de_opciones())
+
+        self.assertEqual(documentadas, len(registro.todas(solo_activas=True)))

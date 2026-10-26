@@ -235,3 +235,83 @@ def secciones() -> list[dict[str, Any]]:
         }
         for seccion in SECCIONES
     ]
+
+
+#: Qué hace cada opción del menú, en una línea. Las que no estén aquí salen igual en
+#: el mapa —con su nombre y su dirección— para que ninguna quede sin documentar.
+QUE_HACE: dict[str, str] = {
+    "tablero": "Lo facturado en los últimos días, lo que pide atención y los avisos del turno.",
+    "facturar": "La hoja de la factura: cliente, líneas del catálogo, IVA y totales.",
+    "facturas": "Las facturas emitidas, con filtros por fecha, cliente y estado ante el SRI.",
+    "notas_credito": "Devuelve o corrige una factura ya autorizada; trae sus líneas.",
+    "notas_debito": "Cobra valores que no iban en la factura: intereses, gastos, ajustes.",
+    "liquidaciones_compra": "Compra a un proveedor que no está obligado a facturar.",
+    "guias_remision": "Transporte de bienes: destinatarios, transportista, vehículo y bienes.",
+    "retenciones": "Retiene IVA, renta o ISD al proveedor con los códigos del SRI.",
+    "productos": "Bienes y servicios con su precio, su tarifa de IVA y su mínimo.",
+    "clientes": "Quién compra, con su identificación, dirección y correo.",
+    "conductores": "Los transportistas de las guías de remisión.",
+    "vehiculos": "Los vehículos que llevan la carga, por placa.",
+    "inventario": "Existencias, valor y aviso de reposición; de aquí sale el kardex.",
+    "caja": "El efectivo del turno: apertura, movimientos, cierre con desglose y acta.",
+    "estado_inicial": "El punto de partida de la contabilidad: activo, pasivo y patrimonio.",
+    "plan_cuentas": "Las cuentas contables, con su grupo, su naturaleza y sus jerarquías.",
+    "contabilidad": "El resumen del mes: movimiento, resultado y avisos del cierre.",
+    "asientos": "Los asientos contables: se proponen, se revisan y se contabilizan.",
+    "libro_diario": "Todos los asientos del período, línea por línea, en orden de fecha.",
+    "libro_mayor": "El extracto de una cuenta: saldo anterior, movimientos y saldo final.",
+    "balance_comprobacion": "Sumas y saldos por cuenta; comprueba que la partida doble cuadre.",
+    "estados_financieros": "Estado de resultados, situación financiera, flujos y patrimonio.",
+    "compras": "Las compras y gastos con comprobante, para el registro y el ATS.",
+    "anexos_sri": "ATS, REOC y RDEP del mes, en el formato que pide el SRI.",
+    "empleados": "Los empleados y lo que va al RDEP: sueldos, aportes y retenciones.",
+    "configuracion_contable": "Qué cuentas usa el sistema para vender, comprar y retener.",
+    "cierre_contable": "Cierra el ejercicio: asiento de cierre y apertura del siguiente.",
+    "reportes": "El índice de los 17 reportes, con sus filtros de período.",
+    "usuarios": "Quién entra al sistema, con su clave y sus roles.",
+    "roles": "Los roles y sus permisos, por categorías y por opción.",
+    "opciones": "El menú completo: categorías, opciones, su orden y su dirección.",
+    "configuracion": "El asistente del SRI: emisor, secuencia, certificado y comprobación.",
+    "manual": "Esta guía, con las capturas de cada pantalla.",
+}
+
+
+def _que_hace(clave: str) -> str:
+    """La explicación de una opción: la suya o, si es un reporte, la del catálogo."""
+    if clave in QUE_HACE:
+        return QUE_HACE[clave]
+    if clave.startswith("reporte_"):
+        from . import catalogo
+
+        definicion = catalogo.de(clave[len("reporte_"):])
+        if definicion is not None:
+            return definicion.descripcion
+    return ""
+
+
+def mapa_de_opciones() -> list[tuple[str, list[dict[str, str]]]]:
+    """Todas las opciones del menú, por categoría, con lo que hace cada una.
+
+    Se arma desde la base, no desde una lista escrita a mano: si mañana se añade una
+    opción, aparece aquí sola —con su nombre y su dirección— aunque todavía no tenga
+    explicación. Así ninguna opción queda sin documentar.
+    """
+    from personalize_options import opciones as registro
+
+    mapa = []
+    for categoria, opciones in registro.grupos(solo_activas=True):
+        mapa.append(
+            (
+                categoria,
+                [
+                    {
+                        "nombre": opcion.nombre,
+                        "clave": opcion.clave,
+                        "url": opcion.url,
+                        "que": _que_hace(opcion.clave),
+                    }
+                    for opcion in opciones
+                ],
+            )
+        )
+    return mapa

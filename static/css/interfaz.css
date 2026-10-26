@@ -4544,3 +4544,17 @@ body.con-modal { overflow: hidden; }
   .modal-caja-panel { max-width: none; border-radius: 0; min-height: 100%; }
   .modal-caja-cuerpo { max-height: none; }
 }
+
+/* El mapa de opciones del manual: un título por categoría y la tabla de lo que hay
+ * dentro, con la dirección en cifras para que se lea de un vistazo. */
+.manual-categoria {
+  margin: var(--e5) 0 var(--e2);
+  font-size: var(--texto-base);
+  font-weight: 600;
+  color: var(--marca-osc);
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+.manual-mapa td { white-space: normal; }
+.manual-mapa td:first-child { font-weight: 600; }
+.manual-mapa td.cifra { white-space: nowrap; color: var(--tinta-3); }

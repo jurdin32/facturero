@@ -63,7 +63,43 @@ hace la pantalla, los pasos y su captura. Las capturas se buscan en
   </section>
 {% endfor %}
 
+
+<section class="bloque manual-seccion" id="mapa-de-opciones">
+  <h2 class="bloque-titulo">
+    <span class="manual-numero">✓</span>
+    Mapa de todas las opciones
+  </h2>
+  <p class="manual-resumen">
+    El menú completo, categoría por categoría, con lo que hace cada opción y dónde está.
+    Se arma desde la base de datos: si se añade una opción, aparece aquí sola. Las
+    opciones que vea en su menú dependen de los permisos de su rol.
+  </p>
+
+  {% for categoria, opciones in mapa %}
+    <h3 class="manual-categoria">{{ categoria }}</h3>
+    <div class="desliza">
+      <table class="table small libro manual-mapa">
+        <thead>
+          <tr><th>Opción</th><th>Para qué es</th><th>Dónde</th></tr>
+        </thead>
+        <tbody>
+          {% for opcion in opciones %}
+            <tr>
+              <td>{{ opcion.nombre }}</td>
+              <td>{% if opcion.que %}{{ opcion.que }}{% else %}<span class="tenue">Pendiente de explicar</span>{% endif %}</td>
+              <td class="cifra">{% if opcion.url %}{{ opcion.url }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% endfor %}
+
+  <p class="manual-volver"><a href="#top">Volver al contenido</a></p>
+</section>
+
 <section class="bloque bloque-suave manual-seccion">
+
   <h2 class="bloque-titulo">Si algo no sale</h2>
   <ul class="lista-ayuda">
     <li>
