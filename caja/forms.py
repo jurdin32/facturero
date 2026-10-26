@@ -87,6 +87,7 @@ class CerrarCajaForm(forms.Form):
         label="Efectivo contado",
         min_value=Decimal("0"),
         required=False,
+        initial=Decimal("0.00"),
         widget=forms.TextInput(
             attrs={
                 "class": "campo-num",
@@ -148,15 +149,16 @@ class CerrarCajaForm(forms.Form):
 
     def clean(self):
         datos = super().clean()
-        del_desglose = total_del_desglose(self.desglose())
-        if del_desglose:
-            # Lo que se contó manda: el total escrito a mano solo se usa si no se
-            # contó nada por denominación.
+        contado = self.desglose()
+        del_desglose = total_del_desglose(contado)
+        manual = datos.get("saldo_declarado")
+        if contado:
+            # Lo que se contó manda, aunque no haya nada: una caja puede cerrarse
+            # vacía —todo se cobró con tarjeta o transferencia— y eso es un cierre
+            # de 0,00, no un error.
             datos["saldo_declarado"] = del_desglose
-        elif datos.get("saldo_declarado") in (None, ""):
-            raise forms.ValidationError(
-                "Cuente los billetes y las monedas, o escriba el efectivo contado."
-            )
+        elif manual in (None, ""):
+            datos["saldo_declarado"] = Decimal("0.00")
         return datos
 
     def renglones(self) -> list[dict]:

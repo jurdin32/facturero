@@ -111,13 +111,28 @@ class DesgloseYCierreTests(TestCase):
         self.assertEqual(formulario.cleaned_data["saldo_declarado"], Decimal("160.22"))
         self.assertEqual(formulario.desglose()["100.00"], 1)
 
-    def test_sin_desglose_ni_efectivo_contado_no_se_cierra(self):
+    def test_una_caja_vacia_se_cierra_en_cero(self):
+        """Todo cobrado con tarjeta deja la caja en 0: se cierra en 0,00 sin pelear."""
         from .forms import CerrarCajaForm
 
-        formulario = CerrarCajaForm({})
+        for datos in ({}, {"cantidad_100_00": "0"}, {"saldo_declarado": "0"}):
+            with self.subTest(datos=datos):
+                formulario = CerrarCajaForm(datos)
+                self.assertTrue(formulario.is_valid(), formulario.errors)
+                self.assertEqual(formulario.cleaned_data["saldo_declarado"], Decimal("0.00"))
 
-        self.assertFalse(formulario.is_valid())
-        self.assertIn("Cuente los billetes", formulario.non_field_errors()[0])
+    def test_la_caja_vacia_se_cierra_y_queda_en_cero(self):
+        sesion = servicios.abrir(self.usuario, Decimal("0"))
+
+        self.client.post(
+            "/caja/",
+            {"accion": "cerrar", "saldo_declarado": "0", "cantidad_100_00": "0"},
+            follow=True,
+        )
+
+        cerrada = SesionCaja.objects.get(pk=sesion.pk)
+        self.assertEqual(cerrada.estado, SesionCaja.Estado.CERRADA.value)
+        self.assertEqual(cerrada.saldo_declarado, Decimal("0.00"))
 
     def test_cerrar_guarda_el_desglose_y_baja_el_acta(self):
         sesion = servicios.abrir(self.usuario, Decimal("160.22"))

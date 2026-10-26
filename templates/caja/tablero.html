@@ -201,6 +201,7 @@
             Cuente los billetes y las monedas: cada línea se multiplica sola y el total
             se compara con el saldo esperado, que es
             <strong class="cifra">{{ sesion.saldo_esperado|floatformat:2 }}</strong>.
+            Si en la caja no hay efectivo, deje el conteo en cero: se cierra en 0,00.
           </p>
 
           <table class="table small desglose" data-tabla-desglose>

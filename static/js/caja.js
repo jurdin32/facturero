@@ -49,7 +49,8 @@
       }
       // Si se contó por denominación, el efectivo contado es ese total; si no se
       // contó nada, el campo se deja como esté para escribirlo a mano.
-      if (declarado && suma > 0) {
+      if (declarado) {
+        // También cuando es cero: una caja vacía se cierra en 0,00.
         declarado.value = suma.toFixed(2);
       }
     }
