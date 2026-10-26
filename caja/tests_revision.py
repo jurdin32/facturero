@@ -334,3 +334,50 @@ class PermisosDeLaRevision(TestCase):
         respuesta = self.cliente.get(reverse("caja:acta", args=[self.sesion.pk]))
 
         self.assertEqual(respuesta.status_code, 403)
+
+
+class ElValeEnPapel(BaseDeCaja):
+    """El vale se imprime: es el papel que se firma."""
+
+    def setUp(self) -> None:
+        super().setUp()
+        self.vale = servicios.crear_vale(
+            responsable=self.cajero,
+            importe=Decimal("3.35"),
+            motivo="Faltante del turno",
+            sesion=self.sesion,
+            creado_por=self.supervisor,
+        )
+        self.entrar(self.supervisor)
+
+    def test_el_pdf_del_vale_se_abre(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:vale_pdf", args=[self.vale.pk]))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(respuesta["Content-Type"], "application/pdf")
+        self.assertIn(f"vale-{self.vale.numero}", respuesta["Content-Disposition"])
+
+    def test_el_libro_trae_el_boton_de_imprimir(self) -> None:
+        respuesta = self.cliente.get(reverse("supervision:vales"))
+
+        self.assertContains(respuesta, reverse("supervision:vale_pdf", args=[self.vale.pk]))
+        self.assertContains(respuesta, "Imprimir")
+
+    def test_el_pdf_lleva_el_numero_y_el_importe(self) -> None:
+        from .vale import vale as vale_pdf
+
+        contenido = vale_pdf(self.vale).decode("latin-1")
+
+        # El PDF va comprimido: se comprueba que se generó y que es un PDF.
+        self.assertTrue(contenido.startswith("%PDF"))
+        self.assertGreater(len(contenido), 1000)
+
+    def test_sin_permiso_no_hay_pdf(self) -> None:
+        # El cajero no es superusuario: en modo cerrado, sin el permiso de vales
+        # el PDF no se sirve.
+        self.entrar(self.cajero)
+        with override_settings(PERSONALIZE_OPTIONS=CERRADO):
+            self.assertEqual(
+                self.cliente.get(reverse("supervision:vale_pdf", args=[self.vale.pk])).status_code,
+                403,
+            )

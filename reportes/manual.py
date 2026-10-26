@@ -175,6 +175,8 @@ SECCIONES: tuple[dict[str, Any], ...] = (
             "importe y el responsable ya puestos. No deja cobrar más de lo que falta.",
             "En «Supervisión → Vales de caja» está el libro completo. Un vale pendiente se cobra "
             "con «Cobrar» —queda la fecha del cobro— o se anula si no tenía por qué existir.",
+            "Cada vale se imprime con «Imprimir»: se abre en PDF —con el logo, el número, el "
+            "importe, el motivo y las dos firmas— y desde ahí se imprime o se guarda.",
             "Para que alguien entre aquí hace falta darle, en «Roles y permisos», la categoría "
             "«Supervisión»; un cajero con su caja no la ve.",
         ),

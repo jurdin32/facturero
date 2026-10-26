@@ -163,6 +163,7 @@ dejarlo observado o cobrar el faltante con un vale.
                 <span class="chip {% if vale.estado == 'cobrado' %}success{% elif vale.estado == 'anulado' %}dark{% else %}warning{% endif %}">
                   <span class="label">{{ vale.numero }} · {{ vale.importe|floatformat:2 }} · {{ vale.get_estado_display }}</span>
                 </span>
+                <a class="enlace" href="{% url 'supervision:vale_pdf' vale.pk %}" target="_blank" rel="noopener">imprimir</a>
               {% endfor %}
             </p>
           {% endif %}

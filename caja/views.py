@@ -21,7 +21,7 @@ from .acta import acta as acta_pdf
 from .forms import AbrirCajaForm, CerrarCajaForm, MovimientoCajaForm, ValeCajaForm
 from .models import MovimientoCaja, SesionCaja
 
-__all__ = ["acta", "revision", "tablero", "vale_nuevo", "vales"]
+__all__ = ["acta", "revision", "tablero", "vale_nuevo", "vale_pdf", "vales"]
 
 
 def _movimientos(sesion: SesionCaja | None, request: HttpRequest):
@@ -291,6 +291,22 @@ def vales(request: HttpRequest) -> HttpResponse:
 
 @login_required
 @requiere_lectura("vales_caja")
+def vale_pdf(request: HttpRequest, pk: int) -> HttpResponse:
+    """El vale en PDF, para imprimirlo y firmarlo."""
+    from .models import ValeCaja
+    from .vale import vale as vale_pdf_bytes
+
+    el_vale = get_object_or_404(
+        ValeCaja.objects.select_related("responsable", "sesion", "creado_por"), pk=pk
+    )
+    respuesta = HttpResponse(vale_pdf_bytes(el_vale), content_type="application/pdf")
+    respuesta["Content-Disposition"] = f'inline; filename="vale-{el_vale.numero}.pdf"'
+    respuesta["Cache-Control"] = "no-store"
+    return respuesta
+
+
+@login_required
+@requiere_lectura("vales_caja")
 def vale_nuevo(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
     """Hacer un vale: sobre un turno con faltante o suelto (anticipo, gasto)."""
     sesion = get_object_or_404(SesionCaja, pk=pk) if pk else None
@@ -313,7 +329,11 @@ def vale_nuevo(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
                 for mensaje in error.messages:
                     messages.error(request, mensaje)
             else:
-                messages.success(request, f"Vale {vale.numero} creado, pendiente de cobro.")
+                messages.success(
+                    request,
+                    f"Vale {vale.numero} creado, pendiente de cobro. "
+                    "Ábralo con «Imprimir» para firmarlo.",
+                )
                 return redirect("supervision:vales")
         else:
             messages.error(request, "Revise lo que está marcado en rojo.")

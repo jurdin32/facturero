@@ -20,5 +20,7 @@ urlpatterns = [
     # El libro de vales: lo que se cobra y lo que ya se cobró.
     path("vales/", views.vales, name="vales"),
     path("vales/nuevo/", views.vale_nuevo, name="vale_nuevo"),
+    # El vale en PDF, que es el papel que se imprime y se firma.
+    path("vales/<int:pk>/pdf/", views.vale_pdf, name="vale_pdf"),
     path("vales/nuevo/<int:pk>/", views.vale_nuevo, name="vale_de_la_sesion"),
 ]

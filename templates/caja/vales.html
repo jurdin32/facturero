@@ -106,6 +106,11 @@ cuenta de alguien. Es pantalla de supervisión, no del cajero.
                 {% if vale.cobrado_en %}<br><span class="tenue">{{ vale.cobrado_en|date:"d/m/Y" }}</span>{% endif %}
               </td>
               <td class="col-acciones">
+                <a class="button small" href="{% url 'supervision:vale_pdf' vale.pk %}"
+                   target="_blank" rel="noopener"
+                   title="Abrir el vale para imprimirlo">
+                  <span class="mif-printer" aria-hidden="true"></span> Imprimir
+                </a>
                 {% if puede_vales and vale.estado == 'pendiente' %}
                   <form method="post" class="acciones-fila">
                     {% csrf_token %}
@@ -124,8 +129,6 @@ cuenta de alguien. Es pantalla de supervisión, no del cajero.
                       <span class="mif-blocked" aria-hidden="true"></span> Anular
                     </button>
                   </form>
-                {% else %}
-                  <span class="tenue">—</span>
                 {% endif %}
               </td>
             </tr>
