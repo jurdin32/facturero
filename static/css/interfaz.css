@@ -729,7 +729,11 @@ select { padding-right: var(--e6); }
   background: var(--hoja);
   color: var(--tinta-2);
   font-size: var(--texto-m);
+  /* El aviso no se pega a lo que venga detrás: si no, parece parte de la
+     tarjeta de abajo. */
+  margin: 0 0 var(--e5);
 }
+.aviso:last-child { margin-bottom: 0; }
 
 .aviso-info    { border-left-color: var(--marca); background: var(--marca-tinte); border-color: #b2ddff; color: var(--marca-osc); }
 .aviso-success { border-left-color: var(--verde); background: var(--verde-tinte); border-color: #abefc6; color: var(--verde); }
@@ -4939,3 +4943,9 @@ body.con-modal { overflow: hidden; }
   .tabla-revision th:first-child { min-width: 130px; }
   .tabla-revision td:nth-child(6) { min-width: 120px; }
 }
+
+/* Los botones que cierran un formulario se separan de los campos: no van
+   pegados al último control. */
+.bloque .row + .acciones-fila,
+.bloque .filtros + .acciones-fila { margin-top: var(--e5); }
+.bloque .acciones-fila + .acciones-fila { margin-top: var(--e3); }
