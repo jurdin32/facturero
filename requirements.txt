@@ -1,0 +1,39 @@
+# Lo que necesita el proyecto para correr (Python 3.12 o superior).
+#
+# Los dos paquetes de la casa se instalan desde su repositorio y en modo editable,
+# para poder cambiarlos sin reinstalar:
+#
+#   pip install -r requirements.txt
+#   pip install -e ~/Desktop/Scripts/factec -e ~/Desktop/Scripts/personalize_options
+#
+# Las versiones están fijadas a las que están probadas. Al subir de versión, corra
+# las pruebas: `python manage.py test`.
+
+# ---------------------------------------------------------------- el marco
+Django==6.1.2
+
+# ----------------------------------------------------- los paquetes de la casa
+# factec: firma, envío y consulta al SRI, y los modelos de los comprobantes.
+factec==1.11.8
+# personalize_options: roles y permisos por opción, con las tablas del paquete.
+personalize_options==1.1.0
+
+# ------------------------------------------------- los reportes y los archivos
+# PDF del acta de cierre y de los reportes, y las hojas de Excel.
+reportlab==5.1.0
+openpyxl==3.1.5
+# Las imágenes del logo dentro del PDF y del Excel.
+pillow==13.0.0
+
+# ------------------------------------------- el envío en segundo plano (opcional)
+# El worker, el reloj que reintenta y el panel de monitorización. Si no se usan,
+# la emisión va en la misma petición y estas tres no hacen falta.
+celery==5.6.3
+flower==2.2.0
+
+# ------------------------------------------------------- lo que traen los de arriba
+# Se dejan escritas para que una instalación limpia quede igual que la probada.
+cryptography==50.0.2   # firma del XML (factec)
+lxml==6.1.3            # el XML del SRI (factec)
+signxml==5.1.0         # firma XAdES (factec)
+requests==2.34.2       # las consultas al catastro del SRI
