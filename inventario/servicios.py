@@ -4,7 +4,8 @@ El paquete factura; el stock es cosa del negocio. Esta es la costura entre los d
 al autorizarse una factura, lo que iba en ella sale del inventario y queda escrito
 en el libro, con el comprobante apuntado para no descontarlo dos veces.
 
-Se puede apagar: con ``INVENTARIO_DESCONTAR_AL_FACTURAR = False`` en los ajustes, el
+Se puede apagar: el ajuste ``inventario_descontar_al_facturar`` en «no» (se cambia
+desde la administración), y entonces el
 inventario solo se mueve a mano desde el libro de cada producto. El comando
 ``manage.py descontar_inventario`` sigue disponible para hacerlo cuando se pida.
 """
@@ -14,6 +15,7 @@ from __future__ import annotations
 from typing import Any, List, Optional
 
 from django.conf import settings
+from personalize_options import ajustes
 from factec.django.documentos import Factura
 from factec.django.models import ComprobanteEmitido, EstadoComprobante
 
@@ -30,7 +32,7 @@ __all__ = [
 
 def descuento_activo() -> bool:
     """¿Se descuenta el inventario al autorizarse una factura?"""
-    return bool(getattr(settings, "INVENTARIO_DESCONTAR_AL_FACTURAR", False))
+    return ajustes.booleano("inventario_descontar_al_facturar", False)
 
 
 def descontar_de_la_factura(factura: Factura, usuario: Any = None) -> List[Movimiento]:

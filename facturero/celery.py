@@ -23,14 +23,26 @@ import os
 os.environ.setdefault("FORKED_BY_MULTIPROCESSING", "1")
 
 from celery import Celery  # noqa: E402  (después de la variable, a propósito)
+from factec.django.conf import planificador  # noqa: E402
 
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "facturero.settings")
 
 app = Celery("facturero")
 
-# Toda la configuración de Celery se lee de settings.py con el prefijo CELERY_:
-# CELERY_BROKER_URL, CELERY_BEAT_SCHEDULE, CELERY_TIMEZONE…
-app.config_from_object("django.conf:settings", namespace="CELERY")
+# La configuración de Celery vive aquí, no en settings.py: es cosa del worker, no
+# del proyecto. El broker se puede cambiar con la variable de entorno
+# CELERY_BROKER_URL; el resto son los valores con los que se probó.
+app.conf.update(
+    broker_url=os.environ.get("CELERY_BROKER_URL", "redis://127.0.0.1:6379/0"),
+    timezone="America/Guayaquil",
+    enable_utc=True,
+    # Los eventos alimentan el panel de Flower sin arrancar el worker con «-E».
+    worker_send_task_events=True,
+    task_send_sent_event=True,
+    # Las tareas periódicas del paquete: revisa la firma a las 7:00 y reintenta
+    # cada 10 minutos los comprobantes que quedaron a medias.
+    beat_schedule={**planificador()},
+)
 
 # Encuentra las tareas de las apps instaladas, incluida factec.django.
 app.autodiscover_tasks()

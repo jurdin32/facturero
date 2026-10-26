@@ -200,11 +200,14 @@ class PruebasDelDescuentoAlFacturar(TestCase):
 
         self.assertEqual(descontar_de_la_factura(factura), [])
 
-    @override_settings(INVENTARIO_DESCONTAR_AL_FACTURAR=False)
     def test_con_el_descuento_apagado_no_se_mueve_nada(self) -> None:
+        from personalize_options import ajustes
+
         factura = factura_autorizada(self.bien, cantidad="3")
 
-        self.assertEqual(descontar_de_la_factura(factura), [])
+        with ajustes.usar(inventario_descontar_al_facturar=False):
+            self.assertEqual(descontar_de_la_factura(factura), [])
+
         self.assertEqual(Existencia.objects.get(producto=self.bien).cantidad, Decimal("10"))
 
     def test_el_libro_lleva_de_vuelta_a_la_factura(self) -> None:

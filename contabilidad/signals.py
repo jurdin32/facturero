@@ -14,6 +14,7 @@ from __future__ import annotations
 import logging
 
 from django.conf import settings
+from personalize_options import ajustes
 from django.db.models.signals import post_save, pre_save
 from django.dispatch import receiver
 from factec.django.models import ComprobanteEmitido, EstadoComprobante
@@ -40,7 +41,7 @@ def contabilizar_al_autorizar(
     sender, instance: ComprobanteEmitido, created: bool, **kwargs
 ) -> None:
     """Al pasar a AUTORIZADO, arma su asiento."""
-    if not getattr(settings, "CONTABILIDAD_CONTABILIZAR_AL_AUTORIZAR", True):
+    if not ajustes.booleano("contabilidad_contabilizar_al_autorizar", True):
         return
     if instance.estado != EstadoComprobante.AUTORIZADO.value:
         return

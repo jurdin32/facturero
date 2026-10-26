@@ -63,12 +63,14 @@ class PruebasDelBloqueo(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(self.client.session.get(sesion.BLOQUEADA))
 
-    @override_settings(BLOQUEO_INACTIVIDAD_MINUTOS=0)
     def test_sin_tiempo_de_bloqueo_no_bloquea_nunca(self) -> None:
+        from personalize_options import ajustes
+
         self._vieja(60 * 24)
         self._bloquear()
 
-        respuesta = self.client.get("/")
+        with ajustes.usar(bloqueo_inactividad_minutos=0):
+            respuesta = self.client.get("/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertNotEqual(respuesta.status_code, 423)
@@ -364,3 +366,68 @@ class PruebasDeLasTablasDeSeguridad(TestCase):
 
         self.assertIn("/admin/personalize_options/rol/", pagina)
         self.assertIn("/admin/personalize_options/permiso/", pagina)
+
+
+class PruebasDeLosAjustes(TestCase):
+    """La configuración de la aplicación vive en la base, no en settings.py."""
+
+    def test_los_ajustes_de_cada_app_quedan_sembrados_al_migrar(self) -> None:
+        from personalize_options.models import Ajuste
+
+        claves = set(Ajuste.objects.values_list("clave", flat=True))
+
+        for clave in (
+            "modo",
+            "superusuarios_todo",
+            "bloqueo_inactividad_minutos",
+            "inventario_descontar_al_facturar",
+            "contabilidad_contabilizar_al_autorizar",
+            "contabilidad_periodo_automatico",
+            "sri_ambiente",
+            "sri_guardar_xml",
+        ):
+            self.assertIn(clave, claves, clave)
+
+    def test_el_valor_sale_de_la_base(self) -> None:
+        from personalize_options import ajustes
+
+        self.assertEqual(ajustes.entero("bloqueo_inactividad_minutos"), 15)
+
+        ajustes.poner("bloqueo_inactividad_minutos", 45)
+
+        self.assertEqual(ajustes.entero("bloqueo_inactividad_minutos"), 45)
+
+    def test_un_booleano_se_lee_como_si_o_no(self) -> None:
+        from personalize_options import ajustes
+
+        self.assertTrue(ajustes.booleano("inventario_descontar_al_facturar"))
+
+        ajustes.poner("inventario_descontar_al_facturar", False)
+
+        self.assertFalse(ajustes.booleano("inventario_descontar_al_facturar"))
+
+    def test_se_puede_fijar_un_ajuste_sin_tocar_la_base(self) -> None:
+        from personalize_options import ajustes
+
+        with ajustes.usar(bloqueo_inactividad_minutos=0):
+            self.assertEqual(ajustes.entero("bloqueo_inactividad_minutos"), 0)
+
+        self.assertEqual(ajustes.entero("bloqueo_inactividad_minutos"), 15)
+
+    def test_settings_py_no_lleva_configuracion_de_la_aplicacion(self) -> None:
+        from pathlib import Path as Ruta
+
+        from django.conf import settings
+
+        ruta = Ruta(settings.BASE_DIR) / "facturero" / "settings.py"
+        texto = ruta.read_text(encoding="utf-8")
+
+        for nombre in (
+            "PERSONALIZE_OPTIONS",
+            "FACTURACION_ELECTRONICA",
+            "INVENTARIO_DESCONTAR_AL_FACTURAR",
+            "CONTABILIDAD_CONTABILIZAR_AL_AUTORIZAR",
+            "BLOQUEO_INACTIVIDAD_MINUTOS",
+            "CELERY_BROKER_URL",
+        ):
+            self.assertNotIn(nombre + " =", texto, nombre)

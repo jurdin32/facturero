@@ -14,9 +14,9 @@ Django==6.1.2
 
 # ----------------------------------------------------- los paquetes de la casa
 # factec: firma, envío y consulta al SRI, y los modelos de los comprobantes.
-factec==1.11.8
+factec==1.12.0
 # personalize_options: roles y permisos por opción, con las tablas del paquete.
-personalize_options==1.1.0
+personalize_options==1.2.0
 
 # ------------------------------------------------- los reportes y los archivos
 # Los PDF (reportes, acta de cierre y vales) se arman con HTML y CSS y los

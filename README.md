@@ -65,16 +65,45 @@ Después, en la aplicación:
 3. **Usuarios y sus roles**: dé de alta a la gente y asígnele su rol.
 4. **Caja del turno**: abra la caja antes de la primera factura.
 
-## Permisos
+## Configuración: la base, no `settings.py`
 
-Los roles viven en la base y se administran desde la aplicación. En `settings.py`:
+`settings.py` sólo lleva lo que es de Django (aplicaciones, middleware, plantillas,
+base de datos, estáticos, zona horaria). Lo que se puede cambiar sin tocar código
+—el modo de los permisos, el bloqueo de la pantalla, el ambiente del SRI, si se
+descuenta el inventario, si se contabiliza al autorizar— vive en la tabla de
+**ajustes**:
+
+- cada paquete y cada aplicación **declara** los suyos en su `AppConfig.ready()`
+  (`personalize_options.ajustes`);
+- al terminar `migrate` la señal `post_migrate` los **siembra** con su valor de
+  serie, sin pisar lo que ya esté puesto: basta con añadir el paquete a
+  `INSTALLED_APPS` y migrar;
+- se cambian desde el **admin** (Seguridad → Ajustes) y valen al momento, sin
+  reiniciar.
 
 ```python
-PERSONALIZE_OPTIONS = {
-    "MODO": "abierto",        # «abierto»: sin rol se puede todo; «cerrado»: solo lo que el rol permita
-    "SUPERUSUARIOS_TODO": True,  # los superusuarios pueden todo aunque no tengan rol
-}
+# inventario/apps.py
+def ready(self):
+    from personalize_options.ajustes import AjusteDeSerie, registrar
+    registrar(AjusteDeSerie("inventario_descontar_al_facturar", "si", tipo="booleano"))
 ```
+
+```python
+# en cualquier parte del código
+from personalize_options import ajustes
+ajustes.booleano("inventario_descontar_al_facturar")   # lee de la base
+```
+
+El único secreto fuera de la base es la clave que cifra la contraseña del
+certificado: va en la variable de entorno `SRI_CLAVE_CIFRADO` (si no está, se usa
+el ajuste `sri_clave_cifrado`, que no se edita desde la aplicación).
+
+## Permisos
+
+Los roles viven en la base y se administran desde la aplicación. El modo se cambia
+en el ajuste `modo`: «abierto» deja pasar a quien no tenga rol —para montar la
+seguridad— y «cerrado» sólo permite lo que los roles digan (es como viene esta
+instalación). `superusuarios_todo` decide si los superusuarios pueden todo sin rol.
 
 En las plantillas, los controles de escritura se esconden así:
 
@@ -90,7 +119,7 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **301 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+Son **306 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
 supervisión de los cuadres y los vales, los reportes en sus tres salidas, los
 períodos, los permisos y el menú.
 

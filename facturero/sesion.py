@@ -43,11 +43,14 @@ EXENTAS = (
 
 
 def minutos_de_bloqueo() -> int:
-    """Minutos de inactividad que aguanta la pantalla sin bloquearse."""
-    try:
-        return max(0, int(getattr(settings, "BLOQUEO_INACTIVIDAD_MINUTOS", 15)))
-    except (TypeError, ValueError):  # configuración rara: mejor no bloquear
-        return 0
+    """Minutos de inactividad que aguanta la pantalla sin bloquearse.
+
+    Sale de los ajustes de la aplicación (``bloqueo_inactividad_minutos``), que se
+    cambian desde la administración sin tocar código.
+    """
+    from personalize_options import ajustes
+
+    return max(0, ajustes.entero("bloqueo_inactividad_minutos", 15))
 
 
 def _exenta(ruta: str) -> bool:

@@ -21,6 +21,7 @@ from decimal import Decimal
 from typing import Any, Iterable, Optional
 
 from django.conf import settings
+from personalize_options import ajustes
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from django.db.models import Sum
@@ -113,7 +114,7 @@ def periodo_de(fecha: date) -> PeriodoContable:
         raise ErrorContable(
             f"El ejercicio {fecha.year} está cerrado: no se pueden crear periodos nuevos."
         )
-    if getattr(settings, "CONTABILIDAD_PERIODO_AUTOMATICO", True):
+    if ajustes.booleano("contabilidad_periodo_automatico", True):
         return PeriodoContable.crear_del_mes(fecha.year, fecha.month)
     raise ErrorContable(
         f"No hay un periodo contable para el {fecha:%d/%m/%Y}. Créelo en «Cierre contable»."
