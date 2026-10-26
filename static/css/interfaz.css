@@ -4663,3 +4663,63 @@ body.con-modal { overflow: hidden; }
   .marco { grid-template-columns: minmax(0, 1fr); }
   .columna { width: 100%; min-width: 0; }
 }
+
+/* Las ventanas del sistema en el teléfono.
+ *
+ * Las que abre el JavaScript —el buscador de productos, el de comprobantes, el de
+ * códigos de retención, la fila que se edita— son ventanas de Metro con su tamaño
+ * y su sitio calculados para el escritorio: en un teléfono se salían de la
+ * pantalla y dejaban el listado a medias. Aquí pasan a ocupar la pantalla entera,
+ * con su contenido desplazándose dentro y sin el borde redondeado.
+ */
+@media (max-width: 720px) {
+  .window.ventana,
+  .window.ventana-buscador-win,
+  .window.ventana-codigos,
+  .window.ventana-fila,
+  .window[class*="ventana"] {
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    height: 100vh !important;
+    max-width: none !important;
+    max-height: none !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    z-index: 9500 !important;
+  }
+  .window[class*="ventana"] .window-content {
+    height: calc(100% - 2.5rem) !important;
+    overflow: auto;
+  }
+
+  /* El buscador: la barra de búsqueda en una línea y la tabla sin la columna del
+   * código, que es la que se comía el ancho. */
+  .buscador-barra { flex-wrap: wrap; gap: var(--e2); }
+  .buscador-barra-campo { flex: 1 1 100%; }
+  .buscador-libro th:nth-child(2),
+  .buscador-libro td:nth-child(2) { display: none; }
+  .buscador-libro { table-layout: auto; }
+  .buscador-pie { position: sticky; bottom: 0; background: var(--hoja); }
+  .ventana-codigos .desliza { overflow-x: auto; }
+}
+
+/* La tabla del buscador en el teléfono: tres columnas que caben —la casilla, lo
+ * que se busca y el precio— con el nombre partiéndose en varias líneas en vez de
+ * empujar la fila. Antes la columna del precio se salía y salía una barra de
+ * desplazamiento dentro de la ventana. */
+@media (max-width: 720px) {
+  .window[class*="ventana"] .window-content { overflow-x: hidden; }
+  .buscador-libro { table-layout: fixed; width: 100%; }
+  .buscador-libro th:first-child,
+  .buscador-libro td:first-child { width: 42px; }
+  .buscador-libro th:last-child,
+  .buscador-libro td:last-child { width: 76px; text-align: right; }
+  .buscador-libro th,
+  .buscador-libro td { white-space: normal; overflow-wrap: anywhere; padding-left: 8px; padding-right: 8px; }
+  .buscador-tabla { overflow-x: hidden; }
+}
