@@ -56,3 +56,42 @@ def orden_apartado(context: Any, grupo: str) -> int:
 def orden_opcion(context: Any, clave: str) -> int:
     """El orden de una opción dentro de su apartado."""
     return _mapas(context)[1].get(clave, 9998)
+
+
+def _vecinos(context: Any) -> Dict[int, Tuple[bool, bool]]:
+    """Para cada opción, si tiene con quién cambiar de puesto.
+
+    Se mira el orden de verdad (``orden`` dentro de su apartado), no el que tenga
+    la tabla en ese momento: aunque la lista esté ordenada por nombre, las flechas
+    mueven dentro del apartado.
+    """
+    peticion = context.get("request")
+    guardados = getattr(peticion, "_vecinos_de_las_opciones", None) if peticion else None
+    if guardados is not None:
+        return guardados
+
+    guardados: Dict[int, Tuple[bool, bool]] = {}
+    por_grupo: Dict[str, list] = {}
+    for pk, grupo in Opcion.objects.order_by("grupo", "orden", "nombre", "pk").values_list(
+        "pk", "grupo"
+    ):
+        por_grupo.setdefault(grupo, []).append(pk)
+    for puestos in por_grupo.values():
+        for indice, pk in enumerate(puestos):
+            guardados[pk] = (indice > 0, indice < len(puestos) - 1)
+
+    if peticion is not None:
+        peticion._vecinos_de_las_opciones = guardados
+    return guardados
+
+
+@register.simple_tag(takes_context=True)
+def puede_subir(context: Any, pk: int) -> bool:
+    """¿Tiene esa opción otra antes en su apartado?"""
+    return _vecinos(context).get(pk, (False, False))[0]
+
+
+@register.simple_tag(takes_context=True)
+def puede_bajar(context: Any, pk: int) -> bool:
+    """¿Tiene esa opción otra después en su apartado?"""
+    return _vecinos(context).get(pk, (False, False))[1]

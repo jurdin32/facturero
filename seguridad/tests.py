@@ -766,3 +766,111 @@ class PruebasDeLosAjustes(TestCase):
         self._entrar(nadie)
 
         self.assertEqual(self.client.get("/seguridad/ajustes/").status_code, 403)
+
+
+class PruebasDeMoverLasOpciones(TestCase):
+    """Subir y bajar una opción de puesto, con las flechas."""
+
+    def setUp(self) -> None:
+        self.jefe = User.objects.create_superuser(
+            "jefe-orden", "jefe@ejemplo.ec", "clave-larga-123"
+        )
+        self.client.force_login(self.jefe)
+        self.client.get("/")
+
+    def _orden(self, grupo: str = "Sistema") -> list:
+        return list(
+            Opcion.objects.filter(grupo=grupo).order_by("orden", "nombre").values_list("clave", flat=True)
+        )
+
+    def test_bajar_una_opcion_la_cambia_con_la_de_al_lado(self) -> None:
+        antes = self._orden("Sistema")
+        self.assertTrue(len(antes) >= 2, antes)
+
+        primera = Opcion.objects.get(clave=antes[0])
+        respuesta = self.client.post(f"/seguridad/opciones/{primera.pk}/mover/abajo/")
+
+        self.assertEqual(respuesta.status_code, 302)
+        despues = self._orden("Sistema")
+        self.assertEqual(despues[0], antes[1])
+        self.assertEqual(despues[1], antes[0])
+
+    def test_subir_una_opcion_la_cambia_con_la_de_al_lado(self) -> None:
+        antes = self._orden("Sistema")
+        segunda = Opcion.objects.get(clave=antes[1])
+
+        self.client.post(f"/seguridad/opciones/{segunda.pk}/mover/arriba/")
+
+        despues = self._orden("Sistema")
+        self.assertEqual(despues[0], antes[1])
+        self.assertEqual(despues[1], antes[0])
+
+    def test_en_el_extremo_no_pasa_nada(self) -> None:
+        antes = self._orden("Sistema")
+        primera = Opcion.objects.get(clave=antes[0])
+
+        self.client.post(f"/seguridad/opciones/{primera.pk}/mover/arriba/")
+
+        self.assertEqual(self._orden("Sistema"), antes)
+
+    def test_el_orden_queda_numerado_sin_huecos(self) -> None:
+        opcion = Opcion.objects.filter(grupo="Sistema").order_by("orden").first()
+        self.client.post(f"/seguridad/opciones/{opcion.pk}/mover/abajo/")
+
+        numeros = list(
+            Opcion.objects.filter(grupo="Sistema").order_by("orden").values_list("orden", flat=True)
+        )
+        self.assertEqual(numeros, list(range(1, len(numeros) + 1)))
+
+    def test_la_pantalla_enseña_las_flechas(self) -> None:
+        pagina = self.client.get("/seguridad/opciones/ordenar/")
+        texto = pagina.content.decode()
+
+        self.assertEqual(pagina.status_code, 200)
+        self.assertIn("mover/arriba", texto)
+        self.assertIn("mover/abajo", texto)
+
+    @override_settings(PERSONALIZE_OPTIONS=CERRADO)
+    def test_quien_solo_lee_no_mueve_nada(self) -> None:
+        mirón = User.objects.create_user("mirón-orden", password="clave-larga-123")
+        _rol_con("sólo mira el menú", mirón, opciones=Nivel.LECTURA)
+        self.client.force_login(mirón)
+        self.client.get("/")
+
+        antes = self._orden("Sistema")
+        primera = Opcion.objects.get(clave=antes[0])
+        respuesta = self.client.post(f"/seguridad/opciones/{primera.pk}/mover/abajo/")
+
+        self.assertEqual(respuesta.status_code, 403)
+        self.assertEqual(self._orden("Sistema"), antes)
+
+    def test_la_lista_principal_tambien_trae_las_flechas(self) -> None:
+        pagina = self.client.get("/seguridad/opciones/")
+        texto = pagina.content.decode()
+
+        self.assertEqual(pagina.status_code, 200)
+        self.assertIn("mover/arriba", texto)
+        self.assertIn("mover/abajo", texto)
+
+    def test_despues_de_mover_vuelve_a_donde_estaba(self) -> None:
+        primera = Opcion.objects.filter(grupo="Sistema").order_by("orden").first()
+
+        respuesta = self.client.post(
+            f"/seguridad/opciones/{primera.pk}/mover/abajo/",
+            {"volver": "/seguridad/opciones/?q=usuarios"},
+        )
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(respuesta["Location"], "/seguridad/opciones/?q=usuarios")
+
+    def test_no_vuelve_a_otro_sitio(self) -> None:
+        # La dirección de vuelta se comprueba: no vale cualquier cosa.
+        primera = Opcion.objects.filter(grupo="Sistema").order_by("orden").first()
+
+        respuesta = self.client.post(
+            f"/seguridad/opciones/{primera.pk}/mover/abajo/",
+            {"volver": "https://ejemplo-fuera.ec/robo"},
+        )
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(respuesta["Location"], "/seguridad/opciones/ordenar/")

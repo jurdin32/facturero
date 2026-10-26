@@ -254,7 +254,13 @@ SECCIONES: tuple[dict[str, Any], ...] = (
         "pasos": (
             "Cree el rol y márquele las opciones: lectura para mirar, escritura para guardar.",
             "Asigne el rol a los usuarios.",
-            "En «Opciones de la aplicación» se ve el menú completo, con su dirección y su orden.",
+            "En «Opciones de la aplicación» se ve el menú completo, con su dirección "
+            "y su orden.",
+            "Para cambiar el orden, use las flechas de la columna «Orden» de la "
+            "propia lista —o las de «Opciones de la aplicación → Ordenar el menú»—: "
+            "un toque sube o baja la opción dentro de su apartado y se guarda al "
+            "momento. Arrastrando el título de un apartado en «Ordenar el menú» se "
+            "mueve entero.",
         ),
     },
 )

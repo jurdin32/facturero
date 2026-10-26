@@ -1,7 +1,11 @@
 {% extends "base.html" %}
+{% load menu_orden %}
+{% load personalize_options %}
 {% block titulo %}Opciones de la aplicación{% endblock %}
 
 {% block contenido %}
+
+{% puede_escribir "opciones" as puede_cambiar %}
 
 <div class="titulo-fila">
   <div>
@@ -39,7 +43,7 @@
                 {% if o.url %} · {{ o.url }}{% endif %}
               </span>
             </td>
-            <td class="cifra">{{ o.clave }}</td>
+            <td class="cifra col-clave">{{ o.clave }}</td>
             <td>
               {% if o.url and o.en_menu %}
                 <span class="chip success"><span class="icon mif-checkmark"></span><span class="label">Sale</span></span>
@@ -50,6 +54,28 @@
               {% endif %}
             </td>
             <td class="col-num cifra">{{ o.cuantos_roles|default:0 }}</td>
+            <td class="col-orden">
+              {% puede_subir o.pk as sube %}
+              {% puede_bajar o.pk as baja %}
+              <form method="post" action="{% url 'seguridad:mover_opcion' o.pk 'arriba' %}">
+                {% csrf_token %}
+                <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+                <button type="submit" class="button small square outline dark"
+                        title="Subir «{{ o.nombre }}»" aria-label="Subir"
+                        {% if not sube or not puede_cambiar %}disabled{% endif %}>
+                  <span class="mif-arrow-up"></span>
+                </button>
+              </form>
+              <form method="post" action="{% url 'seguridad:mover_opcion' o.pk 'abajo' %}">
+                {% csrf_token %}
+                <input type="hidden" name="volver" value="{{ request.get_full_path }}">
+                <button type="submit" class="button small square outline dark"
+                        title="Bajar «{{ o.nombre }}»" aria-label="Bajar"
+                        {% if not baja or not puede_cambiar %}disabled{% endif %}>
+                  <span class="mif-arrow-down"></span>
+                </button>
+              </form>
+            </td>
             <td class="col-acciones">
               <a class="button small square outline primary" href="{% url 'seguridad:opcion' o.pk %}"
                  title="Ver y cambiar «{{ o.nombre }}»" aria-label="Editar"><span class="mif-pencil"></span></a>
@@ -94,6 +120,7 @@
 </div>
 
 <p class="ayuda">
+  Las flechas de «Orden» suben o bajan la opción dentro de su apartado.
   Cada opción es una pantalla o un apartado: los roles marcan, sobre estas, qué puede
   cada quien. Para que una opción nueva salga en el menú, póngale <strong>dirección</strong>
   (por ejemplo <span class="cifra">/reportes/</span>) y déjela «en el menú».

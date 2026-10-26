@@ -22,6 +22,7 @@ from django.db import transaction
 from django.db.models import Count, OuterRef, Q, Subquery
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.utils.http import url_has_allowed_host_and_scheme
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from personalize_options.decoradores import (
@@ -48,6 +49,7 @@ from .forms import (
 __all__ = [
     "accion",
     "ajustes",
+    "mover_opcion",
     "accion_opcion",
     "guardar_orden_menu",
     "opcion",
@@ -490,6 +492,7 @@ def opciones(request: HttpRequest) -> HttpResponse:
             Columna("Clave", "clave"),
             Columna("En el menú", "url"),
             Columna("Roles", "cuantos_roles", clase="col-num"),
+            Columna("Orden", clase="col-orden"),
             Columna("", clase="col-acciones"),
         ],
         buscar_en=["clave", "nombre", "grupo", "url"],
@@ -559,6 +562,54 @@ def guardar_orden_menu(request: HttpRequest) -> JsonResponse:
                 Opcion.objects.filter(pk=pk).update(orden=posicion)
 
     return JsonResponse({"ok": True, "cuantas": len(limpios)})
+
+
+@login_required
+@require_POST
+@requiere_escritura("opciones")
+def mover_opcion(request: HttpRequest, pk: int, sentido: str) -> HttpResponse:
+    """Sube o baja una opción un puesto dentro de su apartado.
+
+    Es un solo toque, sin arrastrar ni escribir números: se cambia el puesto con
+    la de al lado y el apartado se renumera 1..n para que el orden quede limpio.
+    Si ya está la primera (o la última), no pasa nada.
+    """
+    objeto = get_object_or_404(Opcion, pk=pk)
+    companeras = list(
+        Opcion.objects.filter(grupo=objeto.grupo).order_by("orden", "nombre", "pk")
+    )
+
+    try:
+        puesto = next(indice for indice, fila in enumerate(companeras) if fila.pk == objeto.pk)
+    except StopIteration:  # pragma: no cover - la opción acaba de estar en la lista
+        return redirect("seguridad:ordenar_menu")
+
+    vecina = puesto - 1 if sentido == "arriba" else puesto + 1
+    if 0 <= vecina < len(companeras):
+        companeras[puesto], companeras[vecina] = companeras[vecina], companeras[puesto]
+        with transaction.atomic():
+            for posicion, fila in enumerate(companeras, start=1):
+                if fila.orden != posicion:
+                    Opcion.objects.filter(pk=fila.pk).update(orden=posicion)
+        messages.success(
+            request,
+            f"«{objeto.nombre}» pasó al puesto {vecina + 1} de «{objeto.grupo}».",
+        )
+    else:
+        messages.info(
+            request,
+            "Ya está en el extremo de su apartado."
+            if sentido in {"arriba", "abajo"}
+            else "No hay a dónde moverla.",
+        )
+
+    # Se vuelve a donde se estaba: la lista lleva sus filtros en la dirección.
+    volver = request.POST.get("volver", "")
+    if volver and url_has_allowed_host_and_scheme(
+        volver, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return redirect(volver)
+    return redirect("seguridad:ordenar_menu")
 
 
 @login_required

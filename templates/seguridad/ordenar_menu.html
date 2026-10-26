@@ -1,15 +1,18 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% load static %}
 {% block titulo %}Ordenar el menú{% endblock %}
 
 {% block contenido %}
 
+{% puede_escribir "opciones" as puede_cambiar %}
+
 <div class="titulo-fila">
   <div>
     <h1 class="titulo">Ordenar el menú</h1>
     <p class="subtitulo">
-      Arrastre un apartado para moverlo entero, o una opción para cambiarla de sitio
-      dentro de su apartado. Se guarda solo.
+      Suba o baje cada opción con las flechas de su fila: un toque y queda en su
+      puesto. También puede arrastrar un apartado entero para moverlo.
     </p>
   </div>
   <div class="titulo-acciones">
@@ -23,7 +26,7 @@
   {% csrf_token %}
 
   <p class="aviso aviso-info" data-orden-aviso role="status">
-    Arrastre desde el icono de las tres líneas. El orden se guarda automáticamente.
+    Las flechas guardan al momento. Lo que se arrastra se guarda al soltar.
   </p>
 
   {% for grupo in grupos %}
@@ -50,6 +53,24 @@
               <strong>{{ opcion_menu.nombre }}</strong>
               <small class="cifra">{{ opcion_menu.url|default:"Enlace fijo del menú" }}</small>
             </span>
+            <form class="orden-flechas" method="post"
+                  action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'arriba' %}">
+              {% csrf_token %}
+              <button type="submit" class="boton-flecha" title="Subir «{{ opcion_menu.nombre }}»"
+                      {% if forloop.first or not puede_cambiar %}disabled{% endif %}>
+                <span class="mif-arrow-up" aria-hidden="true"></span>
+                <span class="oculto-visual">Subir</span>
+              </button>
+            </form>
+            <form class="orden-flechas" method="post"
+                  action="{% url 'seguridad:mover_opcion' opcion_menu.pk 'abajo' %}">
+              {% csrf_token %}
+              <button type="submit" class="boton-flecha" title="Bajar «{{ opcion_menu.nombre }}»"
+                      {% if forloop.last or not puede_cambiar %}disabled{% endif %}>
+                <span class="mif-arrow-down" aria-hidden="true"></span>
+                <span class="oculto-visual">Bajar</span>
+              </button>
+            </form>
           </li>
         {% endfor %}
       </ul>

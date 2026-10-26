@@ -22,6 +22,12 @@ urlpatterns = [
     path("ajustes/", views.ajustes, name="ajustes"),
     path("opciones/", views.opciones, name="opciones"),
     path("opciones/ordenar/", views.ordenar_menu, name="ordenar_menu"),
+    # Subir y bajar una opción de puesto, sin arrastrar.
+    path(
+        "opciones/<int:pk>/mover/<str:sentido>/",
+        views.mover_opcion,
+        name="mover_opcion",
+    ),
     path(
         "opciones/ordenar/guardar/",
         views.guardar_orden_menu,

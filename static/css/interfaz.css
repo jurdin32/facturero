@@ -5023,3 +5023,48 @@ body.con-modal { overflow: hidden; }
   .ajuste { grid-template-columns: minmax(0, 1fr); }
   .ajuste-campo { justify-content: flex-start; }
 }
+
+/* --------------------------------------------------- flechas de orden
+ * Subir o bajar una opción de puesto: dos botones cuadrados al final de la fila,
+ * para no tener que arrastrar ni escribir números.
+ */
+.orden-item .orden-flechas { margin: 0; display: flex; }
+
+.boton-flecha {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  cursor: pointer;
+  transition: background .12s ease, color .12s ease, border-color .12s ease;
+}
+
+.boton-flecha:hover:not(:disabled) {
+  background: var(--marca-tinte);
+  border-color: var(--marca);
+  color: var(--marca-osc);
+}
+
+.boton-flecha:disabled { opacity: 0; pointer-events: none; }
+.boton-flecha .mif-arrow-up { font-size: 12px; }
+
+/* La columna «Orden» de la lista de opciones: dos flechas seguidas. Van
+ * estrechas y la clave se recorta con puntos suspensivos para que la tabla siga
+ * cabiendo sin arrastrar de lado. */
+td.col-orden { width: 62px; white-space: nowrap; }
+td.col-orden form { display: inline-flex; margin: 0; }
+td.col-orden .button.small.square { width: 24px; height: 24px; padding: 0; }
+td.col-orden .button:disabled { opacity: .3; cursor: default; }
+
+td.col-clave {
+  max-width: 158px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
