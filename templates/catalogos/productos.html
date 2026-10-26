@@ -118,8 +118,8 @@
             
           </td>
           <td class="col-acciones">
-            <a class="button small square outline primary" href="{% url 'catalogos:producto' p.pk %}"
-               title="Editar {{ p.descripcion }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% if puede_añadir %}<a class="button small square outline primary" href="{% url 'catalogos:producto' p.pk %}"
+               title="Editar {{ p.descripcion }}" aria-label="Editar"><span class="mif-pencil"></span></a>{% endif %}
             {% if p.es_producto %}
               <a class="button small square outline dark" href="{% url 'inventario:kardex' p.pk %}"
                  title="Libro de movimientos" aria-label="Libro de movimientos"><span class="mif-history"></span></a>

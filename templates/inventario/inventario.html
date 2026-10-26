@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Inventario{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "productos" as puede_añadir %}
 
 <div class="titulo-fila">
   <div>
@@ -12,7 +14,7 @@
       {% if bajo_minimo %} · <span class="chip alert soft small"><span class="label">{{ bajo_minimo }} por reponer</span></span>{% endif %}
     </p>
   </div>
-  <a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir producto</a>
+  {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir producto</a>{% endif %}
 </div>
 
 <form class="filtros" method="get">
@@ -115,7 +117,7 @@
     {% else %}
       <p>No hay bienes en el catálogo todavía.</p>
       <p class="tenue">Los servicios no llevan inventario; los bienes sí, y su existencia sale de los movimientos.</p>
-      <p><a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir un producto</a></p>
+      <p>{% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir un producto</a>{% endif %}</p>
     {% endif %}
   </div>
 {% endif %}

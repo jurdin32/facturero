@@ -52,8 +52,8 @@
             <span class="listado-meta cifra">{{ c.telefono|default:"—" }}</span>
           </td>
           <td class="col-acciones">
-            <a class="button small square outline primary" href="{% url 'catalogos:conductor' c.pk %}"
-               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% if puede_añadir %}<a class="button small square outline primary" href="{% url 'catalogos:conductor' c.pk %}"
+               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>{% endif %}
           </td>
         </tr>
       {% endfor %}

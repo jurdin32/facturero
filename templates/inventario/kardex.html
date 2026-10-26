@@ -1,7 +1,9 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}{{ producto.descripcion }} · inventario{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "inventario" as puede_mover %}
 
 <div class="titulo-fila">
   <div>
@@ -63,14 +65,14 @@
                 <td class="tenue">{{ fila.movimiento.usuario.get_username|default:"—" }}</td>
                 <td class="col-acciones">
                   {% if fila.movimiento.tipo != 'factura' %}
-                    <form method="post" action="{% url 'inventario:movimiento_anular' fila.movimiento.pk %}"
+                    {% if puede_mover %}<form method="post" action="{% url 'inventario:movimiento_anular' fila.movimiento.pk %}"
                           data-confirmar="Se anula el movimiento y la cantidad vuelve a su sitio."
                           data-titulo="Anular el movimiento"
                           data-aceptar="Anularlo">
                       {% csrf_token %}
                       <button type="submit" class="button small square outline alert" title="Anular el movimiento"
                               aria-label="Anular el movimiento"><span class="mif-undo"></span></button>
-                    </form>
+                    {% endif %}</form>
                   {% else %}
                     <span class="tenue">de la factura</span>
                   {% endif %}

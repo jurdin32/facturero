@@ -49,8 +49,8 @@
             </span>
           </td>
           <td class="col-acciones">
-            <a class="button small square outline primary" href="{% url 'catalogos:vehiculo' v.pk %}"
-               title="Editar {{ v.placa }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% if puede_añadir %}<a class="button small square outline primary" href="{% url 'catalogos:vehiculo' v.pk %}"
+               title="Editar {{ v.placa }}" aria-label="Editar"><span class="mif-pencil"></span></a>{% endif %}
           </td>
         </tr>
       {% endfor %}

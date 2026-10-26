@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Configuración del SRI{% endblock %}
 
 {% comment %}
@@ -10,6 +11,7 @@ se elige cuál toca, para no tener un fichero de mil líneas.
 {% endcomment %}
 
 {% block contenido %}
+{% puede_escribir "configuracion" as puede_configurar %}
 
 <div class="titulo-fila">
   <div>
@@ -29,14 +31,14 @@ se elige cuál toca, para no tener un fichero de mil líneas.
     {% endif %}
     {# Los botones de cada paso viven aquí, en la barra que no se mueve. #}
     {% if paso == 1 %}
-      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>
+      {% if puede_configurar %}<button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>{% endif %}
       <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=2{% if configuracion %}&c={{ configuracion.pk }}{% endif %}">Ahora no</a>
     {% elif paso == 2 %}
-      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>
-      <button type="submit" form="formulario-secuenciales" class="button outline dark"><span class="mif-checkmark"></span> Guardar los secuenciales</button>
+      {% if puede_configurar %}<button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>{% endif %}
+      {% if puede_configurar %}<button type="submit" form="formulario-secuenciales" class="button outline dark"><span class="mif-checkmark"></span> Guardar los secuenciales</button>{% endif %}
       <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=3&c={{ configuracion.pk }}">Ahora no</a>
     {% elif paso == 3 %}
-      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y comprobar</button>
+      {% if puede_configurar %}<button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y comprobar</button>{% endif %}
       <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=4&c={{ configuracion.pk }}">Ahora no</a>
     {% endif %}
     <a class="button outline dark" href="{% url 'facturacion:tablero' %}">Volver al tablero</a>
@@ -132,7 +134,7 @@ se elige cuál toca, para no tener un fichero de mil líneas.
             <p class="ayuda">PNG, JPG, SVG o WEBP, hasta 2 MB. Mejor con fondo transparente.</p>
           </div>
           <div class="acciones-fila">
-            <button type="submit" class="button success small">Guardar el logo</button>
+            {% if puede_configurar %}<button type="submit" class="button success small">Guardar el logo</button>{% endif %}
           </div>
         </form>
       </section>

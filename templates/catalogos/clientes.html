@@ -46,8 +46,8 @@
           <td class="col-acciones">
             <a class="button small square outline success" href="{% url 'facturacion:facturar' %}?cliente={{ c.pk }}"
                title="Facturarle a {{ c.razon_social }}" aria-label="Facturar"><span class="mif-receipt"></span></a>
-            <a class="button small square outline primary" href="{% url 'catalogos:cliente' c.pk %}"
-               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% if puede_añadir %}<a class="button small square outline primary" href="{% url 'catalogos:cliente' c.pk %}"
+               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>{% endif %}
           </td>
         </tr>
       {% endfor %}

@@ -1,14 +1,16 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Asientos contables{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "asientos" as puede_asentar %}
 
 <div class="titulo-fila">
   <div>
     <h1 class="titulo">Asientos contables</h1>
     <p class="subtitulo">{{ cuantos }} asiento{{ cuantos|pluralize }} entre {{ desde|date:"d/m/Y" }} y {{ hasta|date:"d/m/Y" }}.</p>
   </div>
-  <a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a>
+  {% if puede_asentar %}<a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a>{% endif %}
 </div>
 
 <form class="filtros" method="get">
@@ -99,8 +101,8 @@
             <a class="button small square outline dark" href="{% url 'contabilidad:asiento_detalle' a.pk %}"
                title="Ver el asiento" aria-label="Ver"><span class="mif-eye"></span></a>
             {% if a.editable %}
-              <a class="button small square outline primary" href="{% url 'contabilidad:asiento' a.pk %}"
-                 title="Editar el asiento" aria-label="Editar"><span class="mif-pencil"></span></a>
+              {% if puede_asentar %}<a class="button small square outline primary" href="{% url 'contabilidad:asiento' a.pk %}"
+                 title="Editar el asiento" aria-label="Editar"><span class="mif-pencil"></span></a>{% endif %}
             {% endif %}
           </td>
         </tr>
@@ -123,7 +125,7 @@
   <div class="vacio">
     <p>No hay asientos con esos filtros.</p>
     <p class="tenue">Las facturas autorizadas se contabilizan solas; los demás movimientos se escriben a mano.</p>
-    <p><a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a></p>
+    <p>{% if puede_asentar %}<a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a>{% endif %}</p>
   </div>
 {% endif %}
 
