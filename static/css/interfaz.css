@@ -4620,3 +4620,38 @@ body.con-modal { overflow: hidden; }
   .desliza > table { min-width: 460px; }
   .barra .ambiente { display: none; }
 }
+
+/* El tablero en el teléfono.
+ *
+ * Las cuatro cifras del día van de dos en dos —son cortas y así se ven de un
+ * vistazo, sin cuatro pantallas de tarjetas— y lo que necesita ancho (el gráfico,
+ * el ranking, los avisos) va a todo lo ancho debajo. Con menos aire dentro de cada
+ * tarjeta para que quepan las cifras y su pie. */
+@media (max-width: 720px) {
+  .tablero {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: var(--e3);
+  }
+  .tablero > .dato { grid-column: span 1; min-width: 0; }
+  .tablero > .grafico,
+  .tablero > .tarjeta,
+  .tablero > .tarjeta.ancha,
+  .tablero > .bloque { grid-column: 1 / -1; }
+
+  .dato { padding: var(--e3); gap: var(--e1); border-radius: var(--radio-s); }
+  .dato-etiqueta { font-size: 12.5px; }
+  .dato-cifra { font-size: 1.15rem; }
+  .dato-pie { font-size: 12.5px; }
+  .dato-pie .chip { font-size: 12px; }
+  .dato > .ribbon { top: 8px; }
+
+  /* El gráfico: barras más bajas y las etiquetas sin pelearse. */
+  .barras { height: 96px; }
+  .nota-grafico, .grafico-pie { font-size: 12.5px; }
+  .ranking li { gap: var(--e2); }
+}
+
+@media (max-width: 420px) {
+  .dato-cifra { font-size: 1rem; }
+  .dato-etiqueta, .dato-pie { font-size: 12px; }
+}
