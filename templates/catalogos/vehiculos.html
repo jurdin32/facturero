@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Vehículos{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "vehiculos" as puede_añadir %}
+
 
 <div class="titulo-fila">
   <div>
@@ -11,7 +14,7 @@
       <a class="enlace" href="{% url 'comprobantes:lista' 'guias-remision' %}">ver las guías</a>
     </p>
   </div>
-  <a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+  {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir</a>{% endif %}
 </div>
 
 {% if vehiculos %}
@@ -62,7 +65,7 @@
     {% else %}
       <p>Todavía no hay vehículos.</p>
       <p class="tenue">De aquí sale la placa que pide el SRI en la guía de remisión.</p>
-      <p><a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+      <p>{% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a>{% endif %}</p>
     {% endif %}
   </div>
 {% endif %}

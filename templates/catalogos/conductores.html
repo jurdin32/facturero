@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Conductores{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "conductores" as puede_añadir %}
+
 
 <div class="titulo-fila">
   <div>
@@ -11,7 +14,7 @@
       <a class="enlace" href="{% url 'comprobantes:lista' 'guias-remision' %}">ver las guías</a>
     </p>
   </div>
-  <a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+  {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir</a>{% endif %}
 </div>
 
 {% if conductores %}
@@ -65,7 +68,7 @@
     {% else %}
       <p>Todavía no hay conductores.</p>
       <p class="tenue">El conductor es el transportista que el SRI pide en la guía de remisión: se da de alta una vez y se elige en cada guía.</p>
-      <p><a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+      <p>{% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a>{% endif %}</p>
     {% endif %}
   </div>
 {% endif %}

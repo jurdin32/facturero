@@ -1,14 +1,17 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Clientes{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "clientes" as puede_añadir %}
+
 
 <div class="titulo-fila">
   <div>
     <h1 class="titulo">Clientes</h1>
     <p class="subtitulo">{{ cuantos }} en el catálogo · los datos son los que salen en la factura</p>
   </div>
-  <a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+  {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir</a>{% endif %}
 </div>
 
 {% if clientes %}
@@ -58,7 +61,7 @@
     {% else %}
       <p>Todavía no hay clientes.</p>
       <p class="tenue">También puede crearlos desde la propia pantalla de facturar.</p>
-      <p><a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+      <p>{% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a>{% endif %}</p>
     {% endif %}
   </div>
 {% endif %}

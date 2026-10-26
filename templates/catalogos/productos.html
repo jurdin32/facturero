@@ -1,7 +1,10 @@
 {% extends "base.html" %}
+{% load personalize_options %}
 {% block titulo %}Productos y servicios{% endblock %}
 
 {% block contenido %}
+{% puede_escribir "productos" as puede_añadir %}
+
 
 <div class="titulo-fila">
   <div>
@@ -12,7 +15,7 @@
       <a class="enlace" href="{% url 'inventario:inventario' %}">ver el inventario</a>
     </p>
   </div>
-  <a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+  {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir</a>{% endif %}
 </div>
 
 <form class="filtros" method="get">
@@ -131,7 +134,7 @@
   <div class="vacio">
     <p>El catálogo está vacío.</p>
     <p class="tenue">Un producto o servicio es lo que después se elige en la línea de la factura.</p>
-    <p><a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+    <p>{% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a>{% endif %}</p>
   </div>
 {% endif %}
 
