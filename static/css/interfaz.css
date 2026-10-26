@@ -4723,3 +4723,150 @@ body.con-modal { overflow: hidden; }
   .buscador-libro td { white-space: normal; overflow-wrap: anywhere; padding-left: 8px; padding-right: 8px; }
   .buscador-tabla { overflow-x: hidden; }
 }
+
+
+/* ------------------------------------------- la supervisión de la caja
+ *
+ * La revisión de los cuadres y los vales son pantallas de administración: se
+ * leen de un vistazo, con aire entre las fichas y sin que nada quede pegado al
+ * borde. Cada turno cerrado es una ficha con su cabecera, sus cifras en fila y
+ * un pie separado por una línea donde están las únicas acciones posibles.
+ */
+
+.bloque-dato {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5);
+  margin-bottom: 0;
+}
+.bloque-dato .etiqueta { margin: 0; }
+.bloque-dato .cifra { margin: 0; font-size: 1.75rem; line-height: 1.15; }
+.bloque-dato .ayuda { margin: 0; }
+
+/* Los dos contadores de arriba van en su propia fila, con aire debajo. */
+.row:has(> [class*="cell-"] > .bloque-dato) { row-gap: var(--e5); margin-bottom: var(--e6); }
+
+.filtros-cortos { margin-bottom: var(--e6); }
+
+.cuadre { margin-bottom: var(--e7); }
+.cuadre:last-of-type { margin-bottom: 0; }
+
+.cuadre-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--e4);
+  flex-wrap: wrap;
+  padding-bottom: var(--e4);
+  border-bottom: 1px solid var(--linea);
+}
+.cuadre-quien { min-width: 0; }
+.cuadre-cabecera .bloque-titulo { margin: 0 0 var(--e2); }
+.cuadre-cabecera .ayuda { margin: 0; }
+
+.cuadre-cifras {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: var(--e5) var(--e6);
+  padding: var(--e6) 0;
+}
+.cuadre-cifra { display: flex; flex-direction: column; gap: var(--e2); min-width: 0; }
+.cuadre-cifra .etiqueta { margin: 0; }
+.cuadre-cifra .cifra { margin: 0; font-size: 1.25rem; line-height: 1.2; }
+.cuadre-cifra-falta {
+  padding-left: var(--e4);
+  border-left: 3px solid var(--rojo);
+}
+
+.cuadre-desglose { padding-bottom: var(--e2); }
+.cuadre-desglose summary {
+  cursor: pointer;
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-3);
+  padding: var(--e3) 0;
+}
+.cuadre-desglose summary:hover { color: var(--marca); }
+.cuadre-desglose .desliza { margin-bottom: var(--e3); }
+
+.cuadre-notas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  padding: var(--e4) var(--e5);
+  margin-bottom: var(--e5);
+  background: var(--fondo);
+  border-radius: var(--radio-s);
+}
+.cuadre-notas .ayuda { margin: 0; }
+
+.cuadre-pie {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+  padding-top: var(--e5);
+  border-top: 1px solid var(--linea);
+}
+.cuadre-pie .ayuda { margin: 0; }
+
+/* La nota y los dos botones, en una rejilla de dos columnas: así el campo mide
+   lo suyo y no se estira con el bloque, que es lo que lo volvía un cajón. */
+.cuadre-revision {
+  display: grid;
+  grid-template-columns: minmax(0, 340px) auto;
+  justify-content: start;
+  align-items: end;
+  gap: var(--e4);
+  margin: 0;
+}
+.cuadre-revision .campo-nota {
+  width: 100%;
+  height: 40px;
+  box-sizing: border-box;
+}
+
+/* Los botones del pie se separan de la nota, no se pegan. */
+.acciones-separadas { margin-top: var(--e6); }
+
+/* El libro de vales tiene ocho columnas: en el móvil no caben de ninguna
+   manera, así que la tabla se lleva su ancho mínimo y se desliza de lado, en
+   vez de partir las palabras en trozos de dos letras. */
+.libro-vales { width: 100%; min-width: 520px; }
+.libro-vales th,
+.libro-vales td { white-space: nowrap; vertical-align: middle; }
+.libro-vales .celda-motivo { white-space: normal; min-width: 180px; }
+
+/* En una pantalla justa se van las columnas que se pueden deducir del resto:
+   la fecha del vale y el tipo, que ya lo dice el motivo. */
+@media (max-width: 1100px) {
+  .libro-vales .col-opcional { display: none; }
+  .libro-vales { min-width: 0; }
+  /* Los dos botones se apilan: en horizontal se comían el ancho de la tabla. */
+  .libro-vales .col-acciones form { display: block; }
+  .libro-vales .celda-motivo { min-width: 140px; }
+}
+.libro-vales .col-acciones form { display: inline-block; margin: 0; }
+.libro-vales .col-acciones .button { margin: 0 0 var(--e1) 0; }
+
+@media (max-width: 720px) {
+  .bloque-dato { padding: var(--e5); }
+  .bloque-dato .cifra { font-size: 1.5rem; }
+
+  .cuadre-cifras { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--e4) var(--e5); }
+  .cuadre-cifra-falta { padding-left: 0; border-left: 0; }
+
+  .cuadre-pie { gap: var(--e4); }
+  .cuadre-revision { grid-template-columns: minmax(0, 1fr); }
+  .cuadre-revision .acciones-fila { flex-direction: column; align-items: stretch; }
+  .cuadre-revision .button,
+  .cuadre-pie .acciones-fila .button { width: 100%; justify-content: center; }
+}
+
+/* En la cabecera de la ficha, el estado y el acta van juntos a la derecha. */
+.cuadre-estado {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  flex-wrap: wrap;
+}

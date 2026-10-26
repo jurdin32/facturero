@@ -23,6 +23,9 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
   existencias y kardex.
 - **Caja del turno**: apertura, ingresos y egresos, cierre con **desglose de billetes y
   monedas** y **acta de cierre en PDF**. Sin caja abierta no se factura.
+- **Supervisión de la caja** (aparte, con su propio permiso): revisión de los cuadres
+  cerrados —**aprobar** o **dejar observado**, con quién y cuándo— y **vales de caja**
+  para cobrar los faltantes.
 - **Contabilidad**: plan de cuentas, asientos, libro diario y mayor, balance de
   comprobación, estado de resultados, estado de situación financiera, flujos y
   patrimonio, y los anexos del SRI (ATS, REOC y RDEP).
@@ -87,8 +90,9 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **252 pruebas**: los comprobantes de punta a punta, la caja y su acta, los reportes
-en sus tres salidas, los períodos, los permisos y el menú.
+Son **284 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+supervisión de los cuadres y los vales, los reportes en sus tres salidas, los
+períodos, los permisos y el menú.
 
 ## En producción
 

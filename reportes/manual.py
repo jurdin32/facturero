@@ -155,6 +155,31 @@ SECCIONES: tuple[dict[str, Any], ...] = (
         ),
     },
     {
+        "clave": "supervision-caja",
+        "titulo": "Supervisión: cuadres y vales",
+        # Sin capturas todavía: la sección se lee igual y el manual no se rompe.
+        "capturas": (),
+        "resumen": (
+            "La revisión de la caja es aparte de la caja del turno, porque no es cosa del cajero: "
+            "vive en el apartado «Supervisión» del menú y tiene su propio permiso. Ahí se aprueban "
+            "los cuadres, se dejan observados y se cobran los faltantes con vales."
+        ),
+        "pasos": (
+            "Abra «Supervisión → Revisión de caja». Salen los turnos ya cerrados; el filtro de "
+            "arriba separa lo que sigue sin revisar de lo aprobado y lo observado.",
+            "Mire el cuadre: saldo inicial, ingresos, egresos, esperado, contado y lo que falta. "
+            "Si el cajero contó billete por billete, «Desglose de lo contado» lo abre.",
+            "Escriba una nota si hace falta y pulse «Aprobar el cuadre» o «Dejar observado». El "
+            "sistema guarda quién revisó, cuándo y con qué nota; también sale en el acta en PDF.",
+            "Si el cuadre tiene faltante, pulse «Cobrar … con un vale»: se abre el vale con el "
+            "importe y el responsable ya puestos. No deja cobrar más de lo que falta.",
+            "En «Supervisión → Vales de caja» está el libro completo. Un vale pendiente se cobra "
+            "con «Cobrar» —queda la fecha del cobro— o se anula si no tenía por qué existir.",
+            "Para que alguien entre aquí hace falta darle, en «Roles y permisos», la categoría "
+            "«Supervisión»; un cajero con su caja no la ve.",
+        ),
+    },
+    {
         "clave": "reportes",
         "titulo": "Reportes y estadísticas",
         "capturas": ("reportes", "reporte-ventas"),
@@ -254,6 +279,10 @@ QUE_HACE: dict[str, str] = {
     "vehiculos": "Los vehículos que llevan la carga, por placa.",
     "inventario": "Existencias, valor y aviso de reposición; de aquí sale el kardex.",
     "caja": "El efectivo del turno: apertura, movimientos, cierre con desglose y acta.",
+    "revision_caja": (
+        "Los cuadres ya cerrados, para aprobarlos o dejarlos observados con su nota."
+    ),
+    "vales_caja": "Los vales de caja: cobrar un faltante o sacar efectivo a cuenta de alguien.",
     "estado_inicial": "El punto de partida de la contabilidad: activo, pasivo y patrimonio.",
     "plan_cuentas": "Las cuentas contables, con su grupo, su naturaleza y sus jerarquías.",
     "contabilidad": "El resumen del mes: movimiento, resultado y avisos del cierre.",

@@ -280,6 +280,42 @@ def acta(sesion: SesionCaja, movimientos: Any = None) -> bytes:
         historia.append(
             Paragraph("El arqueo cuadra: lo contado es igual al saldo esperado.", _estilo("cuadra", 8))
         )
+
+    # --- la revisión y, si hay faltante, el vale con el que se cobra
+    vales = list(sesion.vales.exclude(estado="anulado")) if sesion.pk else []
+    def _nombre(usuario: Any) -> str:
+        """El nombre de la persona, y si no lo tiene, el de la cuenta."""
+        if usuario is None:
+            return "—"
+        return usuario.get_full_name().strip() or usuario.get_username()
+
+    if sesion.revision != "sin_revisar":
+        quien = _nombre(sesion.revisada_por)
+        cuando = (
+            timezone.localtime(sesion.revisada_en).strftime("%d/%m/%Y %H:%M")
+            if sesion.revisada_en
+            else "—"
+        )
+        historia.append(Spacer(1, 4 * mm))
+        historia.append(
+            Paragraph(
+                f"<b>Revisión:</b> {sesion.get_revision_display()} · {quien} · {cuando}",
+                _DATO,
+            )
+        )
+        if sesion.nota_revision:
+            historia.append(Paragraph(sesion.nota_revision, _DATO))
+
+    for vale in vales:
+        historia.append(Spacer(1, 3 * mm))
+        historia.append(
+            Paragraph(
+                f"<b>Vale {vale.numero}:</b> {vale.get_tipo_display()} de "
+                f"$ {dinero(vale.importe)} a {_nombre(vale.responsable)}, "
+                f"{vale.get_estado_display().lower()} ({vale.motivo}).",
+                _DATO,
+            )
+        )
     historia.append(Spacer(1, 12 * mm))
 
     firmas = Table(

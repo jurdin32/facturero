@@ -1,0 +1,115 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo vale de caja{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+Hacer un vale. Cuando viene de un turno con faltante la pantalla lo dice y trae el
+importe puesto; suelto, sirve para un anticipo o un gasto por reponer.
+{% endcomment %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Nuevo vale de caja</h1>
+    <p class="subtitulo">
+      {% if sesion %}
+        Faltante del turno de
+        {{ sesion.usuario.get_full_name|default:sesion.usuario.get_username }}
+        del {{ sesion.cerrada_en|date:"d/m/Y H:i" }}
+      {% else %}
+        Un vale suelto: anticipo, gasto por reponer o saldo en contra.
+      {% endif %}
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button small" href="{% url 'supervision:vales' %}">
+      <span class="mif-arrow-left" aria-hidden="true"></span> Volver a los vales
+    </a>
+  </div>
+</div>
+
+{% if sesion %}
+  <div class="bloque bloque-dato">
+    <span class="etiqueta">El cuadre de ese turno</span>
+    <p class="ayuda">
+      Esperado <strong class="cifra">{{ sesion.saldo_esperado|floatformat:2 }}</strong>,
+      contado <strong class="cifra">{{ sesion.saldo_declarado|floatformat:2 }}</strong>:
+      {% if sesion.diferencia < 0 %}
+        falta por cobrar <strong class="cifra sale">{{ sesion.diferencia|floatformat:2|cut:"-" }}</strong>.
+      {% else %}
+        el arqueo cuadra, no hay faltante que cobrar.
+      {% endif %}
+    </p>
+  </div>
+{% endif %}
+
+<section class="bloque">
+  <h2 class="bloque-titulo">El vale</h2>
+  <form method="post" novalidate>
+    {% csrf_token %}
+
+    {% if formulario.non_field_errors %}
+      <div class="aviso alerta">{{ formulario.non_field_errors.0 }}</div>
+    {% endif %}
+
+    <div class="row">
+      <div class="cell-12 cell-md-6">
+        <div class="filtro">
+          <label class="etiqueta" for="{{ formulario.responsable.id_for_label }}">
+            {{ formulario.responsable.label }}
+          </label>
+          {{ formulario.responsable }}
+          {% if formulario.responsable.help_text %}
+            <p class="ayuda">{{ formulario.responsable.help_text }}</p>
+          {% endif %}
+          {% if formulario.responsable.errors %}
+            <p class="error">{{ formulario.responsable.errors.0 }}</p>
+          {% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="filtro">
+          <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">
+            {{ formulario.tipo.label }}
+          </label>
+          {{ formulario.tipo }}
+          {% if formulario.tipo.errors %}<p class="error">{{ formulario.tipo.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="filtro">
+          <label class="etiqueta" for="{{ formulario.importe.id_for_label }}">
+            {{ formulario.importe.label }}
+          </label>
+          {{ formulario.importe }}
+          {% if formulario.importe.errors %}<p class="error">{{ formulario.importe.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="filtro">
+          <label class="etiqueta" for="{{ formulario.motivo.id_for_label }}">
+            {{ formulario.motivo.label }}
+          </label>
+          {{ formulario.motivo }}
+          {% if formulario.motivo.errors %}<p class="error">{{ formulario.motivo.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12">
+        <div class="filtro">
+          <label class="etiqueta" for="{{ formulario.nota.id_for_label }}">
+            {{ formulario.nota.label }}
+          </label>
+          {{ formulario.nota }}
+          {% if formulario.nota.errors %}<p class="error">{{ formulario.nota.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+
+    <div class="acciones-fila acciones-separadas">
+      <button type="submit" class="button primary"><span class="mif-checkmark" aria-hidden="true"></span> Crear el vale</button>
+      <a class="button" href="{% url 'supervision:vales' %}">Cancelar</a>
+    </div>
+  </form>
+</section>
+
+{% endblock %}

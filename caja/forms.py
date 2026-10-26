@@ -181,3 +181,65 @@ class CerrarCajaForm(forms.Form):
                 }
             )
         return renglones
+
+
+class ValeCajaForm(forms.Form):
+    """El vale: a quién se le cobra (o a cuenta de quién va), cuánto y por qué."""
+
+    responsable = forms.ModelChoiceField(
+        queryset=None,
+        label="Responsable",
+        empty_label="Elija el responsable",
+        help_text="A quién se le cobra el faltante o a cuenta de quién va el vale.",
+    )
+    tipo = forms.ChoiceField(
+        label="Tipo",
+        choices=(),
+        initial="faltante",
+        widget=forms.Select(attrs={"data-role": "select"}),
+    )
+    importe = CampoImporte(
+        label="Importe",
+        min_value=Decimal("0.01"),
+        widget=forms.TextInput(
+            attrs={
+                "class": "campo-num",
+                "inputmode": "decimal",
+                "autocomplete": "off",
+                "data-role": "input",
+                "data-prepend": "<span class='mif-dollar'></span>",
+            }
+        ),
+    )
+    motivo = forms.CharField(
+        label="Motivo",
+        max_length=200,
+        widget=forms.TextInput(
+            attrs=caja(icono="pencil", placeholder="Faltante del turno, anticipo de sueldo…")
+        ),
+    )
+    nota = forms.CharField(
+        label="Nota",
+        required=False,
+        widget=forms.Textarea(
+            attrs={"rows": 2, "data-role": "textarea", "placeholder": "Lo que haya que dejar dicho."}
+        ),
+    )
+
+    def __init__(self, *args: Any, sesion: Any = None, **kwargs: Any) -> None:
+        from django.contrib.auth import get_user_model
+
+        from .models import ValeCaja
+
+        super().__init__(*args, **kwargs)
+        self.sesion = sesion
+        self.fields["responsable"].queryset = get_user_model().objects.filter(
+            is_active=True
+        ).order_by("first_name", "username")
+        self.fields["tipo"].choices = ValeCaja.Tipo.choices
+        if sesion is not None:
+            self.fields["tipo"].initial = "faltante"
+            falta = -sesion.diferencia if sesion.diferencia < 0 else Decimal("0")
+            self.fields["importe"].initial = falta.quantize(Decimal("0.01"))
+            self.fields["responsable"].initial = sesion.usuario_id
+            self.fields["motivo"].initial = f"Faltante del turno del {sesion.cerrada_en:%d/%m/%Y}"

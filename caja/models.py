@@ -55,6 +55,27 @@ class SesionCaja(models.Model):
     cerrada_en = models.DateTimeField("cerrada", null=True, blank=True)
     observaciones = models.TextField("observaciones de apertura", blank=True)
     observaciones_cierre = models.TextField("observaciones de cierre", blank=True)
+    revision = models.CharField(
+        "revisión",
+        max_length=12,
+        choices=(
+            ("sin_revisar", "Sin revisar"),
+            ("aprobada", "Aprobada"),
+            ("observada", "Observada"),
+        ),
+        default="sin_revisar",
+        help_text="Lo que dijo quien revisó el cuadre.",
+    )
+    revisada_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="revisada por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="cajas_revisadas",
+    )
+    revisada_en = models.DateTimeField("revisada", null=True, blank=True)
+    nota_revision = models.TextField("nota de la revisión", blank=True)
     creado = models.DateTimeField("creada", auto_now_add=True)
     actualizado = models.DateTimeField("actualizada", auto_now=True)
 
@@ -189,3 +210,90 @@ class MovimientoCaja(models.Model):
     @property
     def signo(self) -> str:
         return "+" if self.tipo == self.Tipo.INGRESO.value else "−"
+
+
+class ValeCaja(models.Model):
+    """Un vale de caja: el papel con el que se saca dinero del turno o se cobra un
+    faltante.
+
+    Sirve para dos cosas, que son las dos caras del mismo papel: **sacar** efectivo
+    de la caja a cuenta de alguien (un anticipo, un gasto por reponer) o **cobrar**
+    un saldo en contra, que es el faltante que apareció al cerrar el turno. Nace
+    pendiente y se cierra cuando se cobra —o se anula, si no había por qué—.
+    """
+
+    class Tipo(models.TextChoices):
+        FALTANTE = "faltante", "Faltante por cobrar"
+        ANTICIPO = "anticipo", "Vale de anticipo"
+        GASTO = "gasto", "Gasto por reponer"
+        OTRO = "otro", "Otro"
+
+    class Estado(models.TextChoices):
+        PENDIENTE = "pendiente", "Pendiente"
+        COBRADO = "cobrado", "Cobrado"
+        ANULADO = "anulado", "Anulado"
+
+    numero = models.CharField("número", max_length=12, unique=True, blank=True)
+    sesion = models.ForeignKey(
+        SesionCaja,
+        verbose_name="sesión",
+        on_delete=models.PROTECT,
+        null=True,
+        blank=True,
+        related_name="vales",
+        help_text="El turno en el que apareció el faltante o del que salió el efectivo.",
+    )
+    responsable = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="responsable",
+        on_delete=models.PROTECT,
+        related_name="vales_de_caja",
+        help_text="A quién se le cobra o a cuenta de quién va el vale.",
+    )
+    tipo = models.CharField("tipo", max_length=10, choices=Tipo.choices, default=Tipo.FALTANTE)
+    motivo = models.CharField("motivo", max_length=200)
+    importe = models.DecimalField("importe", max_digits=14, decimal_places=2)
+    estado = models.CharField(
+        "estado", max_length=10, choices=Estado.choices, default=Estado.PENDIENTE
+    )
+    fecha = models.DateField("fecha", default=timezone.localdate)
+    creado_por = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        verbose_name="creado por",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="vales_creados",
+    )
+    cobrado_en = models.DateField("cobrado el", null=True, blank=True)
+    nota = models.TextField("nota", blank=True)
+    creado = models.DateTimeField("creado", auto_now_add=True)
+    actualizado = models.DateTimeField("actualizado", auto_now=True)
+
+    class Meta:
+        verbose_name = "vale de caja"
+        verbose_name_plural = "vales de caja"
+        ordering = ["-fecha", "-pk"]
+
+    def __str__(self) -> str:
+        etiqueta = self.numero or f"vale #{self.pk}"
+        return f"{etiqueta} · {self.get_tipo_display()}"
+
+    def save(self, *args: Any, **kwargs: Any) -> None:
+        if not self.numero:
+            ultimo = (
+                ValeCaja.objects.exclude(numero="")
+                .order_by("-pk")
+                .values_list("numero", flat=True)
+                .first()
+            )
+            siguiente = 1
+            if ultimo and ultimo[3:].isdigit():
+                siguiente = int(ultimo[3:]) + 1
+            self.numero = f"VC-{siguiente:06d}"
+        super().save(*args, **kwargs)
+
+    def clean(self) -> None:
+        super().clean()
+        if self.importe is not None and self.importe <= CERO:
+            raise ValidationError({"importe": "El importe del vale debe ser mayor que cero."})

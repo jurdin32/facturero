@@ -123,3 +123,25 @@
     }
   });
 })();
+
+/* ---------------------------------------------------- la revisión del cuadre
+ *
+ * En la ficha de un cuadre, el campo de la nota está en el mismo formulario que
+ * los dos botones (aprobar y dejar observado). Si alguien escribe la nota y
+ * pulsa Enter, el navegador enviaría el formulario con el primer botón, que es
+ * justo el de aprobar: se aprobaría un cuadre sin querer. Aquí Enter en los
+ * campos no envía nada; para decidir hay que pulsar el botón.
+ */
+(function () {
+  "use strict";
+
+  var fichas = document.querySelectorAll(".cuadre-revision");
+  Array.prototype.forEach.call(fichas, function (formulario) {
+    formulario.addEventListener("keydown", function (evento) {
+      var esCampo = evento.target.matches("input, select, textarea");
+      if (evento.key === "Enter" && esCampo && evento.target.type !== "submit") {
+        evento.preventDefault();
+      }
+    });
+  });
+})();

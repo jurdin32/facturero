@@ -7,11 +7,17 @@ from typing import Any, Optional
 
 from django.core.exceptions import ValidationError
 from django.db import transaction
+from django.utils import timezone
 
 from .models import CERO, MovimientoCaja, SesionCaja
 
 __all__ = [
     "BILLETES",
+    "REVISIONES",
+    "anular_vale",
+    "cobrar_vale",
+    "crear_vale",
+    "revisar",
     "DENOMINACIONES",
     "MONEDAS",
     "abrir",
@@ -165,3 +171,110 @@ def registrar_ingreso_factura(factura: Any, usuario: Any) -> Optional[Movimiento
         referencia=referencia,
         comprobante=comprobante,
     )
+
+
+#: Lo que puede decir la revisión de un cuadre, con su nombre para la pantalla.
+REVISIONES = (
+    ("aprobada", "Aprobar el cuadre"),
+    ("observada", "Dejarlo observado"),
+)
+
+
+def revisar(sesion: SesionCaja, revisor: Any, decision: str, nota: str = "") -> SesionCaja:
+    """Aprobar el cuadre de un turno o dejarlo observado, con su nota.
+
+    No se revisa una caja abierta: primero se cierra. Y el que revisa queda
+    anotado, que es lo que se busca cuando alguien pregunta quién dio el visto
+    bueno.
+    """
+    if decision not in dict(REVISIONES):
+        raise ValidationError("Esa revisión no existe.")
+    if sesion.abierta:
+        raise ValidationError("Primero se cierra la caja; después se revisa el cuadre.")
+    sesion.revision = decision
+    sesion.revisada_por = revisor if getattr(revisor, "is_authenticated", False) else None
+    sesion.revisada_en = timezone.now()
+    sesion.nota_revision = (nota or "").strip()
+    sesion.save(update_fields=["revision", "revisada_por", "revisada_en", "nota_revision", "actualizado"])
+    return sesion
+
+
+def crear_vale(
+    *,
+    responsable: Any,
+    importe: Decimal,
+    motivo: str,
+    tipo: str = "faltante",
+    sesion: Any = None,
+    creado_por: Any = None,
+    nota: str = "",
+    fecha: Any = None,
+) -> Any:
+    """Un vale de caja: el faltante que se le cobra a alguien o el efectivo que saca.
+
+    Nace **pendiente**. Si viene de una caja con faltante, el importe no puede pasar
+    de lo que falta: el vale cubre el saldo en contra, no lo inventa.
+    """
+    from .models import ValeCaja
+
+    if tipo not in ValeCaja.Tipo.values:
+        raise ValidationError("Ese tipo de vale no existe.")
+    if sesion is not None:
+        if sesion.abierta:
+            raise ValidationError("El vale se hace sobre una caja cerrada.")
+        if tipo == ValeCaja.Tipo.FALTANTE.value:
+            falta = -sesion.diferencia if sesion.diferencia < CERO else CERO
+            if falta <= CERO:
+                raise ValidationError("Esta caja no tiene faltante: no hay saldo que cobrar.")
+            ya_cubierto = sum(
+                vale.importe
+                for vale in sesion.vales.exclude(estado=ValeCaja.Estado.ANULADO.value)
+            )
+            if ya_cubierto + importe > falta:
+                disponible = (falta - ya_cubierto).quantize(Decimal("0.01"))
+                raise ValidationError(
+                    f"El faltante de esta caja es {falta:.2f} y ya hay vales por "
+                    f"{ya_cubierto:.2f}: quedan {disponible:.2f}."
+                )
+
+    vale = ValeCaja(
+        sesion=sesion,
+        responsable=responsable,
+        tipo=tipo,
+        motivo=(motivo or "").strip(),
+        importe=importe,
+        creado_por=creado_por if getattr(creado_por, "is_authenticated", False) else None,
+        nota=(nota or "").strip(),
+        fecha=fecha or timezone.localdate(),
+    )
+    vale.full_clean()
+    with transaction.atomic():
+        vale.save()
+    return vale
+
+
+def cobrar_vale(vale: Any, nota: str = "") -> Any:
+    """Dar por cobrado el vale (o por repuesto, si era un gasto)."""
+    from .models import ValeCaja
+
+    if vale.estado != ValeCaja.Estado.PENDIENTE.value:
+        raise ValidationError("Ese vale ya no está pendiente.")
+    vale.estado = ValeCaja.Estado.COBRADO.value
+    vale.cobrado_en = timezone.localdate()
+    if nota:
+        vale.nota = (vale.nota + "\n" + nota).strip()
+    vale.save()
+    return vale
+
+
+def anular_vale(vale: Any, nota: str = "") -> Any:
+    """Anular un vale que no tenía por qué existir."""
+    from .models import ValeCaja
+
+    if vale.estado == ValeCaja.Estado.ANULADO.value:
+        raise ValidationError("Ese vale ya está anulado.")
+    vale.estado = ValeCaja.Estado.ANULADO.value
+    if nota:
+        vale.nota = (vale.nota + "\n" + nota).strip()
+    vale.save()
+    return vale

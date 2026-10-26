@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Vales de caja{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+Los vales de caja: el papel con el que se cobra un faltante o se saca efectivo a
+cuenta de alguien. Es pantalla de supervisión, no del cajero.
+{% endcomment %}
+
+{% puede_escribir "vales_caja" as puede_vales %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Vales de caja</h1>
+    <p class="subtitulo">
+      Lo que quedó pendiente de cobrar y lo que ya se cobró.
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button small" href="{% url 'supervision:cuadres' %}">
+      <span class="mif-clipboard" aria-hidden="true"></span> Revisión de caja
+    </a>
+    {% if puede_vales %}
+      <a class="button small primary" href="{% url 'supervision:vale_nuevo' %}">
+        <span class="mif-plus" aria-hidden="true"></span> Nuevo vale
+      </a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="row">
+  <div class="cell-12 cell-md-6">
+    <div class="bloque bloque-dato">
+      <span class="etiqueta">Pendiente de cobro</span>
+      <p class="cifra sale">{{ pendiente_total|floatformat:2 }}</p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <div class="bloque bloque-dato">
+      <span class="etiqueta">Vales pendientes</span>
+      <p class="cifra">{{ cuantos_pendientes }}</p>
+    </div>
+  </div>
+</div>
+
+<form class="filtros filtros-cortos" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select class="select" name="estado" id="estado" data-role="select">
+          <option value="">Todos</option>
+          {% for clave, nombre in estados %}
+            <option value="{{ clave }}" {% if filtros.estado == clave %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4 cell-lg-2">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search" aria-hidden="true"></span> Filtrar</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Libro de vales</h2>
+
+  {% if vales %}
+    <div class="desliza">
+      <table class="table libro libro-vales">
+        <thead>
+          <tr>
+            <th>Número</th>
+            <th class="col-opcional">Fecha</th>
+            <th>Responsable</th>
+            <th class="col-opcional">Tipo</th>
+            <th>Motivo</th>
+            <th class="col-dato">Importe</th>
+            <th>Estado</th>
+            <th class="col-acciones">Acciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for vale in vales %}
+            <tr>
+              <td class="cifra">{{ vale.numero }}</td>
+              <td class="col-opcional">{{ vale.fecha|date:"d/m/Y" }}</td>
+              <td>{{ vale.responsable.get_full_name|default:vale.responsable.get_username }}</td>
+              <td class="col-opcional">{{ vale.get_tipo_display }}</td>
+              <td class="celda-motivo">
+                {{ vale.motivo }}
+                {% if vale.sesion %}
+                  <span class="tenue">· caja del {{ vale.sesion.cerrada_en|date:"d/m/Y" }}</span>
+                {% endif %}
+                {% if vale.nota %}<br><span class="tenue">{{ vale.nota }}</span>{% endif %}
+              </td>
+              <td class="col-dato cifra">{{ vale.importe|floatformat:2 }}</td>
+              <td>
+                <span class="chip {% if vale.estado == 'cobrado' %}success{% elif vale.estado == 'anulado' %}dark{% else %}warning{% endif %}">
+                  <span class="label">{{ vale.get_estado_display }}</span>
+                </span>
+                {% if vale.cobrado_en %}<br><span class="tenue">{{ vale.cobrado_en|date:"d/m/Y" }}</span>{% endif %}
+              </td>
+              <td class="col-acciones">
+                {% if puede_vales and vale.estado == 'pendiente' %}
+                  <form method="post" class="acciones-fila">
+                    {% csrf_token %}
+                    <input type="hidden" name="vale" value="{{ vale.pk }}">
+                    <input type="hidden" name="que" value="cobrar">
+                    <button type="submit" class="button small success">
+                      <span class="mif-checkmark" aria-hidden="true"></span> Cobrar
+                    </button>
+                  </form>
+                  <form method="post" class="acciones-fila"
+                        onsubmit="return confirm('¿Anular el vale {{ vale.numero }}?');">
+                    {% csrf_token %}
+                    <input type="hidden" name="vale" value="{{ vale.pk }}">
+                    <input type="hidden" name="que" value="anular">
+                    <button type="submit" class="button small outline alert">
+                      <span class="mif-blocked" aria-hidden="true"></span> Anular
+                    </button>
+                  </form>
+                {% else %}
+                  <span class="tenue">—</span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  {% else %}
+    <div class="vacio caja-vacio">
+      <p>No hay vales con ese filtro.</p>
+      <p class="tenue">
+        Los vales se hacen al revisar un cuadre con faltante, o a mano con «Nuevo vale».
+      </p>
+    </div>
+  {% endif %}
+</section>
+
+{% endblock %}

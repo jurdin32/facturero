@@ -47,6 +47,10 @@ urlpatterns = [
     # Apertura, movimientos y cierre de caja por usuario.
     path("caja/", include("caja.urls")),
 
+    # La supervisión de la caja: aprobar los cuadres y cobrar los faltantes con
+    # vales. Es de quien controla, así que va aparte y con sus propios permisos.
+    path("supervision/", include("caja.urls_supervision")),
+
     # La configuración del emisor y del SRI, en cuatro pasos.
     path("configuracion/", include("configuracion.urls")),
 
