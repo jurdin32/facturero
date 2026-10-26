@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+{% load static l10n chips %}
+{% block titulo %}Tablero{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Tablero</h1>
+    <p class="ayuda">{{ hoy|date:"l, d \d\e F \d\e Y" }}</p>
+  </div>
+  <div class="acciones-fila">
+    <a class="button primary" href="{% url 'facturacion:facturar' %}">
+      <span class="mif-plus" aria-hidden="true"></span> Nueva factura
+    </a>
+    <a class="button info outline" href="{% url 'catalogos:productos' %}">
+      <span class="mif-cube" aria-hidden="true"></span> Catálogo
+    </a>
+    <a class="button success outline" href="{% url 'inventario:inventario' %}">
+      <span class="mif-archive" aria-hidden="true"></span> Inventario
+    </a>
+  </div>
+</div>
+
+{% if aviso_emisor %}
+  <div class="aviso aviso-warning mb-4">{{ aviso_emisor }}</div>
+{% endif %}
+
+{% if not caja_abierta %}
+  <div class="aviso aviso-info mb-4">
+    Todavía no ha abierto su caja del turno. Sin caja no se puede facturar, porque cada
+    venta queda en el arqueo del día:
+    <a href="{% url 'caja:tablero' %}">abrir la caja</a>.
+  </div>
+{% endif %}
+
+<section class="tablero">
+
+  {# ---------------------------------------------------------- los números #}
+  <article class="dato dato-fuerte">
+    <p class="dato-etiqueta">Facturado hoy</p>
+    <p class="dato-cifra cifra">{{ contadores.hoy.importe|floatformat:2 }}</p>
+    <p class="dato-pie">
+      <span class="chip small"><span class="label">{{ contadores.hoy.cuantas }} factura{{ contadores.hoy.cuantas|pluralize:"s" }}</span></span>
+    </p>
+  </article>
+
+  <article class="dato">
+    <p class="dato-etiqueta">Este mes</p>
+    <p class="dato-cifra cifra">{{ contadores.mes.importe|floatformat:2 }}</p>
+    <p class="dato-pie">{{ contadores.mes.cuantas }} factura{{ contadores.mes.cuantas|pluralize:"s" }} desde el {{ contadores.mes.desde|date:"d/m" }}</p>
+  </article>
+
+  <article class="dato">
+    <p class="dato-etiqueta">Autorizadas por el SRI</p>
+    <p class="dato-cifra">
+      <span class="counter" data-role="counter" data-value="{{ contadores.autorizadas.cuantas }}" data-duration="700">{{ contadores.autorizadas.cuantas }}</span>
+    </p>
+    <div class="progreso-dato">
+      {% include "fragmentos/progreso.html" with valor=contadores.autorizadas.porcentaje clase="exito" etiqueta="Comprobantes autorizados" %}
+      <span class="progreso-valor">{{ contadores.autorizadas.porcentaje }} %</span>
+    </div>
+    <p class="dato-pie">de {{ contadores.autorizadas.emitidas }} comprobante{{ contadores.autorizadas.emitidas|pluralize:"s" }} emitido{{ contadores.autorizadas.emitidas|pluralize:"s" }}</p>
+  </article>
+
+  <article class="dato {% if contadores.por_resolver.cuantas %}dato-atencion{% endif %}">
+    {% if contadores.por_resolver.cuantas %}
+      <div class="ribbon right alert"><span class="mif-warning icon" aria-hidden="true"></span> Revisar</div>
+    {% endif %}
+    <p class="dato-etiqueta">Por resolver</p>
+    <p class="dato-cifra">{{ contadores.por_resolver.cuantas }}</p>
+    {% if contadores.por_resolver.en_marcha %}
+      <p class="activity-etiqueta">
+        {% include "fragmentos/actividad.html" with tipo="bars" tamano=18 etiqueta="Consultando al SRI" %}
+        {{ contadores.por_resolver.en_marcha }} en trámite en el SRI
+      </p>
+      <div class="activity-metro" role="status" aria-label="Consultando al SRI">
+        <span class="circle"></span><span class="circle"></span><span class="circle"></span>
+        <span class="circle"></span><span class="circle"></span>
+      </div>
+    {% endif %}
+    <p class="dato-pie">
+      {% if contadores.por_resolver.cuantas %}
+        <a class="enlace" href="{% url 'facturacion:facturas' %}?estado=sin_emitir">Ver las que faltan</a>
+      {% else %}
+        Todo emitido y en orden
+      {% endif %}
+    </p>
+  </article>
+
+  {# ------------------------------------------------------------ el gráfico #}
+  <article class="tarjeta grafico">
+    <header class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Ventas de los últimos {{ ventas.dias }} días</h2>
+        <p class="tarjeta-pie">Del {{ ventas.desde|date:"d/m" }} al {{ hoy|date:"d/m" }}</p>
+      </div>
+      <div class="button-group" role="group" aria-label="Días del gráfico">
+        {% for opcion in periodos %}
+          <a class="button small {% if opcion == dias %}primary{% else %}outline{% endif %}"
+             href="?dias={{ opcion }}">{{ opcion }} días</a>
+        {% endfor %}
+      </div>
+    </header>
+
+    <p class="grafico-total cifra">{{ ventas.total|floatformat:2 }}</p>
+
+    <div class="barras" role="img"
+         aria-label="Ventas por día: del {{ ventas.desde|date:'d/m/Y' }} al {{ hoy|date:'d/m/Y' }}">
+      {% for barra in ventas.barras %}
+        <span class="barra-grafico{% if barra.importe %} llena{% endif %}"
+              style="--alto: {{ barra.alto|unlocalize }}"
+              title="{{ barra.etiqueta }}: {{ barra.importe|floatformat:2 }}">
+          {% if barra.marcar %}<span class="barra-dia">{{ barra.etiqueta }}</span>{% endif %}
+        </span>
+      {% endfor %}
+    </div>
+  </article>
+
+  {# ------------------------------------------ lo que más se mueve (gráfico) #}
+  <article class="tarjeta ancha">
+    <header class="tarjeta-cabecera">
+      <div>
+        <h2 class="tarjeta-titulo">Productos y servicios con más movimiento</h2>
+        <p class="tarjeta-pie">
+          Últimos {{ movidos.dias }} días · ordenado por {{ movidos.unidad|lower }}
+        </p>
+      </div>
+      <div class="button-group" role="group" aria-label="Orden del gráfico">
+        {% for clave, nombre in ordenes %}
+          <a class="button small {% if clave == orden %}primary{% else %}outline{% endif %}"
+             href="?dias={{ dias }}&orden={{ clave }}">{{ nombre }}</a>
+        {% endfor %}
+      </div>
+    </header>
+
+    {% if movidos.filas %}
+      <ul class="ranking" role="img"
+          aria-label="Productos y servicios con más movimiento en los últimos {{ movidos.dias }} días, ordenados por {{ movidos.unidad|lower }}">
+        {% for fila in movidos.filas %}
+          <li title="{{ fila.descripcion }} — {{ fila.piezas|floatformat:'-3' }} unidad{{ fila.piezas|pluralize:"es" }} en {{ fila.veces }} línea{{ fila.veces|pluralize:"s" }} · {{ fila.importe|floatformat:2 }}">
+            <span class="ranking-puesto cifra">{{ forloop.counter }}</span>
+            <span class="ranking-nombre">{{ fila.descripcion }}</span>
+            <span class="ranking-barra"><i style="width: {{ fila.alto|unlocalize }}%"></i></span>
+            <span class="ranking-dato">
+              <span class="ranking-valor cifra">
+                {% if orden == 'veces' %}{{ fila.veces }}×{% elif orden == 'importe' %}{{ fila.importe|floatformat:2 }}{% else %}{{ fila.piezas|floatformat:"-3" }}{% endif %}
+              </span>
+              <span class="ranking-meta cifra">
+                {% if orden == 'importe' %}{{ fila.piezas|floatformat:"-3" }} u{% else %}{{ fila.importe|floatformat:2 }}{% endif %}
+              </span>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+      <p class="tarjeta-pie mt-3">
+        {{ movidos.filas|length }} de los que más se mueven ·
+        {{ movidos.unidades|floatformat:"-3" }} unidades ·
+        {{ movidos.importe|floatformat:2 }} facturado
+      </p>
+    {% else %}
+      <p class="tenue">Aún no hay líneas facturadas en estos {{ movidos.dias }} días.</p>
+    {% endif %}
+  </article>
+
+  {# ------------------------------------------------------------ el inventario #}
+  <article class="tarjeta ancha {% if bajo_minimo %}tarjeta-atencion{% endif %}">
+    <header class="tarjeta-cabecera">
+      <h2 class="tarjeta-titulo">Inventario</h2>
+      <a class="enlace" href="{% url 'inventario:inventario' %}">Abrir</a>
+    </header>
+
+    {% if bajo_minimo %}
+      <ul class="lista-compacta">
+        {% for existencia in bajo_minimo %}
+          <li>
+            <span class="lista-nombre">{{ existencia.producto.descripcion }}</span>
+            <span class="progreso-dato">
+              {% include "fragmentos/progreso.html" with valor=existencia.cobertura clase=existencia.clase_cobertura etiqueta="Existencias frente al mínimo" %}
+              <span class="progreso-valor">Quedan {{ existencia.cantidad|floatformat:"-3" }}</span>
+            </span>
+            <a class="enlace" href="{% url 'inventario:kardex' existencia.producto.pk %}">Mover</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="tenue">Nada por debajo del mínimo. Los bienes, cuando los haya, se vigilan aquí.</p>
+    {% endif %}
+  </article>
+
+</section>
+
+{% endblock %}

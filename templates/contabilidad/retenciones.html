@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+{% block titulo %}Retenciones · {{ mes }}/{{ anio }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Retenciones · {{ mes|stringformat:"02d" }}/{{ anio }}</h1>
+    <p class="subtitulo">Detalle por impuesto y código de retención, para revisar el formulario 103.</p>
+  </div>
+  <a class="button outline dark" href="{% url 'contabilidad:anexos' %}?anio={{ anio }}&mes={{ mes }}"><span class="mif-arrow-left"></span> Volver a anexos</a>
+</div>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Impuesto</th>
+        <th>Código</th>
+        <th class="col-dato">Base imponible</th>
+        <th class="col-dato">Porcentaje</th>
+        <th class="col-dato">Valor retenido</th>
+        <th class="col-dato">Comprobantes</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+        <tr>
+          <td>{% if fila.codigo == '1' %}Renta{% elif fila.codigo == '2' %}IVA{% else %}ISD{% endif %}</td>
+          <td class="cifra">{{ fila.codigo_retencion }}</td>
+          <td class="col-dato cifra">{{ fila.base|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ fila.porcentaje|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ fila.valor|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ fila.cuantas }}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr><th colspan="4">Total retenido</th><th class="col-dato cifra">{{ total|floatformat:2 }}</th><th></th></tr>
+    </tfoot>
+  </table></div>
+{% else %}
+  <div class="vacio"><p>No hay retenciones autorizadas en el mes.</p></div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Roles y permisos{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Roles y permisos</h1>
+    <p class="subtitulo">
+      {{ cuantos_activos }} de {{ cuantos }} roles activos · un rol marca, opción por
+      opción, qué puede hacer quien lo lleve ·
+      <a class="enlace" href="{% url 'seguridad:usuarios' %}">ver los usuarios</a>
+    </p>
+  </div>
+  {% puede_escribir "roles" as puede_roles %}{% if puede_roles %}
+    <a class="button primary" href="{% url 'seguridad:rol_nuevo' %}"><span class="mif-plus"></span> Nuevo rol</a>
+  {% endif %}
+</div>
+
+<div class="tabla-caja">
+  {% include "fragmentos/tabla-barra.html" with buscador="Nombre o para qué es el rol" %}
+
+  <div class="tabla-envoltura">
+    <table class="datos" id="tabla-roles">
+      {% include "fragmentos/tabla-cabecera.html" %}
+      <tbody>
+        {% for r in tabla.filas %}
+          <tr>
+            <td class="col-estado">
+              <span class="chip {% if r.activo %}success{% else %}dark{% endif %}">
+                <span class="icon {% if r.activo %}mif-checkmark{% else %}mif-power{% endif %}"></span>
+                <span class="label">{% if r.activo %}Activo{% else %}Apagado{% endif %}</span>
+              </span>
+            </td>
+            <td>
+              <a class="listado-titulo" href="{% url 'seguridad:rol' r.pk %}">{{ r.nombre }}</a>
+              <span class="listado-meta">{{ r.descripcion|default:"Sin descripción" }}</span>
+            </td>
+            <td class="col-num cifra">{{ r.cuantas_opciones }} de {{ opciones_totales }}</td>
+            <td class="col-num cifra">{{ r.con_escritura }}</td>
+            <td class="col-num cifra">{{ r.cuantos_usuarios }}</td>
+            <td class="col-acciones">
+              <a class="button small square outline primary" href="{% url 'seguridad:rol' r.pk %}"
+                 title="Ver y cambiar «{{ r.nombre }}»" aria-label="Editar"><span class="mif-pencil"></span></a>
+              {% if r.activo %}
+                {% url 'seguridad:accion' r.pk 'desactivar' as la_accion %}
+              {% else %}
+                {% url 'seguridad:accion' r.pk 'activar' as la_accion %}
+              {% endif %}
+              <form method="post" action="{{ la_accion }}">
+                {% csrf_token %}
+                <button type="submit" class="button small square outline dark"
+                        title="{% if r.activo %}Apagar «{{ r.nombre }}»{% else %}Encender «{{ r.nombre }}»{% endif %}"
+                        aria-label="{% if r.activo %}Apagar{% else %}Encender{% endif %}"><span class="mif-power"></span></button>
+              </form>
+              <form method="post" action="{% url 'seguridad:accion' r.pk 'eliminar' %}"
+                    data-confirmar="Se borra el rol «{{ r.nombre }}» y quien lo lleve se queda sin él."
+                    data-titulo="Eliminar el rol" data-aceptar="Eliminarlo">
+                {% csrf_token %}
+                <button type="submit" class="button small square outline alert"
+                        title="Eliminar «{{ r.nombre }}»" aria-label="Eliminar"><span class="mif-bin"></span></button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="tabla-vacio" colspan="{{ tabla.columnas|length }}">
+              {% if tabla.hay_filtros %}
+                Ningún rol coincide con «{{ tabla.q }}».
+                <a class="enlace" href="{{ tabla.enlace_limpio }}">Ver todos</a>
+              {% else %}
+                Todavía no hay roles.
+                <a class="enlace" href="{% url 'seguridad:rol_nuevo' %}">Crear el primero</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "fragmentos/tabla-pie.html" %}
+</div>
+
+<p class="ayuda">
+  Un rol apagado no da nada, pero se queda puesto para volver a encenderlo. Quien no
+  tenga ningún rol no puede nada cuando la aplicación está en modo cerrado; los
+  superusuarios pueden todo siempre.
+</p>
+
+{% endblock %}

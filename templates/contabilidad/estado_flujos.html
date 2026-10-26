@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block titulo %}Estado de flujos de efectivo{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Estado de flujos de efectivo</h1>
+    <p class="subtitulo">Método directo · del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}</p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if datos %}
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Saldo inicial</span>
+        <p class="cifra" style="font-size:1.4rem">{{ datos.saldo_inicial|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Flujo del periodo</span>
+        <p class="cifra" style="font-size:1.4rem">{{ datos.total|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Saldo final</span>
+        <p class="cifra" style="font-size:1.4rem">{{ datos.saldo_final|floatformat:2 }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="desliza"><table class="table small libro">
+    <thead><tr><th>Fecha</th><th>Concepto</th><th class="col-dato">Efectivo</th></tr></thead>
+    <tbody>
+      {% for grupo in datos.grupos %}
+        <tr class="fila-madre"><th colspan="3">{{ grupo.nombre }}</th></tr>
+        {% for fila in grupo.filas %}
+          <tr>
+            <td class="cifra">{{ fila.fecha|date:"d/m/Y" }}</td>
+            <td>{{ fila.concepto }}</td>
+            <td class="col-dato cifra {% if fila.valor < 0 %}sale{% endif %}">{{ fila.valor|floatformat:2 }}</td>
+          </tr>
+        {% endfor %}
+        <tr><th colspan="2">Total {{ grupo.nombre|lower }}</th><th class="col-dato cifra">{{ grupo.total|floatformat:2 }}</th></tr>
+      {% empty %}
+        <tr><td colspan="3" class="tenue">No hubo movimientos de caja ni bancos en el rango.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">La clasificación se hace por la contrapartida del asiento: ingresos, costos y gastos son operación; el activo no corriente es inversión; el pasivo no corriente y el patrimonio, financiación.</p>
+{% else %}
+  <div class="vacio"><p>Elija la cuenta de caja y la de bancos en <a class="enlace" href="{% url 'contabilidad:configuracion' %}">Configuración contable</a> para calcular el flujo.</p></div>
+{% endif %}
+
+{% endblock %}

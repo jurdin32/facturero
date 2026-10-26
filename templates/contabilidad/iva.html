@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+{% block titulo %}Resumen de IVA · {{ mes }}/{{ anio }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Resumen de IVA · {{ mes|stringformat:"02d" }}/{{ anio }}</h1>
+    <p class="subtitulo">Bases e impuestos para revisar el formulario 104.</p>
+  </div>
+  <a class="button outline dark" href="{% url 'contabilidad:anexos' %}?anio={{ anio }}&mes={{ mes }}"><span class="mif-arrow-left"></span> Volver a anexos</a>
+</div>
+
+<div class="row">
+  <div class="cell-12 cell-md-6">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Ventas</h2>
+      <table class="totales">
+        <tbody>
+          <tr><th>Base 0 %</th><td class="cifra">{{ ventas.base_0|floatformat:2 }}</td></tr>
+          <tr><th>Base gravada</th><td class="cifra">{{ ventas.base_gravada|floatformat:2 }}</td></tr>
+          <tr><th>Base exenta</th><td class="cifra">{{ ventas.base_exenta|floatformat:2 }}</td></tr>
+          <tr><th>IVA generado</th><td class="cifra">{{ ventas.iva|floatformat:2 }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Compras</h2>
+      <table class="totales">
+        <tbody>
+          <tr><th>Base 0 %</th><td class="cifra">{{ compras.base_0|floatformat:2 }}</td></tr>
+          <tr><th>Base gravada</th><td class="cifra">{{ compras.base_gravada|floatformat:2 }}</td></tr>
+          <tr><th>Base exenta</th><td class="cifra">{{ compras.base_exenta|floatformat:2 }}</td></tr>
+          <tr><th>IVA crédito tributario</th><td class="cifra">{{ compras.iva|floatformat:2 }}</td></tr>
+        </tbody>
+      </table>
+    </section>
+  </div>
+</div>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Liquidación</h2>
+  <table class="totales">
+    <tbody>
+      <tr><th>IVA generado</th><td class="cifra">{{ ventas.iva|floatformat:2 }}</td></tr>
+      <tr><th>Menos IVA crédito tributario</th><td class="cifra">-{{ compras.iva|floatformat:2 }}</td></tr>
+      <tr><th>Menos IVA retenido a proveedores</th><td class="cifra">-{{ retencion_iva_efectuada|floatformat:2 }}</td></tr>
+      <tr><th>Menos IVA retenido por clientes</th><td class="cifra">-{{ retencion_iva_recibida|floatformat:2 }}</td></tr>
+      <tr class="fila-madre"><th>IVA por pagar</th><td class="cifra">{{ iva_por_pagar|floatformat:2 }}</td></tr>
+    </tbody>
+  </table>
+  <p class="ayuda">Es un resumen de trabajo: la declaración se presenta en el portal del SRI. La retención de IVA sale de los comprobantes de retención emitidos en el mes.</p>
+</section>
+
+{% endblock %}

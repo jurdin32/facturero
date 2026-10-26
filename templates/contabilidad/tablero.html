@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+{% block titulo %}Contabilidad{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Contabilidad</h1>
+    <p class="subtitulo">
+      Del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }} ·
+      {{ asientos_mes }} asiento{{ asientos_mes|pluralize }} contabilizado{{ asientos_mes|pluralize }} ·
+      {{ cuentas }} cuentas en el plan
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button outline dark" href="{% url 'contabilidad:plan' %}"><span class="mif-list"></span> Plan de cuentas</a>
+    <a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a>
+  </div>
+</div>
+
+{% if faltantes %}
+  <div class="aviso aviso-warning">
+    Faltan cuentas por elegir en la configuración contable:
+    {% for falta in faltantes %}{{ falta }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+    <a class="enlace" href="{% url 'contabilidad:configuracion' %}">Completar la configuración</a>.
+  </div>
+{% endif %}
+
+{% if pendientes or por_contabilizar %}
+  <div class="aviso aviso-info">
+    {% if pendientes %}{{ pendientes }} comprobante{{ pendientes|pluralize }} autorizado{{ pendientes|pluralize }} sin asiento.{% endif %}
+    {% if por_contabilizar %}{{ por_contabilizar }} asiento{{ por_contabilizar|pluralize }} en borrador.{% endif %}
+    <a class="enlace" href="{% url 'contabilidad:asientos' %}?estado=borrador">Revisar los asientos</a>.
+    {% if pendientes %}
+      <form method="post" action="{% url 'contabilidad:contabilizar_pendientes' %}" style="display:inline"
+            data-confirmar="Se crearán los asientos de todos los comprobantes autorizados que todavía no tienen uno, con la configuración contable actual."
+            data-titulo="Contabilizar pendientes" data-aceptar="Contabilizar">
+        {% csrf_token %}
+        <button type="submit" class="button small primary">
+          <span class="mif-check"></span> Contabilizar pendientes
+        </button>
+      </form>
+    {% endif %}
+  </div>
+{% endif %}
+
+<div class="row">
+  <div class="cell-12 cell-md-6 cell-lg-3">
+    <div class="bloque bloque-suave">
+      <span class="etiqueta">Resultado del mes</span>
+      <p class="cifra" style="font-size:1.6rem;margin:.4rem 0 0">
+        {{ resultado.resultado|floatformat:2 }}
+      </p>
+      <p class="ayuda">
+        Ingresos {{ resultado.total_ingresos|floatformat:2 }} ·
+        costos {{ resultado.total_costos|floatformat:2 }} ·
+        gastos {{ resultado.total_gastos|floatformat:2 }}
+      </p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6 cell-lg-3">
+    <div class="bloque bloque-suave">
+      <span class="etiqueta">Total activo</span>
+      <p class="cifra" style="font-size:1.6rem;margin:.4rem 0 0">
+        {% if situacion %}{{ situacion.total_activo|floatformat:2 }}{% else %}—{% endif %}
+      </p>
+      <p class="ayuda">Al {{ hoy|date:"d/m/Y" }}.</p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6 cell-lg-3">
+    <div class="bloque bloque-suave">
+      <span class="etiqueta">Pasivo + patrimonio</span>
+      <p class="cifra" style="font-size:1.6rem;margin:.4rem 0 0">
+        {% if situacion %}{{ situacion.total_pasivo_patrimonio|floatformat:2 }}{% else %}—{% endif %}
+      </p>
+      <p class="ayuda">
+        {% if situacion and situacion.diferencia %}
+          <span class="chip alert soft"><span class="label">descuadre {{ situacion.diferencia|floatformat:2 }}</span></span>
+        {% else %}El balance cuadra.{% endif %}
+      </p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6 cell-lg-3">
+    <div class="bloque bloque-suave">
+      <span class="etiqueta">IVA del mes</span>
+      <p class="cifra" style="font-size:1.6rem;margin:.4rem 0 0">
+        {{ iva.iva_por_pagar|floatformat:2 }}
+      </p>
+      <p class="ayuda">
+        IVA ventas {{ iva.ventas.iva|floatformat:2 }} ·
+        crédito {{ iva.compras.iva|floatformat:2 }}
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Lo último que se contabilizó</h2>
+      {% if recientes %}
+        <div class="desliza"><table class="table small libro">
+          <thead>
+            <tr>
+              <th>Número</th>
+              <th>Fecha</th>
+              <th>Concepto</th>
+              <th class="col-dato">Debe</th>
+              <th class="col-dato">Haber</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for a in recientes %}
+              <tr>
+                <td class="cifra col-num">{{ a.numero|default:"borrador" }}</td>
+                <td class="cifra">{{ a.fecha|date:"d/m/Y" }}</td>
+                <td>{{ a.concepto }}</td>
+                <td class="col-dato cifra">{{ a.debe_total|default:0|floatformat:2 }}</td>
+                <td class="col-dato cifra">{{ a.haber_total|default:0|floatformat:2 }}</td>
+                <td class="col-acciones">
+                  <a class="button small square outline dark" href="{% url 'contabilidad:asiento_detalle' a.pk %}"
+                     title="Ver el asiento" aria-label="Ver"><span class="mif-eye"></span></a>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      {% else %}
+        <div class="vacio">
+          <p>Todavía no hay asientos contabilizados.</p>
+          <p class="tenue">Las facturas autorizadas se contabilizan solas; lo demás se escribe a mano.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen">
+      <h2 class="bloque-titulo">Atajos</h2>
+      <p><a class="enlace" href="{% url 'contabilidad:libro_diario' %}">Libro diario</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:libro_mayor' %}">Libro mayor</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:balance' %}">Balance de comprobación</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:estados' %}">Estados financieros</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:compras' %}">Compras</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:anexos' %}">Anexos del SRI (ATS, RDEP, REOC)</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:cierre' %}">Cierre de periodos</a></p>
+      <p><a class="enlace" href="{% url 'contabilidad:configuracion' %}">Configuración contable</a></p>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

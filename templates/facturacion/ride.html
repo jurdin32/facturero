@@ -1,0 +1,231 @@
+{% extends "base.html" %}
+{% load l10n %}
+{% block titulo %}Imprimir · Factura {{ registro.secuencial|default:factura.pk }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila sin-imprimir">
+  <div>
+    <h1 class="titulo">Imprimir la factura</h1>
+    <p class="subtitulo">
+      {% if registro %}<span class="cifra">{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}</span>{% else %}sin número{% endif %}
+      · <a class="enlace" href="{% url 'facturacion:factura' factura.pk %}">volver a la ficha</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <div class="conmutador" role="group" aria-label="Tamaño del papel">
+      <a class="conmutador-opcion{% if formato == 'a4' %} activa{% endif %}"
+         href="{% url 'facturacion:ride' factura.pk %}?formato=a4">A4</a>
+      <a class="conmutador-opcion{% if formato == 't80' %} activa{% endif %}"
+         href="{% url 'facturacion:ride' factura.pk %}?formato=t80">Tíquet 80 mm</a>
+    </div>
+    <button class="button primary" type="button" id="boton-imprimir">
+      <span class="mif-printer" aria-hidden="true"></span> Imprimir o guardar en PDF
+    </button>
+  </div>
+</div>
+
+{% comment %}
+  El RIDE: la representación impresa con la forma que fija el SRI. Arriba, quién
+  emite y el número de autorización; luego a quién se le factura, las líneas, los
+  totales y lo adicional.
+{% endcomment %}
+<article class="ride ride-{{ formato }}">
+
+  <header class="ride-cabecera">
+    <div class="ride-logo">
+      {% if logo %}
+        <img src="{{ logo.url }}" alt="Logo de {{ emisor.razon_social|default:'el emisor' }}">
+      {% endif %}
+    </div>
+
+    <div class="ride-identificacion">
+      <p class="ride-ruc">R.U.C. <span class="cifra">{{ emisor.ruc|default:"—" }}</span></p>
+      <p class="ride-tipo">FACTURA</p>
+      <p class="ride-numero">No. <span class="cifra">{{ numero|default:"sin número" }}</span></p>
+      {% if registro %}
+        <p class="ride-linea">
+          <span class="ride-etiqueta">NÚMERO DE AUTORIZACIÓN:</span><br>
+          <span class="cifra">{{ registro.numero_autorizacion|default:registro.clave_acceso }}</span>
+        </p>
+        <p class="ride-linea">
+          <span class="ride-etiqueta">FECHA Y HORA DE AUTORIZACIÓN:</span><br>
+          <span class="cifra">{% if registro.fecha_autorizacion %}{{ registro.fecha_autorizacion|date:"d/m/Y H:i:s" }}{% else %}{{ registro.actualizado|date:"d/m/Y H:i:s" }}{% endif %}</span>
+        </p>
+      {% endif %}
+      <p class="ride-linea">
+        <span class="ride-etiqueta">AMBIENTE:</span> {% if es_produccion %}PRODUCCIÓN{% else %}PRUEBAS{% endif %}
+        &nbsp;&nbsp;<span class="ride-etiqueta">EMISIÓN:</span> {% if registro.tipo_emision == '1' %}NORMAL{% else %}CONTINGENCIA{% endif %}
+      </p>
+      {% if registro %}
+        <p class="ride-linea"><span class="ride-etiqueta">CLAVE DE ACCESO:</span></p>
+        <p class="ride-clave cifra">{{ registro.clave_acceso }}</p>
+        {% if barras %}<div class="ride-barras-caja">{{ barras|safe }}</div>{% endif %}
+      {% endif %}
+    </div>
+
+    <div class="ride-fiscales">
+      <p class="ride-etiqueta">NOMBRE / RAZÓN SOCIAL</p>
+      <p class="ride-valor">{{ emisor.razon_social|default:"Emisor sin configurar" }}</p>
+      <p class="ride-etiqueta">DIRECCIÓN MATRIZ</p>
+      <p class="ride-valor">{{ emisor.dir_matriz|default:"—" }}</p>
+      {% if emisor.dir_establecimiento %}
+        <p class="ride-etiqueta">DIRECCIÓN SUCURSAL</p>
+        <p class="ride-valor">{{ emisor.dir_establecimiento }}</p>
+      {% endif %}
+      <p class="ride-linea">
+        <span class="ride-etiqueta">OBLIGADO A LLEVAR CONTABILIDAD:</span>
+        {% if emisor.obligado_contabilidad %}SÍ{% else %}NO{% endif %}
+      </p>
+      {% if emisor.rimpe_texto %}<p class="ride-linea">{{ emisor.rimpe_texto }}</p>{% endif %}
+      {% if emisor.contribuyente_especial %}
+        <p class="ride-linea">CONTRIBUYENTE ESPECIAL N.º <span class="cifra">{{ emisor.contribuyente_especial }}</span></p>
+      {% endif %}
+      {% if emisor.agente_retencion %}
+        <p class="ride-linea">AGENTE DE RETENCIÓN N.º <span class="cifra">{{ emisor.agente_retencion }}</span></p>
+      {% endif %}
+    </div>
+  </header>
+
+{# Del receptor al final, todo con punto decimal: es como lo lee el SRI. #}
+  <table class="ride-receptor">
+    <tbody>
+      <tr>
+        <th>Razón Social / Nombres y Apellidos</th>
+        <td>{{ factura.receptor.razon_social }}</td>
+        <th>Identificación / Pasaporte</th>
+        <td class="cifra">{{ factura.receptor.identificacion }}</td>
+      </tr>
+      <tr>
+        <th>Fecha Emisión</th>
+        <td class="cifra">{{ factura.fecha_emision|date:"d/m/Y" }}</td>
+        <th>Guía de Remisión</th>
+        <td class="cifra">{{ factura.guia_remision|default:"—" }}</td>
+      </tr>
+      <tr>
+        <th>Dirección</th>
+        <td colspan="3">{{ factura.receptor.direccion|default:"—" }}</td>
+      </tr>
+      <tr>
+        <th>Teléfono</th>
+        <td class="cifra">{{ factura.receptor.telefono|default:"—" }}</td>
+        <th>Forma de Pago</th>
+        <td>
+          {{ factura.get_forma_pago_display }}
+          {% if factura.plazo %}({{ factura.plazo|floatformat:0 }} {{ factura.unidad_tiempo }}){% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <table class="ride-lineas">
+    <colgroup>
+      <col class="ride-col-codigo">
+      <col class="ride-col-auxiliar">
+      <col class="ride-col-cantidad">
+      <col>
+      <col class="ride-col-precio">
+      <col class="ride-col-descuento">
+      <col class="ride-col-importe">
+    </colgroup>
+    <thead>
+      <tr>
+        <th class="ride-col-codigo">Cod. Principal</th>
+        <th class="ride-col-auxiliar">Cod. Auxiliar</th>
+        <th class="ride-col-cantidad">Cant.</th>
+        <th>Descripción</th>
+        <th class="ride-col-precio">Precio Unitario</th>
+        <th class="ride-col-descuento">Descuento</th>
+        <th class="ride-col-importe">Precio Total</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linea in detalles %}
+        <tr>
+          <td class="cifra ride-col-codigo">{{ linea.codigo_principal|default:"—" }}</td>
+          <td class="cifra ride-col-auxiliar">{{ linea.codigo_auxiliar|default:"—" }}</td>
+          <td class="cifra ride-col-cantidad">{{ linea.cantidad|floatformat:"-6u" }}</td>
+          <td>
+            <span class="detalle-descripcion">{{ linea.descripcion }}</span>
+            {% if linea.datos_adicionales %}
+              <span class="detalle-adicional">{{ linea.datos_adicionales }}</span>
+            {% endif %}
+          </td>
+          <td class="cifra ride-col-precio">{{ linea.precio_unitario|floatformat:"6u" }}</td>
+          <td class="cifra ride-col-descuento">{{ linea.descuento|floatformat:"2u" }}</td>
+          <td class="cifra ride-col-importe">{{ linea.precio_total_sin_impuesto|floatformat:"2u" }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="tenue" colspan="7">Esta factura no tiene líneas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <div class="ride-totales-caja">
+    <table class="ride-totales">
+      <tbody>
+        {% for grupo in subtotales %}
+          <tr><th>SUBTOTAL {{ grupo.tarifa|floatformat:"-2u" }} %</th><td class="cifra">{{ grupo.base|floatformat:"2u" }}</td></tr>
+        {% endfor %}
+        <tr><th>SUBTOTAL</th><td class="cifra">{{ totales.total_sin_impuestos|floatformat:"2u" }}</td></tr>
+        {% if totales.total_descuento %}
+          <tr><th>DESCUENTO</th><td class="cifra">{{ totales.total_descuento|floatformat:"2u" }}</td></tr>
+        {% endif %}
+        {% for grupo in iva_por_tarifa %}
+          <tr><th>IVA {{ grupo.tarifa|floatformat:"-2u" }} %</th><td class="cifra">{{ grupo.valor|floatformat:"2u" }}</td></tr>
+        {% empty %}
+          <tr><th>IVA</th><td class="cifra">{{ totales.total_impuestos|floatformat:"2u" }}</td></tr>
+        {% endfor %}
+        {% if factura.propina %}
+          <tr><th>PROPINA</th><td class="cifra">{{ factura.propina|floatformat:"2u" }}</td></tr>
+        {% endif %}
+        {% if factura.valor_ret_iva %}
+          <tr><th>IVA RETENIDO</th><td class="cifra">−{{ factura.valor_ret_iva|floatformat:"2u" }}</td></tr>
+        {% endif %}
+        {% if factura.valor_ret_renta %}
+          <tr><th>RENTA RETENIDA</th><td class="cifra">−{{ factura.valor_ret_renta|floatformat:"2u" }}</td></tr>
+        {% endif %}
+        <tr class="ride-total"><th>VALOR TOTAL</th><td class="cifra">{{ totales.importe_total|floatformat:"2u" }}</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  {% if informacion_adicional %}
+    <section class="ride-info">
+      <h2 class="ride-info-titulo">Información Adicional</h2>
+      <table class="ride-info-tabla">
+        <tbody>
+          {% for concepto, detalle in informacion_adicional %}
+            <tr><th>{{ concepto }}</th><td>{{ detalle }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </section>
+  {% endif %}
+
+  <footer class="ride-pie">
+    {% if not es_produccion %}
+      <p class="ride-pie-aviso">DOCUMENTO NO VÁLIDO PARA EFECTOS TRIBUTARIOS · AMBIENTE DE PRUEBAS</p>
+    {% endif %}
+    <p>
+      Representación impresa del comprobante electrónico autorizado por el SRI.
+      Para comprobar su validez, consulte el número de autorización en sri.gob.ec.
+    </p>
+  </footer>
+
+</article>
+
+{% endblock %}
+
+{% block scripts %}
+{# El tamaño del papel, el que se eligió: la hoja A4 o el tíquet de 80 mm. #}
+<style>
+  @page { size: {{ hoja.pagina }}; margin: {{ hoja.margen }}; }
+</style>
+<script>
+  document.getElementById('boton-imprimir').addEventListener('click', function () {
+    window.print();
+  });
+  {% if imprimir_ya %}window.print();{% endif %}
+</script>
+{% endblock %}

@@ -1,0 +1,21 @@
+{% comment %}Lo que se cobra con una nota de débito: el motivo y su valor.{% endcomment %}
+<div class="desliza">
+  <table class="table small libro {{ clase_tabla|default:'ride-lineas' }}">
+    <thead>
+      <tr>
+        <th>Motivo</th>
+        <th class="col-importe">Valor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for motivo in motivos %}
+        <tr>
+          <td>{{ motivo.razon }}</td>
+          <td class="col-importe cifra">{{ motivo.valor|floatformat:2 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="tenue" colspan="2">Esta nota no tiene motivos.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

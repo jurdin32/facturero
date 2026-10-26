@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block titulo %}Datos de {{ persona }}{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+Los datos de la cuenta y su clave. Los roles se cambian en la pantalla del usuario:
+aquí solo van el nombre, el correo y la clave, que es lo que se toca de vez en cuando.
+{% endcomment %}
+
+<div class="titulo-fila">
+  <div>
+    <p class="migas">
+      <a href="{% url 'seguridad:usuarios' %}">Usuarios y sus roles</a> ·
+      <a href="{% url 'seguridad:usuario' persona.pk %}">{{ persona.username }}</a> · datos
+    </p>
+    <h1 class="titulo">Datos de la cuenta</h1>
+    <p class="subtitulo">
+      {% if es_uno_mismo %}
+        Es su propia cuenta: si cambia la clave, tendrá que entrar con la nueva.
+      {% else %}
+        Cambie el nombre, el correo o la clave. Los roles se cambian en «Roles de la persona».
+      {% endif %}
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-datos-usuario" class="button primary">
+      <span class="mif-checkmark" aria-hidden="true"></span> Guardar los datos
+    </button>
+    <a class="button outline dark" href="{% url 'seguridad:usuarios' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-datos-usuario" novalidate>
+  {% csrf_token %}
+  {% if formulario.non_field_errors %}
+    <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+  {% endif %}
+
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">La cuenta</h2>
+        <div class="row">
+          {% for campo in formulario %}
+            {% if campo.name != "roles" %}
+              <div class="cell-12 cell-md-6">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Roles que lleva</h2>
+        {% for rol in persona.roles.all %}
+          <p class="chip primary"><span class="icon mif-security"></span><span class="label">{{ rol.nombre }}</span></p>
+        {% empty %}
+          <p class="tenue">Sin rol: no verá ninguna pantalla si la aplicación está en modo cerrado.</p>
+        {% endfor %}
+        <div class="acciones-apiladas">
+          <a class="button small outline primary" href="{% url 'seguridad:usuario' persona.pk %}">
+            <span class="mif-security"></span> Roles de la persona
+          </a>
+        </div>
+        <p class="ayuda">Los permisos de cada rol se cambian en «Roles y permisos».</p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

@@ -1,0 +1,52 @@
+{% comment %}
+Una línea del asiento. Los campos reales del formset van ocultos —son los que
+viajan al servidor— y en la tabla se lee el dato ya puesto. La línea se escribe
+en una ventana, no en una fila de controles.
+{% endcomment %}
+<tr class="linea{% if not fila.instance.pk and not fila.cuenta.value and not fila.descripcion.value and not fila.debe.value and not fila.haber.value and not fila.tercero.value and not fila.documento.value %} linea-vacia oculto{% endif %}" data-linea>
+  <td class="col-cuenta">
+    <span class="linea-dato" data-ver-cuenta>{{ fila.cuenta.value|default:"—" }}</span>
+    <span class="linea-oculta">
+      {{ fila.cuenta }}
+      {% for oculto in fila.hidden_fields %}{{ oculto }}{% endfor %}
+    </span>
+    {% if fila.cuenta.errors %}<span class="error">{{ fila.cuenta.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-descripcion">
+    <span class="linea-dato" data-ver-descripcion>{{ fila.descripcion.value|default:"—" }}</span>
+    <span class="linea-oculta">{{ fila.descripcion }}</span>
+    {% if fila.descripcion.errors %}<span class="error">{{ fila.descripcion.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-debe">
+    <span class="cifra" data-ver-debe>{% if fila.debe.value %}{{ fila.debe.value }}{% else %}—{% endif %}</span>
+    <span class="linea-oculta">{{ fila.debe }}</span>
+    {% if fila.debe.errors %}<span class="error">{{ fila.debe.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-haber">
+    <span class="cifra" data-ver-haber>{% if fila.haber.value %}{{ fila.haber.value }}{% else %}—{% endif %}</span>
+    <span class="linea-oculta">{{ fila.haber }}</span>
+    {% if fila.haber.errors %}<span class="error">{{ fila.haber.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-tercero">
+    <span class="linea-dato" data-ver-tercero>{{ fila.tercero.value|default:"—" }}</span>
+    <span class="linea-oculta">{{ fila.tercero }}</span>
+    {% if fila.tercero.errors %}<span class="error">{{ fila.tercero.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-documento">
+    <span class="linea-dato cifra" data-ver-documento>{{ fila.documento.value|default:"—" }}</span>
+    <span class="linea-oculta">{{ fila.documento }}</span>
+    {% if fila.documento.errors %}<span class="error">{{ fila.documento.errors.0 }}</span>{% endif %}
+  </td>
+  <td class="col-acciones">
+    <button type="button" class="button small square outline dark" data-editar-linea
+            title="Editar la línea" aria-label="Editar la línea"><span class="mif-pencil"></span></button>
+    <button type="button" class="quitar" data-quitar-linea tabindex="-1"
+            title="Quitar esta línea" aria-label="Quitar">&times;</button>
+    <span class="linea-oculta">{{ fila.DELETE }}</span>
+  </td>
+</tr>
+{% if fila.non_field_errors %}
+  <tr class="linea-error">
+    <td colspan="7"><span class="error">{{ fila.non_field_errors.0 }}</span></td>
+  </tr>
+{% endif %}

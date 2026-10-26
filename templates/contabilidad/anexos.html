@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block titulo %}Anexos del SRI{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Anexos del SRI</h1>
+    <p class="subtitulo">
+      ATS, RDEP y REOC generados desde los comprobantes autorizados y las retenciones.
+      Periodo {{ mes|stringformat:"02d" }}/{{ anio }}.
+    </p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="anio">Año</label>
+        <input class="campo-num" type="number" name="anio" id="anio" value="{{ anio }}" min="2000" max="9999">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="mes">Mes</label>
+        <input class="campo-num" type="number" name="mes" id="mes" value="{{ mes }}" min="1" max="12">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Cambiar periodo</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if resumen %}
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Ventas del mes</span>
+        <p class="cifra" style="font-size:1.4rem">{{ resumen.total_ventas|floatformat:2 }}</p>
+        <p class="ayuda">{{ resumen.ventas }} comprobante{{ resumen.ventas|pluralize }} autorizado{{ resumen.ventas|pluralize }}.</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Compras del mes</span>
+        <p class="cifra" style="font-size:1.4rem">{{ resumen.total_compras|floatformat:2 }}</p>
+        <p class="ayuda">{{ resumen.compras }} compra{{ resumen.compras|pluralize }} registrada{{ resumen.compras|pluralize }}.</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">IVA por pagar</span>
+        <p class="cifra" style="font-size:1.4rem">{{ iva.iva_por_pagar|floatformat:2 }}</p>
+        <p class="ayuda">Según el resumen del formulario 104.</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Retenciones del mes</span>
+        <p class="cifra" style="font-size:1.4rem">{{ total_retenido|floatformat:2 }}</p>
+        <p class="ayuda">{{ resumen.retenciones }} comprobante{{ resumen.retenciones|pluralize }} de retención.</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="bloque">
+        <h2 class="bloque-titulo">ATS</h2>
+        <p class="ayuda">Anexo Transaccional Simplificado: compras, ventas, retenciones y ventas por establecimiento. XML contra el XSD oficial.</p>
+        <p><a class="button primary" href="{% url 'contabilidad:descargar' 'ats' %}?anio={{ anio }}&mes={{ mes }}"><span class="mif-download"></span> Descargar ATS</a></p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque">
+        <h2 class="bloque-titulo">REOC</h2>
+        <p class="ayuda">Anexo de retenciones en la fuente por otros conceptos: las retenciones de renta aplicadas a proveedores.</p>
+        <p><a class="button primary" href="{% url 'contabilidad:descargar' 'reoc' %}?anio={{ anio }}&mes={{ mes }}"><span class="mif-download"></span> Descargar REOC</a></p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque">
+        <h2 class="bloque-titulo">RDEP</h2>
+        <p class="ayuda">Anexo anual de retenciones bajo relación de dependencia. {{ empleados|length }} empleado{{ empleados|length|pluralize }} registrado{{ empleados|length|pluralize }} para {{ anio }}.</p>
+        <p><a class="button primary" href="{% url 'contabilidad:descargar' 'rdep' %}?anio={{ anio }}"><span class="mif-download"></span> Descargar RDEP</a></p>
+      </div>
+    </div>
+  </div>
+
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">Resumen de IVA (formulario 104)</h2>
+        <div class="desliza"><table class="totales">
+          <tbody>
+            <tr><th>Ventas 0 %</th><td class="cifra">{{ iva.ventas.base_0|floatformat:2 }}</td></tr>
+            <tr><th>Ventas gravadas</th><td class="cifra">{{ iva.ventas.base_gravada|floatformat:2 }}</td></tr>
+            <tr><th>Ventas exentas</th><td class="cifra">{{ iva.ventas.base_exenta|floatformat:2 }}</td></tr>
+            <tr><th>IVA generado</th><td class="cifra">{{ iva.ventas.iva|floatformat:2 }}</td></tr>
+            <tr><th>Compras 0 %</th><td class="cifra">{{ iva.compras.base_0|floatformat:2 }}</td></tr>
+            <tr><th>Compras gravadas</th><td class="cifra">{{ iva.compras.base_gravada|floatformat:2 }}</td></tr>
+            <tr><th>IVA crédito tributario</th><td class="cifra">{{ iva.compras.iva|floatformat:2 }}</td></tr>
+            <tr><th>Retención de IVA</th><td class="cifra">{{ iva.retencion_iva|floatformat:2 }}</td></tr>
+            <tr class="fila-madre"><th>IVA por pagar</th><td class="cifra">{{ iva.iva_por_pagar|floatformat:2 }}</td></tr>
+          </tbody>
+        </table></div>
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Retenciones (formulario 103)</h2>
+        {% if retenciones.filas %}
+          <div class="desliza"><table class="table small libro">
+            <thead><tr><th>Impuesto</th><th>Código</th><th class="col-dato">Base</th><th class="col-dato">%</th><th class="col-dato">Valor</th></tr></thead>
+            <tbody>
+              {% for fila in retenciones.filas %}
+                <tr>
+                  <td>{% if fila.codigo == '1' %}Renta{% elif fila.codigo == '2' %}IVA{% else %}ISD{% endif %}</td>
+                  <td class="cifra">{{ fila.codigo_retencion }}</td>
+                  <td class="col-dato cifra">{{ fila.base|floatformat:2 }}</td>
+                  <td class="col-dato cifra">{{ fila.porcentaje|floatformat:2 }}</td>
+                  <td class="col-dato cifra">{{ fila.valor|floatformat:2 }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        {% else %}
+          <p class="tenue">No hay retenciones autorizadas en el mes.</p>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Antes de presentar</h2>
+        <p class="ayuda">El ATS exige que cada compra tenga número de autorización. Si falta, la descarga se detiene y dice cuál es.</p>
+        <p><a class="enlace" href="{% url 'contabilidad:iva' %}?anio={{ anio }}&mes={{ mes }}">Ver el detalle de IVA</a></p>
+        <p><a class="enlace" href="{% url 'contabilidad:retenciones' %}?anio={{ anio }}&mes={{ mes }}">Ver el detalle de retenciones</a></p>
+        <p><a class="enlace" href="{% url 'contabilidad:empleados' %}?anio={{ anio }}">Empleados del RDEP</a></p>
+        <p><a class="enlace" href="{% url 'contabilidad:descargar' 'compras-ventas' %}?anio={{ anio }}&mes={{ mes }}">Registro de compras y ventas (CSV)</a></p>
+      </div>
+    </aside>
+  </div>
+{% else %}
+  <div class="vacio">
+    <p>No se pudo preparar el resumen de anexos.</p>
+    <p class="tenue">Revise la configuración del emisor y la configuración contable.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

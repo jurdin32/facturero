@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nueva %}Nueva compra{% else %}Compra {{ compra.numero_con_guiones }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<form method="post" novalidate>{% csrf_token %}
+  <div class="titulo-fila">
+    <div>
+      <h1 class="titulo">{% if es_nueva %}Registrar una compra{% else %}{{ compra.proveedor.razon_social }}{% endif %}</h1>
+      <p class="subtitulo">
+        {% if es_nueva %}La factura del proveedor, para contabilizarla y para el ATS.
+        {% else %}{{ compra.get_tipo_comprobante_display }} {{ compra.numero_con_guiones }} · {{ compra.fecha|date:"d/m/Y" }}{% endif %}
+        · <a class="enlace" href="{% url 'contabilidad:compras' %}">volver a compras</a>
+      </p>
+    </div>
+    <div class="titulo-acciones">
+      <button type="submit" name="accion" value="guardar" class="button outline dark"><span class="mif-save"></span> Guardar</button>
+      <button type="submit" name="accion" value="contabilizar" class="button success"
+              data-confirmar="Se guarda la compra y se genera su asiento contable. Revise el proveedor, las bases y el IVA antes de continuar."
+              data-titulo="Contabilizar la compra" data-aceptar="Contabilizar"><span class="mif-check"></span> Guardar y contabilizar</button>
+    </div>
+  </div>
+
+  {% if formulario.non_field_errors %}<p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>{% endif %}
+
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">El comprobante del proveedor</h2>
+        <div class="row">
+          {% for campo in formulario %}
+            {% if campo.name in "proveedor,tipo_comprobante,cod_sustento,numero,autorizacion,fecha,concepto,forma_pago" %}
+              <div class="cell-12 cell-md-6">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                  {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Bases e impuestos</h2>
+        <div class="row">
+          {% for campo in formulario %}
+            {% if campo.name in "base_no_grava,base_exenta,base_iva_0,base_iva,valor_iva,propina,total" %}
+              <div class="cell-12 cell-md-4">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+        <p class="ayuda">Si deja el total en cero, se calcula con las bases, el IVA y la propina.</p>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen pega">
+        <h2 class="bloque-titulo">Contabilización</h2>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.cuenta.id_for_label }}">{{ formulario.cuenta.label }}</label>
+          {{ formulario.cuenta }}
+          {% if formulario.cuenta.errors %}<p class="error">{{ formulario.cuenta.errors.0 }}</p>{% endif %}
+          <p class="ayuda">{{ formulario.cuenta.help_text }}</p>
+        </div>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.retencion.id_for_label }}">{{ formulario.retencion.label }}</label>
+          {{ formulario.retencion }}
+          <p class="ayuda">Si la compra tiene retención, el ATS y el REOC la toman de aquí.</p>
+        </div>
+        {% if compra.asiento_id %}
+          <p class="tenue">Asiento <a class="enlace" href="{% url 'contabilidad:asiento_detalle' compra.asiento_id %}">{{ compra.asiento.numero }}</a></p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

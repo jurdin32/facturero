@@ -1,0 +1,376 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Caja{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Caja</h1>
+    <p class="subtitulo">
+      Efectivo del turno de {{ request.user.get_username }} ·
+      {% if sesion %}abierta el {{ sesion.abierta_en|date:"d/m/Y H:i" }}{% else %}sin caja abierta{% endif %}
+    </p>
+  </div>
+</div>
+
+{% if sesion %}
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Efectivo inicial</span>
+        <p class="cifra" style="font-size:1.5rem">{{ sesion.saldo_inicial|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Ingresos</span>
+        <p class="cifra entra" style="font-size:1.5rem">{{ sesion.total_ingresos|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Egresos</span>
+        <p class="cifra sale" style="font-size:1.5rem">{{ sesion.total_egresos|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-3">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Saldo esperado</span>
+        <p class="cifra" style="font-size:1.5rem">{{ sesion.saldo_esperado|floatformat:2 }}</p>
+      </div>
+    </div>
+  </div>
+
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <div class="bloque-cabecera">
+          <h2 class="bloque-titulo">Movimientos del turno</h2>
+          {% puede_escribir "caja" as puede_caja %}{% if puede_caja %}
+            <button type="button" class="button small success" data-abrir-modal="modal-movimiento">
+              <span class="mif-plus" aria-hidden="true"></span> Registrar movimiento
+            </button>
+          {% endif %}
+        </div>
+
+        <form class="filtros" method="get">
+          <div class="row">
+            <div class="cell-12 cell-md-6 cell-lg-6">
+              <div class="filtro">
+                <label class="etiqueta" for="q">Buscar</label>
+                <input type="search" name="q" id="q" value="{{ filtros.q }}"
+                       data-role="input" data-clear-button="true"
+                       data-prepend="<span class='mif-search'></span>"
+                       placeholder="Concepto o referencia">
+              </div>
+            </div>
+            <div class="cell-12 cell-md-6 cell-lg-3">
+              <div class="filtro">
+                <label class="etiqueta" for="tipo">Tipo</label>
+                <select name="tipo" id="tipo" data-role="select" data-prepend="<span class='mif-swap'></span>">
+                  <option value="">Todo</option>
+                  <option value="ingreso" {% if filtros.tipo == 'ingreso' %}selected{% endif %}>Ingresos</option>
+                  <option value="egreso" {% if filtros.tipo == 'egreso' %}selected{% endif %}>Egresos</option>
+                </select>
+              </div>
+            </div>
+            <div class="cell-12 cell-md-6 cell-lg-3">
+              <div class="filtro filtro-boton">
+                <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+                <a class="enlace" href="{% url 'caja:tablero' %}">Limpiar</a>
+              </div>
+            </div>
+          </div>
+        </form>
+
+        {% if movimientos %}
+          <div class="desliza"><table class="table small libro">
+            <thead>
+              <tr>
+                <th>Fecha</th>
+                <th>Tipo</th>
+                <th>Concepto</th>
+                <th>Referencia</th>
+                <th class="col-dato">Importe</th>
+                <th>Usuario</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for movimiento in movimientos %}
+                <tr>
+                  <td class="cifra">{{ movimiento.fecha|date:"d/m/Y H:i" }}</td>
+                  <td>
+                    <span class="chip {% if movimiento.tipo == 'ingreso' %}success{% else %}alert{% endif %} soft">
+                      <span class="label">{{ movimiento.get_tipo_display }}</span>
+                    </span>
+                  </td>
+                  <td>{{ movimiento.concepto }}</td>
+                  <td>{{ movimiento.referencia|default:"—" }}</td>
+                  <td class="col-dato cifra {% if movimiento.tipo == 'ingreso' %}entra{% else %}sale{% endif %}">
+                    {{ movimiento.signo }}{{ movimiento.importe|floatformat:2 }}
+                  </td>
+                  <td>{{ movimiento.usuario.get_username|default:"—" }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        {% else %}
+          <div class="vacio caja-vacio">
+            <p>No hay movimientos con esos filtros.</p>
+            <p class="tenue">Registre el primer ingreso o egreso del turno.</p>
+          </div>
+        {% endif %}
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Qué se puede hacer</h2>
+        <p class="ayuda">
+          El efectivo del turno se mueve con ingresos y egresos, y se cierra contando
+          los billetes y las monedas. El saldo esperado ahora mismo es
+          <strong class="cifra">{{ sesion.saldo_esperado|floatformat:2 }}</strong>.
+        </p>
+        <div class="acciones-apiladas">
+          {% puede_escribir "caja" as puede_caja %}{% if puede_caja %}
+            <button type="button" class="button success" data-abrir-modal="modal-movimiento">
+              <span class="mif-plus" aria-hidden="true"></span> Registrar movimiento
+            </button>
+            <button type="button" class="button outline alert" data-abrir-modal="modal-cierre">
+              <span class="mif-lock" aria-hidden="true"></span> Cerrar caja
+            </button>
+          {% else %}
+            <p class="ayuda">Solo puede mirar el turno: para mover o cerrar la caja hace falta permiso de escritura.</p>
+          {% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+
+  {# ------------------------------------------------ la ventana del movimiento #}
+  <div class="modal-caja" id="modal-movimiento" hidden>
+    <div class="modal-caja-panel" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-movimiento">
+      <header class="modal-caja-cabecera">
+        <h2 class="modal-caja-titulo" id="titulo-modal-movimiento">
+          <span class="mif-swap" aria-hidden="true"></span> Registrar movimiento
+        </h2>
+        <button type="button" class="modal-caja-cerrar" data-cerrar-modal aria-label="Cerrar la ventana">
+          <span class="mif-cancel" aria-hidden="true"></span>
+        </button>
+      </header>
+      <form method="post" novalidate class="modal-caja-formulario">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="movimiento">
+        <div class="modal-caja-cuerpo">
+          {% for campo in formulario_movimiento %}
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+              {{ campo }}
+              {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+              {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+            </div>
+          {% endfor %}
+        </div>
+        <footer class="modal-caja-pie">
+          <button type="button" class="button dark outline" data-cerrar-modal>Cancelar</button>
+          <button type="submit" class="button success">
+            <span class="mif-plus" aria-hidden="true"></span> Añadir movimiento
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+
+  {# -------------------------------------------------- la ventana del cierre #}
+  <div class="modal-caja" id="modal-cierre" hidden>
+    <div class="modal-caja-panel modal-caja-ancha" role="dialog" aria-modal="true" aria-labelledby="titulo-modal-cierre">
+      <header class="modal-caja-cabecera">
+        <h2 class="modal-caja-titulo" id="titulo-modal-cierre">
+          <span class="mif-lock" aria-hidden="true"></span> Cerrar la caja del turno
+        </h2>
+        <button type="button" class="modal-caja-cerrar" data-cerrar-modal aria-label="Cerrar la ventana">
+          <span class="mif-cancel" aria-hidden="true"></span>
+        </button>
+      </header>
+      <form method="post" novalidate class="modal-caja-formulario" data-desglose>
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="cerrar">
+        <div class="modal-caja-cuerpo">
+          <p class="ayuda">
+            Cuente los billetes y las monedas: cada línea se multiplica sola y el total
+            se compara con el saldo esperado, que es
+            <strong class="cifra">{{ sesion.saldo_esperado|floatformat:2 }}</strong>.
+          </p>
+
+          <table class="table small desglose" data-tabla-desglose>
+            <thead>
+              <tr>
+                <th>Billetes y monedas</th>
+                <th class="col-dato">Cantidad</th>
+                <th class="col-dato">Subtotal</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for renglon in formulario_cerrar.renglones %}
+                <tr class="{% if not renglon.es_billete %}desglose-moneda{% endif %}">
+                  <td class="cifra">{{ renglon.valor|floatformat:2 }}</td>
+                  <td class="col-dato">{{ renglon.campo }}</td>
+                  <td class="col-dato cifra" data-subtotal="{{ renglon.valor|stringformat:'.2f' }}">
+                    {{ renglon.subtotal|floatformat:2 }}
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+            <tfoot>
+              <tr class="totales">
+                <th>Total contado</th>
+                <th></th>
+                <th class="col-dato cifra" data-total-desglose>{{ formulario_cerrar.saldo_declarado.value|default:'0,00' }}</th>
+              </tr>
+            </tfoot>
+          </table>
+
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario_cerrar.saldo_declarado.id_for_label }}">
+              {{ formulario_cerrar.saldo_declarado.label }} (si el conteo se hizo aparte)
+            </label>
+            {{ formulario_cerrar.saldo_declarado }}
+            {% if formulario_cerrar.saldo_declarado.errors %}
+              <p class="error">{{ formulario_cerrar.saldo_declarado.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario_cerrar.observaciones_cierre.id_for_label }}">
+              {{ formulario_cerrar.observaciones_cierre.label }}
+            </label>
+            {{ formulario_cerrar.observaciones_cierre }}
+            {% if formulario_cerrar.observaciones_cierre.errors %}
+              <p class="error">{{ formulario_cerrar.observaciones_cierre.errors.0 }}</p>
+            {% endif %}
+          </div>
+
+          {% if formulario_cerrar.non_field_errors %}
+            <p class="error">{{ formulario_cerrar.non_field_errors.0 }}</p>
+          {% endif %}
+        </div>
+        <footer class="modal-caja-pie">
+          <button type="button" class="button dark outline" data-cerrar-modal>Cancelar</button>
+          <button type="submit" class="button outline alert">
+            <span class="mif-lock" aria-hidden="true"></span> Cerrar caja
+          </button>
+        </footer>
+      </form>
+    </div>
+  </div>
+{% else %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <div class="aviso aviso-info">
+        No hay una caja abierta. Ábrala para controlar el efectivo de su turno.
+      </div>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Abrir caja</h2>
+        <form method="post" novalidate>
+          {% csrf_token %}
+          <input type="hidden" name="accion" value="abrir">
+          <div class="row">
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario_abrir.saldo_inicial.id_for_label }}">{{ formulario_abrir.saldo_inicial.label }}</label>
+                {{ formulario_abrir.saldo_inicial }}
+                {% if formulario_abrir.saldo_inicial.errors %}<p class="error">{{ formulario_abrir.saldo_inicial.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <div class="cell-12 cell-md-8">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario_abrir.observaciones.id_for_label }}">{{ formulario_abrir.observaciones.label }}</label>
+                {{ formulario_abrir.observaciones }}
+                {% if formulario_abrir.observaciones.errors %}<p class="error">{{ formulario_abrir.observaciones.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+          </div>
+          <div class="acciones-fila">
+            <button type="submit" class="button success"><span class="mif-unlock"></span> Abrir caja</button>
+          </div>
+        </form>
+      </section>
+
+      {% if ultima_cerrada %}
+        <section class="bloque">
+          <h2 class="bloque-titulo">Último cierre</h2>
+          <p class="ayuda">
+            {{ ultima_cerrada.abierta_en|date:"d/m/Y H:i" }} —
+            {{ ultima_cerrada.cerrada_en|date:"d/m/Y H:i" }}
+          </p>
+          <table class="totales">
+            <tbody>
+              <tr><th>Saldo inicial</th><td class="cifra">{{ ultima_cerrada.saldo_inicial|floatformat:2 }}</td></tr>
+              <tr><th>Saldo esperado</th><td class="cifra">{{ ultima_cerrada.saldo_esperado|floatformat:2 }}</td></tr>
+              <tr><th>Efectivo contado</th><td class="cifra">{{ ultima_cerrada.saldo_declarado|floatformat:2 }}</td></tr>
+              <tr>
+                <th>Diferencia</th>
+                <td class="cifra {% if ultima_cerrada.diferencia %}sale{% else %}entra{% endif %}">
+                  {{ ultima_cerrada.diferencia|floatformat:2 }}
+                </td>
+              </tr>
+            </tbody>
+          </table>
+
+          {% if ultima_cerrada.desglose %}
+            <p class="ayuda">Desglose del efectivo contado:</p>
+            <table class="table small libro desglose">
+              <thead><tr><th>Billetes y monedas</th><th class="col-dato">Cantidad</th><th class="col-dato">Subtotal</th></tr></thead>
+              <tbody>
+                {% for renglon in ultima_cerrada.renglones_del_desglose %}{% if renglon.cantidad %}
+                  <tr>
+                    <td class="cifra">{{ renglon.valor|floatformat:2 }}</td>
+                    <td class="col-dato cifra">{{ renglon.cantidad }}</td>
+                    <td class="col-dato cifra">{{ renglon.subtotal|floatformat:2 }}</td>
+                  </tr>
+                {% endif %}{% endfor %}
+              </tbody>
+            </table>
+          {% endif %}
+
+          <div class="acciones-fila">
+            <a class="button small primary" href="{% url 'caja:acta' ultima_cerrada.pk %}" target="_blank" rel="noopener">
+              <span class="mif-description"></span> Acta de cierre en PDF
+            </a>
+          </div>
+        </section>
+      {% endif %}
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Cierres anteriores</h2>
+        {% if historial %}
+          <table class="table small libro">
+            <thead><tr><th>Fecha</th><th class="col-dato">Diferencia</th><th>Acta</th></tr></thead>
+            <tbody>
+              {% for cierre in historial %}
+                <tr>
+                  <td class="cifra">{{ cierre.cerrada_en|date:"d/m/Y H:i" }}</td>
+                  <td class="col-dato cifra {% if cierre.diferencia %}sale{% else %}entra{% endif %}">
+                    {{ cierre.diferencia|floatformat:2 }}
+                  </td>
+                  <td>
+                    <a href="{% url 'caja:acta' cierre.pk %}" target="_blank" rel="noopener"
+                       title="Acta de cierre en PDF"><span class="mif-description"></span> PDF</a>
+                  </td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        {% else %}
+          <p class="tenue">Todavía no hay cierres.</p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,72 @@
+{% comment %}
+Lo que se retiene: por cada documento del proveedor, el IVA que trae y lo que se le
+retiene encima (renta, IVA o ISD).
+{% endcomment %}
+{% for sustento in docs_sustento %}
+  <section class="bloque ride-sustento">
+    <p class="ride-etiqueta">Documento del proveedor</p>
+    <p class="ride-receptor">{{ sustento }}</p>
+
+    <div class="desliza">
+      <table class="table small libro {{ clase_tabla|default:'ride-lineas' }}">
+        <thead>
+          <tr>
+            <th>Impuesto</th>
+            <th>IVA del documento</th>
+            <th class="col-precio">Base imponible</th>
+            <th class="col-importe">Valor</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for impuesto in sustento.impuestos.all %}
+            <tr>
+              <td>{{ impuesto.get_codigo_display|default:impuesto.codigo }}</td>
+              <td class="cifra">{{ impuesto.codigo_porcentaje }}</td>
+              <td class="col-precio cifra">{{ impuesto.base_imponible|floatformat:2 }}</td>
+              <td class="col-importe cifra">{{ impuesto.valor|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="tenue" colspan="4">No se puso el IVA del documento.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="desliza">
+      <table class="table small libro {{ clase_tabla|default:'ride-lineas' }}">
+        <thead>
+          <tr>
+            <th>Se retiene</th>
+            <th>Código</th>
+            <th class="col-precio">Base imponible</th>
+            <th class="col-descuento">% a retener</th>
+            <th class="col-importe">Valor retenido</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for retencion in sustento.retenciones.all %}
+            <tr>
+              <td>{{ retencion.get_codigo_display|default:retencion.codigo }}</td>
+              <td class="cifra">{{ retencion.codigo_retencion }}</td>
+              <td class="col-precio cifra">{{ retencion.base_imponible|floatformat:2 }}</td>
+              <td class="col-descuento cifra">{{ retencion.porcentaje_retener|floatformat:"-2" }} %</td>
+              <td class="col-importe cifra">{{ retencion.valor_retenido|floatformat:2 }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="tenue" colspan="5">Todavía no se ha puesto qué se retiene.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% empty %}
+  <p class="tenue">Este comprobante no tiene documento de sustento.</p>
+{% endfor %}
+
+{% if objeto.total_retenido %}
+  <div class="desliza caja-totales"><table class="totales">
+    <tbody>
+      <tr class="total-final"><th>Total retenido</th><td class="cifra">{{ objeto.total_retenido|floatformat:2 }}</td></tr>
+    </tbody>
+  </table></div>
+{% endif %}

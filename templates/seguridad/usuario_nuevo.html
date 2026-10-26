@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+{% block titulo %}Nuevo usuario{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+El alta de una persona desde la aplicación: sus datos, su clave y los roles que va a
+llevar, en una sola hoja. La cuenta queda lista para entrar en el momento.
+{% endcomment %}
+
+<div class="titulo-fila">
+  <div>
+    <p class="migas"><a href="{% url 'seguridad:usuarios' %}">Usuarios y sus roles</a> · nuevo</p>
+    <h1 class="titulo">Nuevo usuario</h1>
+    <p class="subtitulo">
+      Con su clave y el rol que le toque, la persona puede entrar en cuanto se guarde.
+      Los roles se crean en «Roles y permisos».
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-usuario-nuevo" class="button primary">
+      <span class="mif-checkmark" aria-hidden="true"></span> Crear el usuario
+    </button>
+    <a class="button outline dark" href="{% url 'seguridad:usuarios' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-usuario-nuevo" novalidate>
+  {% csrf_token %}
+  {% if formulario.non_field_errors %}
+    <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+  {% endif %}
+
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">La cuenta</h2>
+        <div class="row">
+          {% for campo in formulario %}
+            {% if campo.name != "roles" %}
+              <div class="cell-12 cell-md-6">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">{{ formulario.roles.label }}</h2>
+        <p class="subtitulo">{{ formulario.roles.help_text }}</p>
+        {% if roles %}
+          <div class="roles">
+            {% for rol in roles %}
+              <label class="rol-opcion">
+                <input type="checkbox" name="roles" value="{{ rol.pk }}" id="rol-{{ rol.pk }}">
+                <span class="rol-datos">
+                  <span class="rol-nombre">{{ rol.nombre }}</span>
+                  <span class="rol-meta">
+                    {{ rol.descripcion|default:"Sin descripción" }} ·
+                    <span class="cifra">{{ rol.permisos.count }}</span> de {{ opciones_totales|default:"—" }} opciones
+                  </span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="vacio">
+            <p>Todavía no hay roles que dar.</p>
+            <p><a class="button primary" href="{% url 'seguridad:rol_nuevo' %}"><span class="mif-plus"></span> Crear un rol</a></p>
+          </div>
+        {% endif %}
+        {% if formulario.roles.errors %}<p class="error">{{ formulario.roles.errors.0 }}</p>{% endif %}
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Antes de guardar</h2>
+        <ul class="lista-ayuda">
+          <li>El nombre de usuario es con el que se entra: no se puede repetir.</li>
+          <li>La clave se guarda cifrada; nadie puede leerla después.</li>
+          <li>Sin rol, la persona entra pero no ve nada si la aplicación está en modo cerrado.</li>
+          <li>Los permisos de cada rol se cambian en «Roles y permisos».</li>
+        </ul>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

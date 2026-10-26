@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Balance de comprobación{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Balance de comprobación</h1>
+    <p class="subtitulo">Sumas y saldos del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}.</p>
+  </div>
+  <a class="button outline dark" href="{% url 'contabilidad:libro_diario' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Libro diario</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Cuenta</th>
+        <th class="col-dato">Sumas debe</th>
+        <th class="col-dato">Sumas haber</th>
+        <th class="col-dato">Saldo deudor</th>
+        <th class="col-dato">Saldo acreedor</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+        <tr{% if fila.es_madre %} class="fila-madre"{% endif %}>
+          <td class="cifra">{{ fila.codigo }}</td>
+          <td style="padding-left: {% widthratio fila.nivel 1 14 %}px">
+            {% if fila.es_madre %}<strong>{{ fila.nombre }}</strong>{% else %}{{ fila.nombre }}{% endif %}
+          </td>
+          <td class="col-dato cifra">{{ fila.debe|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ fila.haber|floatformat:2 }}</td>
+          <td class="col-dato cifra">{% if fila.saldo_deudor %}{{ fila.saldo_deudor|floatformat:2 }}{% endif %}</td>
+          <td class="col-dato cifra">{% if fila.saldo_acreedor %}{{ fila.saldo_acreedor|floatformat:2 }}{% endif %}</td>
+        </tr>
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="2">Totales</th>
+        <th class="col-dato cifra">{{ total_debe|floatformat:2 }}</th>
+        <th class="col-dato cifra">{{ total_haber|floatformat:2 }}</th>
+        <th colspan="2"></th>
+      </tr>
+    </tfoot>
+  </table></div>
+  <p class="ayuda">Las cuentas madre suman a sus hijas. Los totales de debe y haber son los de las cuentas de último nivel.</p>
+{% else %}
+  <div class="vacio"><p>No hay movimientos contabilizados en ese rango.</p></div>
+{% endif %}
+
+{% endblock %}

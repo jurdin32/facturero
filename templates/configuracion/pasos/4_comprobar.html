@@ -1,0 +1,73 @@
+{% comment %}
+Paso 4: la comprobación. Se corre lo mismo que `manage.py check` para la app del
+SRI y se enseña el informe de la firma. La prueba de conexión sí sale a la red,
+así que solo se hace si se pide con el botón.
+{% endcomment %}
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Lo que dice el paquete</h2>
+
+  {% if comprobaciones.mensajes %}
+    {% for mensaje in comprobaciones.mensajes %}
+      <div class="aviso aviso-{% if mensaje.is_serious %}error{% else %}warning{% endif %}">
+        <strong>{{ mensaje }}</strong>
+        {% if mensaje.hint %}<br>{{ mensaje.hint }}{% endif %}
+        <br><span class="tenue mono">{{ mensaje.id }}</span>
+      </div>
+    {% endfor %}
+  {% else %}
+    <div class="aviso aviso-success">Ni un reparo: la configuración está completa.</div>
+  {% endif %}
+
+  {% for aviso in comprobaciones.firma.avisos %}
+    <div class="aviso aviso-warning">{{ aviso }}</div>
+  {% endfor %}
+</section>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">La firma electrónica</h2>
+  {% if comprobaciones.firma.ok %}
+    <dl class="lista-datos">
+      <dt>Titular</dt><dd>{{ firma_titular|default:"—" }}</dd>
+      <dt>RUC del certificado</dt><dd class="mono">{{ comprobaciones.firma.ruc|default:"—" }}</dd>
+      <dt>Válido</dt>
+      <dd>
+        {% if comprobaciones.firma.valido_desde %}desde el {{ comprobaciones.firma.valido_desde|date:"d/m/Y" }}{% endif %}
+        {% if comprobaciones.firma.valido_hasta %} hasta el {{ comprobaciones.firma.valido_hasta|date:"d/m/Y" }}{% endif %}
+        {% if comprobaciones.firma.dias_restantes is not None %} · {{ comprobaciones.firma.dias_restantes }} días{% endif %}
+      </dd>
+      <dt>Emitido por</dt><dd>{{ firma_emisor|default:"—" }}</dd>
+    </dl>
+  {% else %}
+    <div class="aviso aviso-error">{{ comprobaciones.firma.problemas.0|default:"No hay certificado que revisar." }}</div>
+  {% endif %}
+</section>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Que el SRI conteste</h2>
+  <p class="ayuda">
+    Pregunta por el RUC <span class="mono">{{ configuracion.ruc }}</span> al catastro del
+    SRI. Es la forma de saber que hay conexión antes de intentar emitir. Necesita
+    internet.
+  </p>
+  <form method="post" action="{% url 'configuracion:probar_sri' %}">{% csrf_token %}
+    <input type="hidden" name="c" value="{{ configuracion.pk }}">
+    <button type="submit" class="button outline dark">
+      <span class="mif-refresh" aria-hidden="true"></span> Probar la conexión
+    </button>
+  </form>
+</section>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Cuando todo esté en orden</h2>
+  <p class="ayuda">
+    Ya se puede facturar. Las facturas se firman con este certificado y se envían
+    al SRI desde la pantalla de facturar.
+  </p>
+  <div class="acciones-fila">
+    <a class="button primary" href="{% url 'facturacion:facturar' %}">
+      <span class="mif-receipt" aria-hidden="true"></span> Emitir una factura
+    </a>
+    <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=1&c={{ configuracion.pk }}">Repasar los datos</a>
+  </div>
+</section>

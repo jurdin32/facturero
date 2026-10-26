@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block titulo %}{{ tabla.titulo }}{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+Un reporte: el filtro del período arriba, las cifras destacadas, la tabla y las
+notas. Los botones de PDF y de Excel son la misma dirección con otro formato, así
+que el período viaja con ellos.
+{% endcomment %}
+
+{% url 'reportes:reporte' definicion.clave as el_reporte %}
+
+<div class="titulo-fila">
+  <div>
+    <p class="migas"><a href="{% url 'reportes:indice' %}">Reportes y estadísticas</a> · {{ definicion.grupo }}</p>
+    <h1 class="titulo">{{ tabla.titulo }}</h1>
+    <p class="subtitulo">{{ tabla.subtitulo }}</p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button small" href="{% url 'reportes:indice' %}"><span class="mif-arrow-left"></span> Volver</a>
+    <a class="button primary small" href="{{ el_reporte }}?{{ filtro.consulta }}&amp;formato=pdf" target="_blank" rel="noopener">
+      <span class="mif-description"></span> PDF
+    </a>
+    <a class="button small" href="{{ el_reporte }}?{{ filtro.consulta }}&amp;formato=xlsx">
+      <span class="mif-download"></span> Excel
+    </a>
+  </div>
+</div>
+
+<form class="filtros" method="get" action="{{ el_reporte }}">
+  <div class="row">
+    <div class="cell-12 cell-md-4 cell-lg-3">
+      <div class="filtro">
+        <label class="etiqueta" for="periodo">Período</label>
+        <select class="select" name="periodo" id="periodo">
+          {% for clave, nombre in periodos %}
+            <option value="{{ clave }}"{% if clave == filtro.clave %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input type="date" class="campo" name="desde" id="desde" value="{{ filtro.desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input type="date" class="campo" name="hasta" id="hasta" value="{{ filtro.hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    {% if cuentas %}
+      <div class="cell-12 cell-md-4 cell-lg-3">
+        <div class="filtro">
+          <label class="etiqueta" for="cuenta">Cuenta</label>
+          <select class="select" name="cuenta" id="cuenta">
+            {% for cuenta in cuentas %}
+              <option value="{{ cuenta.pk }}"{% if filtro.cuenta == cuenta.pk %} selected{% endif %}>
+                {{ cuenta.codigo }} · {{ cuenta.nombre }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+    {% endif %}
+    <div class="cell-12 cell-md-2 cell-lg-2">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if tabla.resumen %}
+  <div class="reporte-metricas">
+    {% for etiqueta, valor in tabla.resumen %}
+      <div class="metrica">
+        <span class="metrica-etiqueta">{{ etiqueta }}</span>
+        <span class="metrica-valor">{{ valor }}</span>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+{% if tabla.grafico %}
+  <section class="bloque">
+    <h2 class="bloque-titulo">Cómo se movió el período</h2>
+    <div class="serie" role="img" aria-label="Serie de valores por día">
+      {% for barra in tabla.barras %}
+        <div class="serie-item" title="{{ barra.etiqueta }}: {{ barra.texto }}">
+          <span class="serie-barra" style="height: {{ barra.alto|floatformat:1 }}%"></span>
+          <span class="serie-etiqueta">{{ barra.etiqueta }}</span>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% endif %}
+
+<section class="bloque">
+  {% if tabla.filas %}
+    <div class="desliza">
+      <table class="table small libro reporte-tabla">
+        <thead>
+          <tr>
+            {% for columna in tabla.columnas %}
+              <th class="col-{{ columna.alinear }}">{{ columna.titulo }}</th>
+            {% endfor %}
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in renglones %}
+            <tr>
+              {% for celda in fila %}
+                <td class="{{ celda.clase }}">{{ celda.texto }}</td>
+              {% endfor %}
+            </tr>
+          {% endfor %}
+        </tbody>
+        {% if totales %}
+          <tfoot>
+            <tr class="totales">
+              {% for celda in totales %}
+                <td class="{{ celda.clase }}">{{ celda.texto }}</td>
+              {% endfor %}
+            </tr>
+          </tfoot>
+        {% endif %}
+      </table>
+    </div>
+    <p class="ayuda">{{ tabla.cuantas }} fila{{ tabla.cuantas|pluralize }} · {{ ficha.periodo }}.</p>
+  {% else %}
+    <p class="vacio">{{ tabla.sin_datos }}</p>
+  {% endif %}
+</section>
+
+{% if tabla.notas %}
+  <section class="bloque bloque-suave reporte-notas">
+    <h2 class="bloque-titulo">De dónde sale este reporte</h2>
+    <ul class="lista-ayuda">
+      {% for nota in tabla.notas %}
+        <li>{{ nota }}</li>
+      {% endfor %}
+    </ul>
+  </section>
+{% endif %}
+
+{% endblock %}

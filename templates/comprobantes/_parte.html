@@ -1,0 +1,23 @@
+{% comment %}
+La barra del buscador de la otra parte dentro de una cabecera repetible (a quién se le
+entrega una guía): el campo va oculto y se ve el nombre. El botón abre la ventana de
+clientes y llena los campos que dice ``data-llena`` —el nombre, la identificación, el
+tipo y la dirección—, buscándolos dentro de esa misma cabecera.
+{% endcomment %}
+<div class="cell-12 cell-md-4">
+  <div class="campo-caja">
+    <label class="etiqueta" for="{{ campo.id_for_label }}_nombre">{{ campo.label }}</label>
+    <div class="buscador-barra" data-buscador="{{ campo.field.widget.attrs.buscador }}"
+         data-llena="{{ campo.field.widget.attrs.llena }}"
+         data-url="{% url 'facturacion:buscar_clientes' %}">
+      {{ campo }}
+      <input type="text" id="{{ campo.id_for_label }}_nombre"
+             class="buscador-barra-campo" readonly autocomplete="off"
+             value="{{ valor|default:'' }}" placeholder="Busque y elija…">
+      <button type="button" class="button primary" data-buscar>
+        <span class="mif-search" aria-hidden="true"></span> Buscar y elegir
+      </button>
+    </div>
+    {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+  </div>
+</div>

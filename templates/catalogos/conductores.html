@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}Conductores{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Conductores</h1>
+    <p class="subtitulo">
+      {{ cuantos_activos }} de {{ cuantos }} se ofrecen al hacer la guía ·
+      <a class="enlace" href="{% url 'comprobantes:lista' 'guias-remision' %}">ver las guías</a>
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+</div>
+
+{% if conductores %}
+  <div class="desliza"><table id="tabla-conductores" class="table small libro listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Conductor</th>
+        <th class="col-dato">Guías</th>
+        <th class="col-dato">Teléfono</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in conductores %}
+        <tr>
+          <td class="col-marca">
+            <span class="marca {% if not c.activo %}tenue{% endif %}">
+              <span class="mif-person-card"></span>
+            </span>
+          </td>
+          <td class="col-principal">
+            <span class="listado-titulo {% if not c.activo %}tenue{% endif %}">{{ c.razon_social }}</span>
+            <span class="listado-meta cifra">
+              {{ c.get_tipo_identificacion_display }} · {{ c.identificacion }}
+            </span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-dato" title="Guías de remisión con este transportista">
+              <span class="mif-truck"></span>
+              <span class="cifra">{{ c.cuantas_guias }}</span>
+            </span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-meta cifra">{{ c.telefono|default:"—" }}</span>
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline primary" href="{% url 'catalogos:conductor' c.pk %}"
+               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">Los retirados no se ofrecen al hacer la guía, pero siguen en el histórico.</p>
+{% else %}
+  <div class="vacio">
+    {% if filtros.q %}
+      <p>Ningún conductor coincide con «{{ filtros.q }}».</p>
+      <p><a class="enlace" href="{% url 'catalogos:conductores' %}">Ver todos</a></p>
+    {% else %}
+      <p>Todavía no hay conductores.</p>
+      <p class="tenue">El conductor es el transportista que el SRI pide en la guía de remisión: se da de alta una vez y se elige en cada guía.</p>
+      <p><a class="button primary" href="{% url 'catalogos:conductor_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

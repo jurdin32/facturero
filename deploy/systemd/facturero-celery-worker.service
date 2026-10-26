@@ -1,0 +1,67 @@
+# Servicio de systemd para el WORKER de Celery de facturero (facturación SRI).
+#
+# En el servidor Linux:
+#
+#   sudo cp facturero-celery-worker.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now facturero-celery-worker
+#   journalctl -u facturero-celery-worker -f          # sus logs
+#
+# O sin copiarlo: se queda aquí y systemd lo usa desde esta carpeta
+#   sudo systemctl enable --now __PROYECTO__/deploy/systemd/facturero-celery-worker.service
+#   (crea el enlace en /etc/systemd/system y el del arranque automático; la
+#    carpeta debe estar en el disco raíz, no en /home ni /var de otra partición)
+#   Lo hace por usted:  sudo python manage.py servicios_celery --enlazar
+#
+# ANTES DE COPIARLO, ajuste estas cuatro cosas (están marcadas abajo):
+#   __USUARIO__   usuario del servicio (p. ej. www-data)
+#   __GRUPO__     su grupo (p. ej. www-data)
+#   __PROYECTO__  carpeta del proyecto en el servidor (la que tiene manage.py)
+#   __VENV__      entorno virtual con celery y factec (p. ej. __PROYECTO__/.venv)
+#
+# O se sustituyen de una vez:
+#   sed -i "s|__USUARIO__|www-data|g; s|__GRUPO__|www-data|g; \
+#           s|__PROYECTO__|/var/www/facturero|g; s|__VENV__|/var/www/facturero/.venv|g" \
+#       facturero-*.service
+#
+# (También puede dejar que el paquete lo haga solo, ya con las rutas del
+#  servidor:  sudo python manage.py servicios_celery)
+
+[Unit]
+Description=Celery worker de facturero (facturación electrónica SRI)
+Documentation=https://github.com/jurdin32/factec
+After=network-online.target
+Wants=network-online.target
+# Si Redis es un servicio de esta misma máquina, descomente estas dos:
+#After=redis-server.service
+#Wants=redis-server.service
+
+[Service]
+Type=simple
+User=__USUARIO__
+Group=__GRUPO__
+WorkingDirectory=__PROYECTO__
+
+# Ajustes de Django y del proceso.
+Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
+Environment="PYTHONUNBUFFERED=1"
+Environment="FORKED_BY_MULTIPROCESSING=1"
+# Secretos fuera del código (opcional): SRI_CLAVE_CIFRADO, CELERY_BROKER_URL…
+EnvironmentFile=-__PROYECTO__/.env
+
+# Ejecuta las tareas del paquete: sri_fe.emitir_comprobante,
+# sri_fe.consultar_autorizacion, sri_fe.reintentar_pendientes y
+# sri_fe.revisar_certificado.
+# No hace falta -E: en settings.py está CELERY_WORKER_SEND_TASK_EVENTS = True,
+# que es lo que alimenta el panel de Flower.
+ExecStart=__VENV__/bin/celery -A facturero worker -l info -c 4 --without-mingle --without-gossip
+
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=60
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

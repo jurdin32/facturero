@@ -1,0 +1,111 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nuevo %}Nuevo cliente{% else %}{{ cliente.razon_social }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nuevo %}Nuevo cliente{% else %}{{ cliente.razon_social }}{% endif %}</h1>
+    <p class="subtitulo">
+      {% if es_nuevo %}Los datos que el SRI pide del adquirente.{% else %}
+        <span class="cifra">{{ cliente.identificacion }}</span> ·
+        <a class="enlace" href="{% url 'facturacion:facturar' %}?cliente={{ cliente.pk }}">facturarle</a> ·
+        <a class="enlace" href="{% url 'catalogos:clientes' %}">volver a la lista</a>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-cliente" class="button success"><span class="mif-checkmark"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'catalogos:clientes' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-cliente" novalidate{% if es_nuevo %} data-consulta-ruc{% endif %}>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">Cómo se identifica</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-8 cell-lg-8">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.razon_social.id_for_label }}">Razón social o nombres</label>
+              {{ formulario.razon_social }}
+              {% if formulario.razon_social.errors %}<p class="error">{{ formulario.razon_social.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4 cell-lg-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.tipo_identificacion.id_for_label }}">Tipo</label>
+              {{ formulario.tipo_identificacion }}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4 cell-lg-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.identificacion.id_for_label }}">RUC o cédula</label>
+              {{ formulario.identificacion }}
+              {% if formulario.identificacion.errors %}<p class="error">{{ formulario.identificacion.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-8 cell-lg-8">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.direccion.id_for_label }}">Dirección</label>
+              {{ formulario.direccion }}
+              <p class="ayuda">Calle, número y ciudad. El SRI la pide en la factura.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6 cell-lg-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.email.id_for_label }}">Correo</label>
+              {{ formulario.email }}
+              <p class="ayuda">Para enviarle el comprobante.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6 cell-lg-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.telefono.id_for_label }}">Teléfono</label>
+              {{ formulario.telefono }}
+            </div>
+          </div>
+        </div>
+        {% if es_nuevo %}
+          <div class="acciones-fila">
+            <button type="button" class="button small outline primary" data-boton-consultar-ruc>
+              <span class="mif-search" aria-hidden="true"></span> Consultar SRI
+            </button>
+            <p class="ayuda" data-aviso-ruc></p>
+          </div>
+        {% endif %}
+      </section>
+
+      {% if facturas %}
+        <section class="bloque">
+          <h2 class="bloque-titulo">Sus últimas facturas</h2>
+          <div class="desliza"><table class="table small libro">
+            <tbody>
+              {% for f in facturas %}
+                <tr>
+                  <td class="cifra">{{ f.fecha_emision|date:"d/m/Y" }}</td>
+                  <td class="cifra">
+                    {% if f.comprobante %}{{ f.comprobante.estab }}-{{ f.comprobante.pto_emi }}-{{ f.comprobante.secuencial }}{% else %}sin número{% endif %}
+                  </td>
+                  <td class="col-importe cifra">{{ f.total|floatformat:2 }}</td>
+                  <td class="col-acciones"><a class="enlace" href="{% url 'facturacion:factura' f.pk %}">Ver</a></td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table></div>
+        </section>
+      {% endif %}
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Antes de guardar</h2>
+        <p class="ayuda">Con el RUC y el tipo correctos, el SRI acepta la factura sin devolverla.</p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

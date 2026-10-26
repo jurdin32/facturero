@@ -1,0 +1,38 @@
+{% comment %}
+Los bienes de una guía de remisión: van dentro de cada destinatario, que es quien los
+recibe y quien firma la entrega.
+{% endcomment %}
+{% for destinatario in destinatarios %}
+  <section class="bloque ride-destinatario">
+    <p class="ride-etiqueta">Se entrega a</p>
+    <p class="ride-receptor">{{ destinatario.razon_social }}</p>
+    <p class="ride-linea">
+      Identificación: <span class="cifra">{{ destinatario.identificacion }}</span>
+      {% if destinatario.direccion %}· {{ destinatario.direccion }}{% endif %}
+    </p>
+    <div class="desliza">
+      <table class="table small libro {{ clase_tabla|default:'ride-lineas' }}">
+        <thead>
+          <tr>
+            <th class="col-codigo">Código</th>
+            <th>Qué se lleva</th>
+            <th class="col-cantidad">Cantidad</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for bien in destinatario.detalles.all %}
+            <tr>
+              <td class="col-codigo cifra">{{ bien.codigo_principal }}</td>
+              <td>{{ bien.descripcion }}</td>
+              <td class="col-cantidad cifra">{{ bien.cantidad|floatformat:"-6" }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="tenue" colspan="3">No se ha puesto qué se lleva.</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </section>
+{% empty %}
+  <p class="tenue">Esta guía no tiene destinatarios.</p>
+{% endfor %}

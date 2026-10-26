@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nuevo %}Nuevo vehículo{% else %}{{ vehiculo.placa }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nuevo %}Nuevo vehículo{% else %}{{ vehiculo.placa }}{% endif %}</h1>
+    <p class="subtitulo">
+      {% if es_nuevo %}De aquí sale la placa que pide el SRI en la guía.{% else %}
+        {{ vehiculo.descripcion|default:"sin descripción" }} ·
+        <a class="enlace" href="{% url 'catalogos:vehiculos' %}">volver a la lista</a>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-vehiculo" class="button success"><span class="mif-checkmark"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'catalogos:vehiculos' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-vehiculo" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">El vehículo</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.placa.id_for_label }}">Placa</label>
+              {{ formulario.placa }}
+              {% if formulario.placa.errors %}<p class="error">{{ formulario.placa.errors.0 }}</p>{% endif %}
+              <p class="ayuda">La que va al SRI, tal cual: PBX-1234.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">Descripción</label>
+              {{ formulario.descripcion }}
+              <p class="ayuda">Para ustedes: marca, modelo o color. El SRI no la pide.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Estado</h2>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.activo.id_for_label }}">{{ formulario.activo }} {{ formulario.activo.label }}</label>
+        </div>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

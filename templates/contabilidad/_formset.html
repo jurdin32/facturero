@@ -1,0 +1,97 @@
+{% comment %}
+La tabla de líneas de un asiento. Los datos ya escritos se leen aquí; para
+escribir o corregir una línea se abre una ventana, no se llena una fila de
+controles dentro de la tabla.
+{% endcomment %}
+<div class="oculto">{{ conjunto.management_form }}</div>
+{% if conjunto.non_form_errors %}
+  <p class="aviso aviso-error">{{ conjunto.non_form_errors.0 }}</p>
+{% endif %}
+<div class="desliza">
+  <table class="table small libro libro-asiento" data-lineas="{{ conjunto.prefix }}"
+         data-total="id_{{ conjunto.prefix }}-TOTAL_FORMS"
+         data-plantilla="plantilla-{{ conjunto.prefix }}"
+         data-modal="modal-linea-{{ conjunto.prefix }}">
+    <thead>
+      <tr>
+        <th class="col-cuenta">Cuenta</th>
+        <th class="col-descripcion">Detalle</th>
+        <th class="col-debe">Debe</th>
+        <th class="col-haber">Haber</th>
+        <th class="col-tercero">Tercero</th>
+        <th class="col-documento">Documento</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody data-cuerpo-lineas>
+      {% for fila in conjunto %}{% include "contabilidad/_fila_formset.html" %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+<p class="tenue" data-vacio-lineas>Todavía no hay líneas. Añada la primera para empezar la partida doble.</p>
+
+<div class="acciones-fila">
+  <button type="button" class="button primary" data-abrir-linea data-para="{{ conjunto.prefix }}">
+    <span class="mif-plus" aria-hidden="true"></span> Añadir línea
+  </button>
+  <span class="tenue" data-totales-asiento>
+    Debe <span data-total-debe>0,00</span> · Haber <span data-total-haber>0,00</span> ·
+    <span data-diferencia>0,00</span>
+  </span>
+</div>
+
+<template id="plantilla-{{ conjunto.prefix }}">
+  {% include "contabilidad/_fila_formset.html" with fila=conjunto.empty_form %}
+</template>
+
+<template id="modal-linea-{{ conjunto.prefix }}">
+  <div class="linea-modal">
+    <div class="row">
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.cuenta.id_for_label }}">{{ conjunto.empty_form.cuenta.label }}</label>
+          {{ conjunto.empty_form.cuenta }}
+          <p class="ayuda">Solo aparecen las cuentas que aceptan movimientos.</p>
+        </div>
+      </div>
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.descripcion.id_for_label }}">{{ conjunto.empty_form.descripcion.label }}</label>
+          {{ conjunto.empty_form.descripcion }}
+        </div>
+      </div>
+      <div class="cell-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.debe.id_for_label }}">{{ conjunto.empty_form.debe.label }}</label>
+          {{ conjunto.empty_form.debe }}
+        </div>
+      </div>
+      <div class="cell-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.haber.id_for_label }}">{{ conjunto.empty_form.haber.label }}</label>
+          {{ conjunto.empty_form.haber }}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.tercero.id_for_label }}">{{ conjunto.empty_form.tercero.label }}</label>
+          {{ conjunto.empty_form.tercero }}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ conjunto.empty_form.documento.id_for_label }}">{{ conjunto.empty_form.documento.label }}</label>
+          {{ conjunto.empty_form.documento }}
+        </div>
+      </div>
+      <div class="cell-12">
+        <p class="ayuda">
+          Una línea va al debe o al haber, nunca a los dos. El asiento cuadra cuando
+          los dos totales coinciden.
+        </p>
+        <p class="aviso aviso-error oculto" data-error-linea></p>
+      </div>
+    </div>
+  </div>
+</template>

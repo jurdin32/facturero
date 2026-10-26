@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+{% block titulo %}Libro mayor{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Libro mayor</h1>
+    <p class="subtitulo">El extracto de una cuenta, con su saldo anterior y el que va quedando.</p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="cuenta">Cuenta</label>
+        <select name="cuenta" id="cuenta" data-role="select" data-prepend="<span class='mif-list'></span>">
+          {% for c in cuentas %}
+            <option value="{{ c.pk }}" {% if cuenta_actual and cuenta_actual.pk == c.pk %}selected{% endif %}>{{ c.codigo }} · {{ c.nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if datos %}
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Saldo anterior</span>
+        <p class="cifra" style="font-size:1.4rem">{{ datos.saldo_anterior|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Movimientos</span>
+        <p class="cifra" style="font-size:1.4rem">Debe {{ datos.total_debe|floatformat:2 }} · Haber {{ datos.total_haber|floatformat:2 }}</p>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="bloque bloque-suave">
+        <span class="etiqueta">Saldo final</span>
+        <p class="cifra" style="font-size:1.4rem">{{ datos.saldo_final|floatformat:2 }}</p>
+      </div>
+    </div>
+  </div>
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">{{ datos.cuenta.codigo }} · {{ datos.cuenta.nombre }}</h2>
+    {% if datos.filas %}
+      <div class="desliza"><table class="table small libro">
+        <thead>
+          <tr>
+            <th>Fecha</th>
+            <th>Asiento</th>
+            <th>Detalle</th>
+            <th>Tercero</th>
+            <th class="col-dato">Debe</th>
+            <th class="col-dato">Haber</th>
+            <th class="col-dato">Saldo</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for fila in datos.filas %}
+            <tr>
+              <td class="cifra">{{ fila.asiento.fecha|date:"d/m/Y" }}</td>
+              <td class="cifra"><a class="enlace" href="{% url 'contabilidad:asiento_detalle' fila.asiento.pk %}">{{ fila.asiento.numero|default:"—" }}</a></td>
+              <td>{{ fila.linea.descripcion|default:fila.asiento.concepto }}</td>
+              <td>{{ fila.linea.tercero.razon_social|default:"—" }}</td>
+              <td class="col-dato cifra">{% if fila.debe %}{{ fila.debe|floatformat:2 }}{% endif %}</td>
+              <td class="col-dato cifra">{% if fila.haber %}{{ fila.haber|floatformat:2 }}{% endif %}</td>
+              <td class="col-dato cifra {% if fila.saldo < 0 %}sale{% endif %}">{{ fila.saldo|floatformat:2 }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    {% else %}
+      <div class="vacio"><p>Esta cuenta no tuvo movimientos en el rango.</p></div>
+    {% endif %}
+  </section>
+{% else %}
+  <div class="vacio"><p>Elija una cuenta para ver su libro.</p></div>
+{% endif %}
+
+{% endblock %}

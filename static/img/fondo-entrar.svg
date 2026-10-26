@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Fondo abstracto en tonos azules">
+  <defs>
+    <linearGradient id="cielo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#c9d8e8"/>
+      <stop offset="45%" stop-color="#8fb4d8"/>
+      <stop offset="100%" stop-color="#4f7fae"/>
+    </linearGradient>
+    <radialGradient id="luz" cx="50%" cy="45%" r="60%">
+      <stop offset="0%" stop-color="#f2f8ff" stop-opacity=".95"/>
+      <stop offset="60%" stop-color="#dbe9f7" stop-opacity=".35"/>
+      <stop offset="100%" stop-color="#7ea6cc" stop-opacity="0"/>
+    </radialGradient>
+    <linearGradient id="petalo" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ffffff" stop-opacity=".95"/>
+      <stop offset="55%" stop-color="#d9e8f7" stop-opacity=".85"/>
+      <stop offset="100%" stop-color="#9dc0e0" stop-opacity=".75"/>
+    </linearGradient>
+    <linearGradient id="petalo2" x1="1" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#eef5fd" stop-opacity=".9"/>
+      <stop offset="100%" stop-color="#7fa8cd" stop-opacity=".65"/>
+    </linearGradient>
+    <filter id="suave" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="10"/>
+    </filter>
+    <filter id="muySuave" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="42"/>
+    </filter>
+  </defs>
+
+  <rect width="1600" height="900" fill="url(#cielo)"/>
+  <ellipse cx="800" cy="430" rx="760" ry="520" fill="url(#luz)" filter="url(#muySuave)"/>
+
+  <!-- Una flor abstracta: pétalos de papel alrededor del centro. -->
+  <g transform="translate(760 470)" filter="url(#suave)">
+    <g opacity=".85">
+      <path d="M0 0 C 190 -120 330 -60 330 90 C 330 250 170 300 0 250 Z" fill="url(#petalo)"/>
+      <path d="M0 0 C -190 -130 -330 -70 -330 80 C -330 240 -170 300 0 250 Z" fill="url(#petalo2)"/>
+      <path d="M0 0 C 170 130 320 90 320 -60 C 320 -220 160 -280 0 -230 Z" fill="url(#petalo2)" opacity=".9"/>
+      <path d="M0 0 C -170 140 -320 100 -320 -50 C -320 -210 -160 -280 0 -230 Z" fill="url(#petalo)" opacity=".9"/>
+    </g>
+    <g opacity=".75" transform="rotate(38)">
+      <path d="M0 0 C 150 -95 265 -45 265 75 C 265 200 135 240 0 195 Z" fill="url(#petalo)"/>
+      <path d="M0 0 C -150 -95 -265 -45 -265 75 C -265 200 -135 240 0 195 Z" fill="url(#petalo2)"/>
+    </g>
+    <g opacity=".6" transform="rotate(-34)">
+      <path d="M0 0 C 120 -70 210 -30 210 60 C 210 160 110 190 0 155 Z" fill="url(#petalo2)"/>
+      <path d="M0 0 C -120 -70 -210 -30 -210 60 C -210 160 -110 190 0 155 Z" fill="url(#petalo)"/>
+    </g>
+    <ellipse cx="0" cy="0" rx="150" ry="130" fill="#dceaf8" opacity=".55" filter="url(#muySuave)"/>
+  </g>
+
+</svg>

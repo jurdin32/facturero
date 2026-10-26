@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nueva %}Nueva cuenta{% else %}{{ cuenta.codigo }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nueva %}Nueva cuenta{% else %}{{ cuenta.nombre }}{% endif %}</h1>
+    <p class="subtitulo">
+      {% if es_nueva %}Una cuenta del plan, con su código y su lugar en la jerarquía.
+      {% else %}Código <span class="cifra">{{ cuenta.codigo }}</span> · nivel {{ cuenta.nivel }}{% endif %}
+      · <a class="enlace" href="{% url 'contabilidad:plan' %}">volver al plan</a>
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-cuenta" class="button success"><span class="mif-check"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'contabilidad:plan' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-cuenta" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">Datos de la cuenta</h2>
+        {% if formulario.non_field_errors %}
+          <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+        {% endif %}
+        <div class="row">
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.codigo.id_for_label }}">{{ formulario.codigo.label }}</label>
+              {{ formulario.codigo }}
+              {% if formulario.codigo.errors %}<p class="error">{{ formulario.codigo.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Niveles con puntos: 1, 1.1, 1.1.01, 1.1.01.01.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-8">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">{{ formulario.nombre.label }}</label>
+              {{ formulario.nombre }}
+              {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
+              {{ formulario.tipo }}
+              {% if formulario.tipo.errors %}<p class="error">{{ formulario.tipo.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.naturaleza.id_for_label }}">{{ formulario.naturaleza.label }}</label>
+              {{ formulario.naturaleza }}
+              <p class="ayuda">{{ formulario.naturaleza.help_text }}</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.padre.id_for_label }}">{{ formulario.padre.label }}</label>
+              {{ formulario.padre }}
+              {% if formulario.padre.errors %}<p class="error">{{ formulario.padre.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
+              {{ formulario.descripcion }}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Estado</h2>
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.activa }}
+            <span class="caption-append">Cuenta activa</span>
+          </label>
+        </div>
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.permite_movimientos }}
+            <span class="caption-append">Recibe asientos</span>
+          </label>
+          <p class="ayuda">{{ formulario.permite_movimientos.help_text }}</p>
+          {% if formulario.permite_movimientos.errors %}<p class="error">{{ formulario.permite_movimientos.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

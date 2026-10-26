@@ -1,0 +1,38 @@
+Imágenes de la interfaz
+=======================
+
+Aquí se dejan las imágenes que usa la interfaz. Basta con copiarlas con el
+nombre puesto: no hay que tocar el código ni el CSS.
+
+  entrar.*              la imagen de marca de la pantalla de entrada (en el redondel;
+                       si no hay, se usa el logo-blanco)
+  icono.*               el símbolo solo: es el favicon de la pestaña
+  logo.*                el logo completo, vertical (para fondos claros)
+  logo-blanco.*         el mismo en blanco: va en el redondel de la entrada y del
+                       bloqueo, sobre el azul
+  logo-ancho.*          el logo apaisado (para fondos claros)
+  logo-ancho-blanco.*   el apaisado en blanco: es el que va en el lateral
+  bloqueo.*             la imagen de la pantalla de bloqueo (en el redondel; si
+                       no hay, se usa el logo-blanco)
+  marca.*               la que usan todas, cuando no hay una propia de cada una
+  fondo-entrar.*        la imagen de fondo de la pantalla de entrada
+  fondo-bloqueo.*       la de fondo de la pantalla de bloqueo (si no hay, usa la
+                       de la entrada)
+
+Las extensiones que se buscan son, en este orden: png, webp, jpg, jpeg, avif y
+svg. Da igual cuál se use mientras el nombre sea el de la lista. La entrada trae
+un fondo de serie (fondo-entrar.svg): si se pone uno con el mismo nombre en PNG o
+JPG, el que se usa es el que se ponga.
+
+Las imágenes de fondo se estiran a lo ancho y a lo alto de la ventana, recortando
+lo que sobre, y llevan un velo oscuro suave encima para que el texto de la
+pantalla se lea sobre cualquier foto. Ese velo se ajusta en un sitio:
+``--velo-fondo``, al principio de ``static/css/interfaz.css``.
+
+La imagen de marca se enseña dentro del redondel de la pantalla (140 px, el mismo
+en la entrada y en el bloqueo) y se ajusta sin deformarse, así que sirve tanto un
+logo cuadrado como uno ancho. El redondel lleva el azul de la casa (``--marca-fondo``),
+de modo que la imagen que mejor queda es la blanca y con el fondo transparente:
+el logo-blanco. Si no hay imagen de marca, la pantalla se queda con lo que trae
+de serie: el icono de la persona en la entrada y la inicial del usuario en el
+bloqueo.

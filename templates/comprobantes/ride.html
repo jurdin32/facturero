@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Imprimir · {{ documento.titulo }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila sin-imprimir">
+  <div>
+    <h1 class="titulo">Imprimir {{ documento.titulo|lower }}</h1>
+    <p class="subtitulo">
+      {% if registro %}
+        <span class="cifra">{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}</span>
+      {% else %}sin número{% endif %}
+      · <a class="enlace" href="{% url 'comprobantes:ficha' documento.clave objeto.pk %}">volver a la ficha</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <div class="conmutador" role="group" aria-label="Tamaño del papel">
+      <a class="conmutador-opcion{% if formato == 'a4' %} activa{% endif %}"
+         href="{% url 'comprobantes:ride' documento.clave objeto.pk %}?formato=a4">A4</a>
+      <a class="conmutador-opcion{% if formato == 't80' %} activa{% endif %}"
+         href="{% url 'comprobantes:ride' documento.clave objeto.pk %}?formato=t80">Tíquet 80 mm</a>
+    </div>
+    <button class="button primary" type="button" id="boton-imprimir">
+      <span class="mif-printer" aria-hidden="true"></span> Imprimir o guardar en PDF
+    </button>
+  </div>
+</div>
+
+{% include "comprobantes/_documento.html" %}
+
+{% endblock %}
+
+{% block scripts %}
+  {# El tamaño de la hoja lo pone el navegador: A4 para archivar, 80 mm para el tíquet. #}
+  <style>@page { size: {{ hoja.pagina }}; margin: {{ hoja.margen }}; }</style>
+  <script>
+    (function () {
+      var boton = document.getElementById("boton-imprimir");
+      if (boton) boton.addEventListener("click", function () { window.print(); });
+      {% if imprimir_ya %}window.print();{% endif %}
+    })();
+  </script>
+{% endblock %}

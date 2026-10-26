@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block titulo %}Estados financieros{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Estados financieros</h1>
+    <p class="subtitulo">Del {{ desde|date:"d/m/Y" }} al {{ hasta|date:"d/m/Y" }}.</p>
+  </div>
+</div>
+
+<div class="row">
+  <div class="cell-12 cell-md-6">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Estado de resultados</h2>
+      <p class="etiqueta">Resultado del ejercicio</p>
+      <p class="cifra" style="font-size:1.6rem">{{ resultado.resultado|floatformat:2 }}</p>
+      <p class="ayuda">
+        Ingresos {{ resultado.total_ingresos|floatformat:2 }} ·
+        costos {{ resultado.total_costos|floatformat:2 }} ·
+        gastos {{ resultado.total_gastos|floatformat:2 }}
+      </p>
+      <p><a class="button outline primary" href="{% url 'contabilidad:estado_resultados' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Ver el estado</a></p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Estado de situación financiera</h2>
+      <p class="etiqueta">Activo</p>
+      <p class="cifra" style="font-size:1.6rem">{{ situacion.total_activo|floatformat:2 }}</p>
+      <p class="ayuda">
+        Pasivo {{ situacion.total_pasivo|floatformat:2 }} ·
+        patrimonio {{ situacion.total_patrimonio|floatformat:2 }}
+        {% if situacion.diferencia %}· <span class="sale">descuadre {{ situacion.diferencia|floatformat:2 }}</span>{% endif %}
+      </p>
+      <p><a class="button outline primary" href="{% url 'contabilidad:estado_situacion' %}?hasta={{ hasta|date:'Y-m-d' }}">Ver el estado</a></p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Estado de situación inicial</h2>
+      <p class="ayuda">Los saldos con los que abre el ejercicio, antes de las operaciones del año.</p>
+      <p><a class="button outline dark" href="{% url 'contabilidad:estado_situacion_inicial' %}?hasta={{ desde|date:'Y-m-d' }}">Ver el estado inicial</a></p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Flujo de efectivo</h2>
+      <p class="ayuda">Método directo, agrupado por operación, inversión y financiación. Se calcula con los movimientos de caja y bancos.</p>
+      <p><a class="button outline dark" href="{% url 'contabilidad:estado_flujos' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Ver el estado</a></p>
+    </div>
+  </div>
+  <div class="cell-12 cell-md-6">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Cambios en el patrimonio</h2>
+      <p class="ayuda">Saldo inicial, aumentos, disminuciones y saldo final de cada cuenta patrimonial.</p>
+      <p><a class="button outline dark" href="{% url 'contabilidad:estado_patrimonio' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Ver el estado</a></p>
+    </div>
+  </div>
+</div>
+
+{% endblock %}

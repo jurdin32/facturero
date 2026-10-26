@@ -1,0 +1,55 @@
+{% comment %}
+Lo que se escribe de una cabecera repetible: sus campos y las tablas que lleva dentro
+(qué se transporta, los impuestos del documento y lo que se retiene).
+
+Va escondido en la hoja y el navegador lo lleva a la ventana de la fila al abrirla, y lo
+devuelve al cerrarla (ver ``comprobantes.js``), de modo que los campos nunca salen del
+formulario y la hoja no se llena de campos. El bloque de la cabecera en blanco se arma
+con la marca ``hijo-__prefix__``, que el navegador numera al añadir otra.
+{% endcomment %}
+<div class="grupo-campos oculto" data-detalle="{{ grupo.prefijo }}">
+  {# Los campos ocultos, menos el de la barra del buscador, que ya lo pone ella. #}
+  {% for oculto in grupo.form.hidden_fields %}{% if not oculto.field.widget.attrs.buscador %}{{ oculto }}{% endif %}{% endfor %}
+  {% if grupo.form.non_field_errors %}
+    <p class="aviso aviso-error">{{ grupo.form.non_field_errors.0 }}</p>
+  {% endif %}
+
+  <div class="row">
+    {% for campo in grupo.form %}
+      {% if campo.field.widget.attrs.buscador %}
+        {% include "comprobantes/_parte.html" with campo=campo valor=grupo.nombre %}
+      {% elif not campo.is_hidden and campo.name != "DELETE" %}
+        <div class="cell-12 cell-md-4">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            {{ campo }}
+            {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+            {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+          </div>
+        </div>
+      {% endif %}
+    {% endfor %}
+  </div>
+
+  {% for nombre, titulo, cuantas, conjunto in grupo.hijos %}
+    <h3 class="grupo-titulo">{{ titulo }}</h3>
+    {% if conjunto.non_form_errors %}
+      <p class="aviso aviso-error">{{ conjunto.non_form_errors.0 }}</p>
+    {% endif %}
+    {% include "comprobantes/_formset.html" with conjunto=conjunto %}
+  {% endfor %}
+
+  {% comment %}
+    Lo que falte en un campo oculto —la identificación, el tipo— se dice aquí: en su
+    sitio no se vería.
+  {% endcomment %}
+  {% for oculto in grupo.form.hidden_fields %}{% if oculto.errors %}
+    <p class="error">{{ oculto.label }}: {{ oculto.errors.0 }}</p>
+  {% endif %}{% endfor %}
+
+  {% comment %}
+    La marca de borrado viaja escondida: quitar la cabecera se hace con la × de su
+    fila, no con un botón dentro de la ventana.
+  {% endcomment %}
+  <span class="linea-oculta">{{ grupo.form.DELETE }}</span>
+</div>

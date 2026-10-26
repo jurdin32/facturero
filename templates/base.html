@@ -1,0 +1,139 @@
+{% load static marca %}<!DOCTYPE html>
+<html lang="es-ec">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Facturar{% endblock %}</title>
+  <link rel="stylesheet" href="{% static 'css/metro/metro.css' %}">
+  <link rel="stylesheet" href="{% static 'icons/core/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/interfaz.css' %}?v={{ sello_estatico }}">
+  {% imagen_marca "icono" "logo" as favicon %}
+  {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+</head>
+<body>
+
+<div class="marco">
+
+  <aside class="rail">
+    {% imagen_marca "logo-ancho-blanco" "logo-ancho" "marca" as imagen %}
+    <div class="rail-cabecera">
+      {% if imagen %}
+        <img class="rail-logo" src="{{ imagen }}" alt="Facturación electrónica">
+      {% else %}
+        <strong>Facturación electrónica</strong>
+      {% endif %}
+      <span>{% if emisor %}{{ emisor.ruc }}{% else %}SRI · Ecuador{% endif %}</span>
+    </div>
+    {% include "menu.html" %}
+  </aside>
+
+  <div class="columna">
+
+    <nav class="barra">
+      <button class="barra-menu" type="button" id="abrir-menu" aria-controls="panel-menu" aria-expanded="false" aria-label="Abrir el menú">
+        <span class="mif-menu" aria-hidden="true"></span>
+      </button>
+  
+      <div class="emisor">
+        {% if emisor %}
+          <span class="emisor-nombre">{{ emisor.razon_social }}</span>
+          <span class="emisor-datos">RUC {{ emisor.ruc }} · {{ emisor.estab }}-{{ emisor.pto_emi }}</span>
+        {% else %}
+          <span class="emisor-nombre">Facturación electrónica</span>
+          <span class="emisor-datos">sin configuración de emisor</span>
+        {% endif %}
+      </div>
+  
+      <div class="cabecera-lado">
+        <span class="ambiente {% if es_produccion %}ambiente-produccion{% endif %}">
+          {% if es_produccion %}Producción{% else %}Pruebas{% endif %}
+        </span>
+        {% if request.user.is_authenticated %}
+          <span class="usuario">{{ request.user.get_username }}</span>
+          <form method="post" action="{% url 'bloquear' %}">{% csrf_token %}
+            {# Para volver a esta misma página al desbloquear. #}
+            <input type="hidden" name="next" value="{{ request.get_full_path }}">
+            <button type="submit" class="small" title="Bloquear la pantalla"><span class="mif-lock"></span> Bloquear</button>
+          </form>
+          <form method="post" action="{% url 'salir' %}">{% csrf_token %}
+            <button type="submit" class="small"><span class="mif-exit"></span> Salir</button>
+          </form>
+        {% endif %}
+      </div>
+    </nav>
+
+    <main class="contenido">
+
+      {% if sin_emisor and request.user.is_authenticated %}
+        <div class="banda">
+          <div class="aviso aviso-warning">
+            Todavía no hay configuración del emisor. Sin ella no se puede firmar nada:
+            <a href="{% url 'configuracion:sri' %}">configúrela con su certificado .p12</a>.
+          </div>
+        </div>
+      {% endif %}
+
+      {% if messages %}
+        <div class="avisos">
+          {% for aviso in messages %}
+            {# Sin JavaScript se lee aquí; con JavaScript, interfaz.js lo pasa a aviso flotante de Metro. #}
+            <div class="aviso aviso-{{ aviso.tags|default:'info' }}" data-aviso="{{ aviso.tags|default:'info' }}">{{ aviso }}</div>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="hoja">
+        {% block contenido %}{% endblock %}
+      </div>
+    </main>
+
+    <footer class="pie">
+      <div class="pie-lado">
+        <span class="pie-marca" aria-hidden="true"></span>
+        <span class="pie-texto">
+          <span class="pie-titulo">Facturación electrónica del SRI</span>
+          <span class="pie-nota">
+            {% if emisor %}{{ emisor.razon_social }} · RUC <span class="cifra">{{ emisor.ruc }}</span>{% else %}Sin configuración del emisor{% endif %}
+          </span>
+        </span>
+      </div>
+      <div class="pie-lado pie-derecha">
+        <span class="ambiente {% if es_produccion %}ambiente-produccion{% endif %}">
+          {% if es_produccion %}Producción{% else %}Pruebas{% endif %}
+        </span>
+        <span class="pie-nota">Emitido con <strong>factec</strong></span>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<div class="velo" id="velo"></div>
+<aside class="panel-menu" id="panel-menu" aria-label="Menú">
+  {% imagen_marca "logo-ancho-blanco" "logo-ancho" "marca" as imagen %}
+  <div class="rail-cabecera">
+    {% if imagen %}
+      <img class="rail-logo" src="{{ imagen }}" alt="Facturación electrónica">
+    {% else %}
+      <strong>Facturación electrónica</strong>
+    {% endif %}
+    <span>{% if emisor %}{{ emisor.ruc }}{% else %}SRI · Ecuador{% endif %}</span>
+  </div>
+  {% include "menu.html" %}
+</aside>
+
+<script src="{% static 'js/metro/metro.js' %}"></script>
+<script src="{% static 'js/interfaz.js' %}?v={{ sello_estatico }}"></script>
+<script src="{% static 'js/imprimir.js' %}?v={{ sello_estatico }}"></script>
+<script src="{% static 'js/facturacion.js' %}?v={{ sello_estatico }}"></script>
+<script src="{% static 'js/consulta_ruc.js' %}?v={{ sello_estatico }}"></script>
+<script src="{% static 'js/caja.js' %}?v={{ sello_estatico }}"></script>
+{% block scripts %}{% endblock %}
+
+{% if request.user.is_authenticated %}
+  {# El servidor manda esta pantalla cuando la sesión está bloqueada; aquí queda lista para que aparezca sola al pasar el rato sin tocar nada. #}
+  {% include "fragmentos/bloqueo.html" with overlay=True limite=limite_bloqueo siguiente=request.get_full_path %}
+  <script src="{% static 'js/bloqueo.js' %}?v={{ sello_estatico }}"></script>
+{% endif %}
+
+</body>
+</html>

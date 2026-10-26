@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% block titulo %}Roles de {{ persona }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{{ persona.get_full_name|default:persona.username }}</h1>
+    <p class="subtitulo">
+      <span class="cifra">{{ persona.username }}</span>
+      {% if persona.email %} · {{ persona.email }}{% endif %} ·
+      <a class="enlace" href="{% url 'seguridad:usuarios' %}">volver a los usuarios</a>
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-usuario" class="button success"><span class="mif-checkmark"></span> Guardar los roles</button>
+    <a class="button outline dark" href="{% url 'seguridad:usuarios' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-usuario" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Qué roles lleva</h2>
+        <p class="subtitulo">
+          Se marca el rol entero: lo que puede cada uno se decide una vez, en el rol.
+        </p>
+        {% if roles %}
+          <div class="roles">
+            {% for fila in roles %}
+              <label class="rol-opcion {% if not fila.rol.activo %}tenue{% endif %}">
+                <input type="checkbox" name="roles" value="{{ fila.rol.pk }}" id="rol-{{ fila.rol.pk }}"
+                       {% if fila.marcado %}checked{% endif %}>
+                <span class="rol-datos">
+                  <span class="rol-nombre">
+                    {{ fila.rol.nombre }}
+                    {% if not fila.rol.activo %}<span class="chip dark"><span class="label">Apagado</span></span>{% endif %}
+                  </span>
+                  <span class="rol-meta">
+                    {{ fila.rol.descripcion|default:"Sin descripción" }} ·
+                    <span class="cifra">{{ fila.opciones }}</span> de {{ opciones_totales }} opciones
+                    {% if fila.escritura %}({{ fila.escritura }} para modificar){% endif %}
+                  </span>
+                </span>
+              </label>
+            {% endfor %}
+          </div>
+        {% else %}
+          <div class="vacio">
+            <p>Todavía no hay roles que dar.</p>
+            <p><a class="button primary" href="{% url 'seguridad:rol_nuevo' %}"><span class="mif-plus"></span> Crear un rol</a></p>
+          </div>
+        {% endif %}
+        {% if formulario.roles.errors %}<p class="error">{{ formulario.roles.errors.0 }}</p>{% endif %}
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Qué puede hoy</h2>
+        <p class="subtitulo">
+          <span class="cifra">{{ puede_ver }}</span> de {{ opciones_totales }} opciones para ver
+          y <span class="cifra">{{ puede_escribir }}</span> para modificar
+          {% if abierto %} · <strong>modo abierto</strong>: sin rol, puede todo{% endif %}
+        </p>
+        {% if abierto %}
+          <p class="aviso aviso-warning">
+            La seguridad está en modo abierto, así que ahora mismo esta persona puede
+            todo. Cuando se ponga en modo cerrado, solo podrá lo que le den sus roles.
+          </p>
+        {% endif %}
+
+        <div class="tabla-envoltura">
+          <table class="datos">
+            <thead>
+              <tr>
+                <th>Apartado</th>
+                <th>Opción de la aplicación</th>
+                <th class="col-estado">Nivel</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for grupo, opciones in grupos %}
+                {% for opcion, nivel in opciones %}
+                  <tr>
+                    <td class="tenue">{% if forloop.first %}{{ grupo }}{% endif %}</td>
+                    <td>{{ opcion.nombre }}</td>
+                    <td class="col-estado">
+                      {% if nivel == "escritura" %}
+                        <span class="chip success"><span class="icon mif-pencil"></span><span class="label">Lee y escribe</span></span>
+                      {% elif nivel == "lectura" %}
+                        <span class="chip primary"><span class="icon mif-eye"></span><span class="label">Lee</span></span>
+                      {% else %}
+                        <span class="chip"><span class="label">Sin acceso</span></span>
+                      {% endif %}
+                    </td>
+                  </tr>
+                {% endfor %}
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Antes de guardar</h2>
+        {% if persona.is_superuser %}
+          <p class="aviso aviso-info">
+            Es superusuario de Django: puede todo aunque no lleve ningún rol. Para
+            limitarle algo, quítele esa condición en el admin.
+          </p>
+        {% endif %}
+        {% if es_uno_mismo %}
+          <p class="ayuda">
+            Se está cambiando sus propios roles: si se quita el de «Roles y permisos»,
+            después no podrá volver a esta pantalla.
+          </p>
+        {% endif %}
+        <p class="ayuda">
+          Un rol apagado se queda puesto pero no da nada, así que se puede volver a
+          encender sin repartirlo otra vez.
+        </p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

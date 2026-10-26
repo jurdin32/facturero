@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block titulo %}Asiento {{ asiento.numero|default:"borrador" }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">
+      Asiento {{ asiento.numero|default:"borrador" }}
+      <span class="chip {% if asiento.estado == 'contabilizado' %}success{% elif asiento.estado == 'anulado' %}alert{% else %}warning{% endif %} soft">
+        <span class="label">{{ asiento.get_estado_display }}</span>
+      </span>
+    </h1>
+    <p class="subtitulo">
+      {{ asiento.fecha|date:"d/m/Y" }} · {{ asiento.get_tipo_display }}
+      {% if asiento.periodo %}· {{ asiento.periodo.nombre }}{% endif %}
+      {% if asiento.referencia %}· {{ asiento.referencia }}{% endif %}
+      · <a class="enlace" href="{% url 'contabilidad:asientos' %}">volver a los asientos</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    {% if asiento.editable %}
+      <a class="button outline dark" href="{% url 'contabilidad:asiento' asiento.pk %}"><span class="mif-pencil"></span> Editar</a>
+      <form method="post" action="{% url 'contabilidad:asiento_accion' asiento.pk 'contabilizar' %}">
+        {% csrf_token %}
+        <button type="submit" class="button success"
+                data-confirmar="El asiento queda contabilizado y empieza a afectar los saldos y los libros. Después solo se puede anular, no editar."
+                data-titulo="Contabilizar el asiento" data-aceptar="Contabilizar">
+          <span class="mif-check"></span> Contabilizar
+        </button>
+      </form>
+    {% elif asiento.contabilizado %}
+      <form method="post" action="{% url 'contabilidad:asiento_accion' asiento.pk 'anular' %}"
+            data-confirmar="El asiento queda anulado y deja de contar en los saldos."
+            data-titulo="Anular el asiento" data-aceptar="Anularlo">
+        {% csrf_token %}
+        <input type="hidden" name="motivo" value="Anulación desde la ficha del asiento">
+        <button type="submit" class="button outline alert"><span class="mif-undo"></span> Anular</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+{% if asiento.motivo_anulacion %}
+  <div class="aviso aviso-warning">Anulado: {{ asiento.motivo_anulacion }}</div>
+{% endif %}
+
+<div class="columnas">
+  <div class="columna-principal">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Concepto</h2>
+      <p>{{ asiento.concepto }}</p>
+      {% if asiento.comprobante_id %}
+        <p class="tenue">Comprobante del SRI: {{ asiento.comprobante }}</p>
+      {% endif %}
+    </section>
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">Líneas</h2>
+      <div class="desliza"><table class="table small libro">
+        <thead>
+          <tr>
+            <th>Cuenta</th>
+            <th>Detalle</th>
+            <th>Tercero</th>
+            <th>Documento</th>
+            <th class="col-dato">Debe</th>
+            <th class="col-dato">Haber</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for linea in lineas %}
+            <tr>
+              <td class="cifra">{{ linea.cuenta.codigo }} · {{ linea.cuenta.nombre }}</td>
+              <td>{{ linea.descripcion|default:"—" }}</td>
+              <td>{{ linea.tercero.razon_social|default:"—" }}</td>
+              <td class="cifra">{{ linea.documento|default:"—" }}</td>
+              <td class="col-dato cifra">{% if linea.debe %}{{ linea.debe|floatformat:2 }}{% endif %}</td>
+              <td class="col-dato cifra">{% if linea.haber %}{{ linea.haber|floatformat:2 }}{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+        <tfoot>
+          <tr>
+            <th colspan="4">Totales</th>
+            <th class="col-dato cifra">{{ asiento.total_debe|floatformat:2 }}</th>
+            <th class="col-dato cifra">{{ asiento.total_haber|floatformat:2 }}</th>
+          </tr>
+        </tfoot>
+      </table></div>
+      {% if not asiento.cuadra %}
+        <p class="aviso aviso-error">El asiento no cuadra: diferencia {{ asiento.diferencia|floatformat:2 }}.</p>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen">
+      <h2 class="bloque-titulo">Resumen</h2>
+      <table class="totales">
+        <tbody>
+          <tr><th>Debe</th><td class="cifra">{{ asiento.total_debe|floatformat:2 }}</td></tr>
+          <tr><th>Haber</th><td class="cifra">{{ asiento.total_haber|floatformat:2 }}</td></tr>
+          <tr><th>Diferencia</th><td class="cifra">{{ asiento.diferencia|floatformat:2 }}</td></tr>
+        </tbody>
+      </table>
+      <p class="ayuda">Creado por {{ asiento.usuario.get_username|default:"—" }} el {{ asiento.creado|date:"d/m/Y H:i" }}.</p>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

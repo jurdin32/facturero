@@ -1,0 +1,79 @@
+{% extends "base.html" %}
+{% block titulo %}Libro diario{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Libro diario</h1>
+    <p class="subtitulo">{{ cuantos }} asiento{{ cuantos|pluralize }} entre {{ desde|date:"d/m/Y" }} y {{ hasta|date:"d/m/Y" }}.</p>
+  </div>
+  <a class="button outline dark" href="{% url 'contabilidad:balance' %}?desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Balance de comprobación</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro libro-diario">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Asiento</th>
+        <th>Cuenta</th>
+        <th>Detalle</th>
+        <th class="col-dato">Debe</th>
+        <th class="col-dato">Haber</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for bloque in filas %}
+        {% for linea in bloque.lineas %}
+          <tr{% if forloop.first %} class="fila-madre"{% endif %}>
+            <td class="cifra">{% if forloop.first %}{{ bloque.asiento.fecha|date:"d/m/Y" }}{% endif %}</td>
+            <td class="cifra">{% if forloop.first %}{{ bloque.asiento.numero|default:"—" }}{% endif %}</td>
+            <td class="cifra">{{ linea.cuenta.codigo }} · {{ linea.cuenta.nombre }}</td>
+            <td>
+              {% if forloop.first %}<strong>{{ bloque.asiento.concepto }}</strong><br>{% endif %}
+              <span class="tenue">{{ linea.descripcion|default:"" }}{% if linea.documento %} · {{ linea.documento }}{% endif %}</span>
+            </td>
+            <td class="col-dato cifra">{% if linea.debe %}{{ linea.debe|floatformat:2 }}{% endif %}</td>
+            <td class="col-dato cifra">{% if linea.haber %}{{ linea.haber|floatformat:2 }}{% endif %}</td>
+          </tr>
+        {% endfor %}
+      {% endfor %}
+    </tbody>
+    <tfoot>
+      <tr>
+        <th colspan="4">Totales del periodo</th>
+        <th class="col-dato cifra">{{ total_debe|floatformat:2 }}</th>
+        <th class="col-dato cifra">{{ total_haber|floatformat:2 }}</th>
+      </tr>
+    </tfoot>
+  </table></div>
+{% else %}
+  <div class="vacio">
+    <p>No hay asientos contabilizados en esas fechas.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

@@ -1,0 +1,130 @@
+{% extends "base.html" %}
+{% block titulo %}Asientos contables{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Asientos contables</h1>
+    <p class="subtitulo">{{ cuantos }} asiento{{ cuantos|pluralize }} entre {{ desde|date:"d/m/Y" }} y {{ hasta|date:"d/m/Y" }}.</p>
+  </div>
+  <a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="q">Buscar</label>
+        <input type="search" name="q" id="q" value="{{ filtros.q }}"
+               data-role="input" data-clear-button="true" data-prepend="<span class='mif-search'></span>"
+               placeholder="Número o concepto">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-flag'></span>">
+          <option value="">Todos</option>
+          {% for valor, nombre in estados %}
+            <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="tipo">Tipo</label>
+        <select name="tipo" id="tipo" data-role="select" data-prepend="<span class='mif-history'></span>">
+          <option value="">Todos</option>
+          {% for valor, nombre in tipos %}
+            <option value="{{ valor }}" {% if filtros.tipo == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'contabilidad:asientos' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Número</th>
+        <th>Fecha</th>
+        <th>Concepto</th>
+        <th>Tipo</th>
+        <th>Estado</th>
+        <th class="col-dato">Debe</th>
+        <th class="col-dato">Haber</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in filas %}
+        <tr>
+          <td class="cifra">{{ a.numero|default:"—" }}</td>
+          <td class="cifra">{{ a.fecha|date:"d/m/Y" }}</td>
+          <td>
+            {{ a.concepto }}
+            {% if a.referencia %}<span class="listado-meta cifra">{{ a.referencia }}</span>{% endif %}
+          </td>
+          <td>{{ a.get_tipo_display }}</td>
+          <td>
+            <span class="chip {% if a.estado == 'contabilizado' %}success{% elif a.estado == 'anulado' %}alert{% else %}warning{% endif %} soft">
+              <span class="label">{{ a.get_estado_display }}</span>
+            </span>
+          </td>
+          <td class="col-dato cifra">{{ a.debe_total|default:0|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ a.haber_total|default:0|floatformat:2 }}</td>
+          <td class="col-acciones">
+            <a class="button small square outline dark" href="{% url 'contabilidad:asiento_detalle' a.pk %}"
+               title="Ver el asiento" aria-label="Ver"><span class="mif-eye"></span></a>
+            {% if a.editable %}
+              <a class="button small square outline primary" href="{% url 'contabilidad:asiento' a.pk %}"
+                 title="Editar el asiento" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+
+  {% if filas.has_other_pages %}
+    <div class="acciones-fila">
+      {% if filas.has_previous %}
+        <a class="button small outline dark" href="?pagina={{ filas.previous_page_number }}&q={{ filtros.q }}&estado={{ filtros.estado }}&tipo={{ filtros.tipo }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Anterior</a>
+      {% endif %}
+      <span class="tenue">Página {{ filas.number }} de {{ filas.paginator.num_pages }}</span>
+      {% if filas.has_next %}
+        <a class="button small outline dark" href="?pagina={{ filas.next_page_number }}&q={{ filtros.q }}&estado={{ filtros.estado }}&tipo={{ filtros.tipo }}&desde={{ desde|date:'Y-m-d' }}&hasta={{ hasta|date:'Y-m-d' }}">Siguiente</a>
+      {% endif %}
+    </div>
+  {% endif %}
+{% else %}
+  <div class="vacio">
+    <p>No hay asientos con esos filtros.</p>
+    <p class="tenue">Las facturas autorizadas se contabilizan solas; los demás movimientos se escriben a mano.</p>
+    <p><a class="button primary" href="{% url 'contabilidad:asiento_nuevo' %}"><span class="mif-plus"></span> Nuevo asiento</a></p>
+  </div>
+{% endif %}
+
+{% endblock %}

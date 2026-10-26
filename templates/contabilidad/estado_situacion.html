@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_inicial %}Estado de situación inicial{% else %}Estado de situación financiera{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+      <h1 class="titulo">{% if es_inicial %}Estado de situación inicial{% else %}Estado de situación financiera{% endif %}</h1>
+      <p class="subtitulo">
+        Al {{ hasta|date:"d/m/Y" }}. Activo, pasivo y patrimonio bajo NIIF.
+        {% if es_inicial %}Son los saldos con los que abre el ejercicio, antes de las operaciones del año.{% endif %}
+      </p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Al</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+<div class="desliza"><table class="table small libro">
+  <thead><tr><th>Código</th><th>Cuenta</th><th class="col-dato">Valor</th></tr></thead>
+  <tbody>
+    <tr class="fila-madre"><th colspan="3">Activo</th></tr>
+    {% for fila in activo %}
+      <tr>
+        <td class="cifra">{{ fila.codigo }}</td>
+        <td style="padding-left: {% widthratio fila.nivel 1 14 %}px">{% if fila.es_madre %}<strong>{{ fila.nombre }}</strong>{% else %}{{ fila.nombre }}{% endif %}</td>
+        <td class="col-dato cifra">{{ fila.valor|floatformat:2 }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="3" class="tenue">Sin saldos de activo.</td></tr>{% endfor %}
+    <tr class="fila-madre"><th colspan="2">Total activo</th><th class="col-dato cifra">{{ total_activo|floatformat:2 }}</th></tr>
+
+    <tr class="fila-madre"><th colspan="3">Pasivo</th></tr>
+    {% for fila in pasivo %}
+      <tr>
+        <td class="cifra">{{ fila.codigo }}</td>
+        <td style="padding-left: {% widthratio fila.nivel 1 14 %}px">{% if fila.es_madre %}<strong>{{ fila.nombre }}</strong>{% else %}{{ fila.nombre }}{% endif %}</td>
+        <td class="col-dato cifra">{{ fila.valor|floatformat:2 }}</td>
+      </tr>
+    {% empty %}<tr><td colspan="3" class="tenue">Sin saldos de pasivo.</td></tr>{% endfor %}
+    <tr class="fila-madre"><th colspan="2">Total pasivo</th><th class="col-dato cifra">{{ total_pasivo|floatformat:2 }}</th></tr>
+
+    <tr class="fila-madre"><th colspan="3">Patrimonio</th></tr>
+    {% for fila in patrimonio %}
+      <tr>
+        <td class="cifra">{{ fila.codigo }}</td>
+        <td style="padding-left: {% widthratio fila.nivel 1 14 %}px">{% if fila.es_madre %}<strong>{{ fila.nombre }}</strong>{% else %}{{ fila.nombre }}{% endif %}</td>
+        <td class="col-dato cifra">{{ fila.valor|floatformat:2 }}</td>
+      </tr>
+    {% endfor %}
+    {% if resultado %}
+      <tr>
+        <td></td>
+        <td>Resultado del ejercicio</td>
+        <td class="col-dato cifra">{{ resultado|floatformat:2 }}</td>
+      </tr>
+    {% endif %}
+    <tr class="fila-madre"><th colspan="2">Total patrimonio</th><th class="col-dato cifra">{{ total_patrimonio|floatformat:2 }}</th></tr>
+
+    <tr class="fila-madre"><th colspan="2">Total pasivo y patrimonio</th><th class="col-dato cifra">{{ total_pasivo_patrimonio|floatformat:2 }}</th></tr>
+  </tbody>
+</table></div>
+
+{% if diferencia %}
+  <p class="aviso aviso-error">El balance no cuadra: hay una diferencia de {{ diferencia|floatformat:2 }}. Revise los asientos de apertura y los saldos iniciales.</p>
+{% else %}
+  <p class="aviso aviso-success">El activo coincide con el pasivo más el patrimonio.</p>
+{% endif %}
+
+{% if es_inicial %}
+  <p class="ayuda">
+    Si todavía no hay asiento de apertura, este estado muestra los saldos que dejaron
+    los comprobantes y movimientos registrados hasta esa fecha. Regístrelo desde
+    <a class="enlace" href="{% url 'contabilidad:asientos' %}?tipo=apertura">Asientos contables</a>.
+  </p>
+{% endif %}
+
+{% endblock %}

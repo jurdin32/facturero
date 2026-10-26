@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% block titulo %}{{ documento.plural }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <h1 class="titulo"><span class="mif-{{ documento.icono }}" aria-hidden="true"></span> {{ documento.plural }}</h1>
+  <a class="button primary" href="{% url 'comprobantes:nuevo' documento.clave %}">
+    <span class="mif-plus" aria-hidden="true"></span> Nuevo
+  </a>
+</div>
+
+<p class="ayuda">{{ documento.ayuda }}</p>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado ante el SRI</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-flag'></span>">
+          <option value="">Todas</option>
+          <option value="sin_emitir" {% if filtros.estado == 'sin_emitir' %}selected{% endif %}>Sin emitir</option>
+          {% for valor, nombre in estados.items %}
+            <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-one-fifth">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'comprobantes:lista' documento.clave %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro listado" id="tabla-comprobantes" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca">Estado</th>
+        <th class="col-principal">{{ documento.titulo }}</th>
+        <th class="col-dato">{% if documento.importe %}Importe{% endif %}</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+        <tr>
+          <td class="col-marca">
+            {% include "fragmentos/estado.html" with estado=fila.registro.estado|default:"BORRADOR" %}
+          </td>
+          <td class="col-principal">
+            <span class="listado-titulo">{{ fila.contraparte|default:"—" }}</span>
+            <span class="listado-meta cifra">
+              {{ fila.numero }} · {{ fila.objeto.fecha_emision|date:"d/m/Y" }}
+              {% if fila.usuario %}· por {{ fila.usuario.usuario_nombre }}{% endif %}
+            </span>
+          </td>
+          <td class="col-dato cifra listado-cifra">
+            {% if fila.importe is not None %}{{ fila.importe|floatformat:2 }}{% else %}—{% endif %}
+          </td>
+          <td class="col-acciones">
+            {% if fila.objeto.autorizado %}
+              <a class="button small square outline dark" href="{% url 'comprobantes:ficha' documento.clave fila.objeto.pk %}"
+                 title="Ver {{ documento.titulo|lower }}" aria-label="Ver"><span class="mif-eye"></span></a>
+            {% else %}
+              <a class="button small square outline primary" href="{% url 'comprobantes:editar' documento.clave fila.objeto.pk %}"
+                 title="Seguir con {{ documento.titulo|lower }}" aria-label="Seguir"><span class="mif-pencil"></span></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+
+{% else %}
+  <div class="vacio">
+    {% if filtros.q or filtros.estado %}
+      <p>Con esos filtros no aparece nada.</p>
+      <p><a class="enlace" href="{% url 'comprobantes:lista' documento.clave %}">Quitar los filtros</a></p>
+    {% else %}
+      <p>Todavía no hay {{ documento.plural|lower }}.</p>
+      <p class="ayuda">{{ documento.ayuda }}</p>
+      <p><a class="button primary" href="{% url 'comprobantes:nuevo' documento.clave %}">
+        <span class="mif-plus" aria-hidden="true"></span> Crear el primero</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

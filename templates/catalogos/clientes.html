@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block titulo %}Clientes{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Clientes</h1>
+    <p class="subtitulo">{{ cuantos }} en el catálogo · los datos son los que salen en la factura</p>
+  </div>
+  <a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+</div>
+
+{% if clientes %}
+  <div class="desliza"><table id="tabla-clientes" class="table small libro libro-clientes listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Cliente</th>
+        <th class="col-dato">Facturas</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in clientes %}
+        <tr>
+          <td class="col-marca"><span class="marca"><span class="mif-person"></span></span></td>
+          <td class="col-principal">
+            <span class="listado-titulo">{{ c.razon_social }}</span>
+            <span class="listado-meta cifra">
+              {{ c.identificacion }}{% if c.telefono %} · {{ c.telefono }}{% endif %}
+            </span>
+            <span class="listado-meta">
+              {{ c.direccion|default:"sin dirección" }}{% if c.email %} · {{ c.email }}{% endif %}
+            </span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-dato" title="Facturas emitidas a este cliente">
+              <span class="mif-receipt"></span>
+              <span class="cifra">{{ c.cuantas_facturas }}</span>
+            </span>
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline success" href="{% url 'facturacion:facturar' %}?cliente={{ c.pk }}"
+               title="Facturarle a {{ c.razon_social }}" aria-label="Facturar"><span class="mif-receipt"></span></a>
+            <a class="button small square outline primary" href="{% url 'catalogos:cliente' c.pk %}"
+               title="Editar {{ c.razon_social }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}
+  <div class="vacio">
+    {% if filtros.q %}
+      <p>Ningún cliente coincide con «{{ filtros.q }}».</p>
+      <p><a class="enlace" href="{% url 'catalogos:clientes' %}">Ver todos</a></p>
+    {% else %}
+      <p>Todavía no hay clientes.</p>
+      <p class="tenue">También puede crearlos desde la propia pantalla de facturar.</p>
+      <p><a class="button primary" href="{% url 'catalogos:cliente_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

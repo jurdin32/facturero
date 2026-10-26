@@ -1,0 +1,29 @@
+{% comment %}Las líneas del comprobante: qué se devuelve (nota de crédito) o qué se compra.{% endcomment %}
+<div class="desliza">
+  <table class="table small libro {{ clase_tabla|default:'ride-lineas' }}">
+    <thead>
+      <tr>
+        <th class="col-codigo">Código</th>
+        <th>Descripción</th>
+        <th class="col-cantidad">Cantidad</th>
+        <th class="col-precio">P. unitario</th>
+        <th class="col-descuento">Descuento</th>
+        <th class="col-importe">Importe</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for linea in detalles %}
+        <tr>
+          <td class="col-codigo cifra">{{ linea.codigo_principal }}</td>
+          <td>{{ linea.descripcion }}</td>
+          <td class="col-cantidad cifra">{{ linea.cantidad|floatformat:"-6" }}</td>
+          <td class="col-precio cifra">{{ linea.precio_unitario|floatformat:2 }}</td>
+          <td class="col-descuento cifra">{{ linea.descuento|floatformat:2 }}</td>
+          <td class="col-importe cifra">{{ linea.precio_total_sin_impuesto|floatformat:2 }}</td>
+        </tr>
+      {% empty %}
+        <tr><td class="tenue" colspan="6">Este comprobante no tiene líneas.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>

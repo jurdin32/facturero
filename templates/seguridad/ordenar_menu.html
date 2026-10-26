@@ -1,0 +1,72 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}Ordenar el menú{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Ordenar el menú</h1>
+    <p class="subtitulo">
+      Arrastre un apartado para moverlo entero, o una opción para cambiarla de sitio
+      dentro de su apartado. Se guarda solo.
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button outline dark" href="{% url 'seguridad:opciones' %}">
+      <span class="mif-arrow-left"></span> Volver a las opciones
+    </a>
+  </div>
+</div>
+
+<div class="orden-menu" data-orden-menu data-url="{% url 'seguridad:guardar_orden_menu' %}">
+  {% csrf_token %}
+
+  <p class="aviso aviso-info" data-orden-aviso role="status">
+    Arrastre desde el icono de las tres líneas. El orden se guarda automáticamente.
+  </p>
+
+  {% for grupo in grupos %}
+    <section class="bloque orden-grupo" data-grupo="{{ grupo.nombre }}">
+      <header class="orden-grupo-cabecera" draggable="true" data-arrastrar-grupo
+              title="Arrastrar el apartado «{{ grupo.nombre }}» entero">
+        <span class="orden-agarre" aria-hidden="true">
+          <span class="mif-menu"></span>
+        </span>
+        <h2 class="bloque-titulo">{{ grupo.nombre }}</h2>
+        <span class="tenue">{{ grupo.opciones|length }} opción{{ grupo.opciones|length|pluralize }}</span>
+      </header>
+
+      <ul class="orden-lista" data-opciones>
+        {% for opcion_menu in grupo.opciones %}
+          <li class="orden-item" draggable="true" data-opcion="{{ opcion_menu.pk }}">
+            <span class="orden-agarre" data-arrastrar-opcion aria-hidden="true">
+              <span class="mif-menu"></span>
+            </span>
+            <span class="orden-icono">
+              <span class="mif-{{ opcion_menu.icono|default:'file' }}" aria-hidden="true"></span>
+            </span>
+            <span class="orden-texto">
+              <strong>{{ opcion_menu.nombre }}</strong>
+              <small class="cifra">{{ opcion_menu.url|default:"Enlace fijo del menú" }}</small>
+            </span>
+          </li>
+        {% endfor %}
+      </ul>
+    </section>
+  {% empty %}
+    <div class="vacio">
+      <p>Todavía no hay opciones en el menú.</p>
+      <p class="tenue">Cree una opción con dirección y déjela «en el menú».</p>
+      <p><a class="button primary" href="{% url 'seguridad:opcion_nueva' %}">
+        <span class="mif-plus"></span> Crear una opción
+      </a></p>
+    </div>
+  {% endfor %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/ordenar_menu.js' %}?v={{ sello_estatico }}"></script>
+{% endblock %}

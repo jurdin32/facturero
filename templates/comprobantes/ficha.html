@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ documento.titulo }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <h1 class="titulo">
+    <span class="mif-{{ documento.icono }}" aria-hidden="true"></span> {{ documento.titulo }}
+    {% if registro %}<span class="tenue cifra">{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}</span>{% endif %}
+  </h1>
+  <div class="titulo-acciones">
+    <a class="button outline dark" href="{% url 'comprobantes:lista' documento.clave %}">
+      <span class="mif-arrow-left" aria-hidden="true"></span> {{ documento.plural }}
+    </a>
+    {% if not objeto.autorizado %}
+      <a class="button outline primary" href="{% url 'comprobantes:editar' documento.clave objeto.pk %}">
+        <span class="mif-pencil" aria-hidden="true"></span> Corregir
+      </a>
+    {% endif %}
+    <a class="button primary" href="{% url 'comprobantes:ride' documento.clave objeto.pk %}"
+       data-imprimir="{% url 'comprobantes:ride' documento.clave objeto.pk %}" data-titulo="Imprimir {{ documento.titulo|lower }}">
+      <span class="mif-printer" aria-hidden="true"></span> Imprimir
+    </a>
+    {% if not objeto.autorizado and registro %}
+      <form method="post" action="{% url 'comprobantes:accion' documento.clave objeto.pk 'reintentar' %}">
+        {% csrf_token %}
+        <button type="submit" class="button outline dark"><span class="mif-refresh" aria-hidden="true"></span> Reintentar el envío</button>
+      </form>
+      <form method="post" action="{% url 'comprobantes:accion' documento.clave objeto.pk 'consultar' %}">
+        {% csrf_token %}
+        <button type="submit" class="button outline dark"><span class="mif-cloud" aria-hidden="true"></span> Preguntar al SRI</button>
+      </form>
+      <form method="post" action="{% url 'comprobantes:accion' documento.clave objeto.pk 'fecha' %}">
+        {% csrf_token %}
+        <button type="submit" class="button outline dark"><span class="mif-calendar" aria-hidden="true"></span> Rehacer con la fecha de hoy</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    <article class="comprobante">
+
+      <header class="comprobante-cabecera">
+        <div class="comprobante-emisor">
+          <p class="comprobante-nombre">{{ emisor.razon_social|default:"Emisor sin configurar" }}</p>
+          <p class="comprobante-dato">RUC <span class="cifra">{{ emisor.ruc }}</span></p>
+          {% if emisor.nombre_comercial %}<p class="comprobante-dato">{{ emisor.nombre_comercial }}</p>{% endif %}
+          <p class="comprobante-dato">{{ emisor.dir_establecimiento|default:emisor.dir_matriz }}</p>
+          <p class="comprobante-dato tenue">
+            Ambiente {% if es_produccion %}de producción{% else %}de pruebas{% endif %}
+          </p>
+        </div>
+        <div class="comprobante-titulo">
+          <p class="comprobante-tipo">{{ documento.titulo }}</p>
+          <p class="comprobante-serie cifra">
+            {% if registro %}{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}{% else %}sin número{% endif %}
+          </p>
+          <p class="comprobante-dato cifra">Emitido el {{ objeto.fecha_emision|date:"d/m/Y" }}</p>
+          {% if registro_usuario %}
+            <p class="comprobante-dato">
+              Registrado por {{ registro_usuario.usuario_nombre|default:"un usuario" }}
+              el {{ registro_usuario.actualizado|date:"d/m/Y H:i" }}
+            </p>
+          {% endif %}
+        </div>
+      </header>
+
+      <section class="comprobante-datos">
+        <div>
+          <p class="comprobante-etiqueta">
+            {% if documento.campo_contraparte == "proveedor" %}Proveedor
+            {% elif documento.campo_contraparte == "sujeto_retenido" %}Sujeto retenido
+            {% else %}Receptor{% endif %}
+          </p>
+          {% if contraparte %}
+            <p class="comprobante-nombre">{{ contraparte.razon_social }}</p>
+            <p class="comprobante-dato cifra">{{ contraparte.identificacion }}</p>
+            <p class="comprobante-dato">{{ contraparte.direccion|default:"—" }}</p>
+          {% else %}
+            <p class="comprobante-dato tenue">Los destinatarios van abajo, con lo que se les entrega.</p>
+          {% endif %}
+        </div>
+        <div>
+          <p class="comprobante-etiqueta">Comprobante</p>
+          {% if objeto.get_forma_pago_display %}
+            <p class="comprobante-dato">{{ objeto.get_forma_pago_display }}</p>
+          {% endif %}
+          <p class="comprobante-dato">Estado: {{ estado }}</p>
+        </div>
+      </section>
+
+      {% if registro %}
+        <section class="comprobante-clave-caja">
+          <p class="comprobante-etiqueta">Clave de acceso</p>
+          <p class="comprobante-clave cifra">{{ registro.clave_acceso }}</p>
+          {% if objeto.autorizado %}
+            <p class="comprobante-etiqueta segundo">Autorización</p>
+            <p class="comprobante-clave cifra">
+              {{ registro.fecha_autorizacion|date:"d/m/Y H:i" }} · {{ registro.numero_autorizacion }}
+            </p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if documento.cuerpo %}{% include documento.cuerpo %}{% endif %}
+
+      {% if totales %}
+        <div class="desliza caja-totales"><table class="totales">
+          <tbody>
+            {% if totales.total_descuento %}
+              <tr><th>Suma de líneas</th><td class="cifra">{{ totales.total_bruto|floatformat:2 }}</td></tr>
+              <tr><th>Descuento</th><td class="cifra">−{{ totales.total_descuento|floatformat:2 }}</td></tr>
+            {% endif %}
+            <tr><th>Subtotal</th><td class="cifra">{{ totales.total_sin_impuestos|floatformat:2 }}</td></tr>
+            {% for grupo in iva_por_tarifa %}
+              <tr><th>IVA {{ grupo.tarifa|floatformat:"-2" }} %</th><td class="cifra">{{ grupo.valor|floatformat:2 }}</td></tr>
+            {% empty %}
+              <tr><th>IVA</th><td class="cifra">{{ totales.total_impuestos|floatformat:2 }}</td></tr>
+            {% endfor %}
+            <tr class="total-final"><th>Total</th><td class="cifra">{{ totales.importe_total|floatformat:2 }}</td></tr>
+          </tbody>
+        </table></div>
+      {% endif %}
+
+      {% if objeto.observaciones or objeto.informacion_adicional %}
+        <section class="comprobante-notas">
+          {% if objeto.observaciones %}
+            <p class="comprobante-etiqueta">Observaciones</p>
+            <p>{{ objeto.observaciones|linebreaksbr }}</p>
+          {% endif %}
+          {% if objeto.informacion_adicional %}
+            <p class="comprobante-etiqueta">Información adicional</p>
+            <p>{{ objeto.informacion_adicional|linebreaksbr }}</p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+      {% if clave_por_partes %}
+        {# Al pie del documento: el desglose para leer la clave sin contar dígitos a ojo. No va al papel. #}
+        <section class="comprobante-clave-partes sin-imprimir">
+          <details class="desplegable">
+            <summary class="desplegable-titulo">Cómo se lee la clave de acceso</summary>
+            <table class="table small libro libro-partes">
+              <tbody>
+                {% for nombre, trozo in clave_por_partes %}
+                  <tr><th>{{ nombre }}</th><td class="cifra">{{ trozo }}</td></tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </details>
+        </section>
+      {% endif %}
+    </article>
+  </div>
+
+  <aside class="columna-lateral sin-imprimir">
+    <div class="bloque">
+      <h2 class="bloque-titulo">Documentos del envío</h2>
+      {% if documentos %}
+        <ul class="documentos">
+          {% for archivo in documentos %}
+            <li class="documento{% if archivo.principal %} documento-fuerte{% endif %}">
+              <span class="documento-icono mif-{{ archivo.icono }}" aria-hidden="true"></span>
+              <div class="documento-cuerpo">
+                <span class="documento-nombre">{{ archivo.titulo }}</span>
+                <span class="documento-datos cifra">{{ archivo.archivo }} · {{ archivo.tamano }}</span>
+                <span class="documento-ayuda">{{ archivo.ayuda }}</span>
+              </div>
+              <div class="documento-botones">
+                <a class="documento-boton" target="_blank" rel="noopener"
+                   title="Ver «{{ archivo.titulo }}»"
+                   href="{% url 'comprobantes:documento' documento.clave objeto.pk archivo.clave %}">
+                  <span class="mif-eye" aria-hidden="true"></span><span class="oculto-visual">Ver</span>
+                </a>
+                <a class="documento-boton" title="Descargar «{{ archivo.titulo }}»"
+                   href="{% url 'comprobantes:documento' documento.clave objeto.pk archivo.clave %}?descargar=1">
+                  <span class="mif-download" aria-hidden="true"></span><span class="oculto-visual">Descargar</span>
+                </a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="ayuda">Todavía no se ha emitido: no hay documentos que guardar.</p>
+      {% endif %}
+    </div>
+
+    <div class="bloque">
+      <h2 class="bloque-titulo">Estado ante el SRI</h2>
+      <p>{% include "fragmentos/estado.html" with estado=registro.estado|default:"BORRADOR" %}</p>
+      {% if registro %}
+        {% if registro.fecha_autorizacion %}
+          <p class="ayuda">Autorizado el {{ registro.fecha_autorizacion|date:"d/m/Y H:i" }}.</p>
+        {% elif registro.enviado %}
+          <p class="ayuda">Enviado el {{ registro.enviado|date:"d/m/Y H:i" }}.</p>
+        {% endif %}
+      {% else %}
+        <p class="ayuda">Todavía no se ha emitido: es un borrador que se puede cambiar.</p>
+      {% endif %}
+
+      {% include "fragmentos/mensajes_sri.html" with mensajes=mensajes_sri %}
+
+      {% if not objeto.autorizado and registro %}
+        <p class="ayuda">Rehacer la fecha emite un comprobante nuevo: cambia la clave de
+          acceso y la fecha de emisión. Úselo cuando el SRI rechaza por estar fuera de plazo.</p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

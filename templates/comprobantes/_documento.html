@@ -1,0 +1,116 @@
+{% comment %}
+El comprobante como sale impreso. Lo usan la ficha y el RIDE, y cada tipo pone su
+cuerpo (las líneas, los motivos, los bienes, lo retenido) en la plantilla que dice el
+registro, así que aquí no se sabe de qué comprobante se trata.
+{% endcomment %}
+<article class="ride ride-{{ formato|default:'a4' }}">
+
+  <header class="ride-cabecera">
+    <div class="ride-emisor">
+      <p class="ride-emisor-nombre">{{ emisor.razon_social|default:"Emisor sin configurar" }}</p>
+      {% if emisor %}
+        {% if emisor.nombre_comercial %}<p class="ride-linea">{{ emisor.nombre_comercial }}</p>{% endif %}
+        <p class="ride-linea">RUC <span class="cifra">{{ emisor.ruc }}</span></p>
+        <p class="ride-linea">Matriz: {{ emisor.dir_matriz }}</p>
+        {% if emisor.dir_establecimiento %}
+          <p class="ride-linea">Establecimiento: {{ emisor.dir_establecimiento }}</p>
+        {% endif %}
+        <p class="ride-linea">
+          Obligado a llevar contabilidad: {% if emisor.obligado_contabilidad %}Sí{% else %}No{% endif %}
+        </p>
+        {% if emisor.contribuyente_especial %}
+          <p class="ride-linea">Contribuyente especial n.º <span class="cifra">{{ emisor.contribuyente_especial }}</span></p>
+        {% endif %}
+        {% if emisor.rimpe_texto %}<p class="ride-linea">{{ emisor.rimpe_texto }}</p>{% endif %}
+      {% endif %}
+    </div>
+    <div class="ride-titulo">
+      <p class="ride-titulo-tipo">{{ documento.titulo }}</p>
+      <p class="ride-titulo-numero cifra">
+        {% if registro %}{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}{% else %}sin número{% endif %}
+      </p>
+      <p class="ride-linea">Ambiente: {% if es_produccion %}Producción{% else %}Pruebas{% endif %}</p>
+      <p class="ride-linea">Estado: {{ estado }}</p>
+      <p class="ride-linea tenue">Representación impresa del comprobante electrónico</p>
+    </div>
+  </header>
+
+  {% if registro and registro.clave_acceso %}
+    <section class="ride-autorizacion">
+      {% if registro.numero_autorizacion %}
+        <p><span class="ride-etiqueta">Número de autorización</span><br><span class="cifra">{{ registro.numero_autorizacion }}</span></p>
+      {% endif %}
+      <p><span class="ride-etiqueta">Clave de acceso</span><br><span class="cifra">{{ registro.clave_acceso }}</span></p>
+      {% if registro.fecha_autorizacion %}
+        <p><span class="ride-etiqueta">Fecha de autorización</span><br><span class="cifra">{{ registro.fecha_autorizacion|date:"d/m/Y H:i" }}</span></p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <section class="ride-partes">
+    <div>
+      <p class="ride-etiqueta">
+        {% if documento.campo_contraparte == "proveedor" %}Proveedor
+        {% elif documento.campo_contraparte == "sujeto_retenido" %}Sujeto retenido
+        {% else %}Receptor{% endif %}
+      </p>
+      {% if contraparte %}
+        <p class="ride-receptor">{{ contraparte.razon_social }}</p>
+        <p class="ride-linea">Identificación: <span class="cifra">{{ contraparte.identificacion }}</span></p>
+        <p class="ride-linea">Dirección: {{ contraparte.direccion|default:"—" }}</p>
+      {% else %}
+        <p class="tenue">Los destinatarios van abajo, con lo que se les entrega.</p>
+      {% endif %}
+    </div>
+    <div>
+      <p class="ride-etiqueta">Comprobante</p>
+      <p class="ride-linea">Fecha de emisión: <span class="cifra">{{ objeto.fecha_emision|date:"d/m/Y" }}</span></p>
+      {% if objeto.get_forma_pago_display %}
+        <p class="ride-linea">Forma de pago: {{ objeto.get_forma_pago_display }}</p>
+      {% endif %}
+      {% if objeto.numero_autorizacion_doc_sustento %}
+        <p class="ride-linea">Documento que sustenta: <span class="cifra">{{ objeto.numero_autorizacion_doc_sustento }}</span></p>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if documento.cuerpo %}{% include documento.cuerpo %}{% endif %}
+
+  {% if totales %}
+    <div class="desliza caja-totales"><table class="totales">
+      <tbody>
+        {% if totales.total_descuento %}
+          <tr><th>Suma de líneas</th><td class="cifra">{{ totales.total_bruto|floatformat:2 }}</td></tr>
+          <tr><th>Descuento</th><td class="cifra">−{{ totales.total_descuento|floatformat:2 }}</td></tr>
+        {% endif %}
+        <tr><th>Subtotal</th><td class="cifra">{{ totales.total_sin_impuestos|floatformat:2 }}</td></tr>
+        {% for grupo in iva_por_tarifa %}
+          <tr><th>IVA {{ grupo.tarifa|floatformat:"-2" }} %</th><td class="cifra">{{ grupo.valor|floatformat:2 }}</td></tr>
+        {% empty %}
+          <tr><th>IVA</th><td class="cifra">{{ totales.total_impuestos|floatformat:2 }}</td></tr>
+        {% endfor %}
+        <tr class="total-final"><th>Total</th><td class="cifra">{{ totales.importe_total|floatformat:2 }}</td></tr>
+      </tbody>
+    </table></div>
+  {% endif %}
+
+  {% if objeto.observaciones %}
+    <section class="ride-notas">
+      <p class="ride-etiqueta">Observaciones</p>
+      <p>{{ objeto.observaciones|linebreaksbr }}</p>
+    </section>
+  {% endif %}
+
+  {% if objeto.informacion_adicional %}
+    <section class="ride-notas">
+      <p class="ride-etiqueta">Información adicional</p>
+      {% for dato in objeto.informacion_adicional %}<p>{{ dato }}</p>{% endfor %}
+    </section>
+  {% endif %}
+
+  <footer class="ride-pie">
+    <p class="tenue">Documento emitido electrónicamente y autorizado por el SRI. Vale como
+      comprobante solo con su número de autorización.</p>
+    <p class="tenue cifra">{{ documento.titulo }} · {{ contraparte.razon_social|default:documento.plural }}</p>
+  </footer>
+</article>

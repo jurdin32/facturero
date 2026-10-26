@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block titulo %}Plan de cuentas{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Plan de cuentas</h1>
+    <p class="subtitulo">Estructura NIIF de la Superintendencia de Compañías, editable por el negocio.</p>
+  </div>
+  <a class="button primary" href="{% url 'contabilidad:cuenta_nueva' %}"><span class="mif-plus"></span> Nueva cuenta</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6">
+      <div class="filtro">
+        <label class="etiqueta" for="q">Buscar</label>
+        <input type="search" name="q" id="q" value="{{ filtros.q }}"
+               data-role="input" data-clear-button="true" data-prepend="<span class='mif-search'></span>"
+               placeholder="código o nombre">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro">
+        <label class="etiqueta" for="tipo">Grupo</label>
+        <select name="tipo" id="tipo" data-role="select" data-prepend="<span class='mif-list'></span>">
+          <option value="">Todos</option>
+          {% for valor, nombre in tipos %}
+            <option value="{{ valor }}" {% if filtros.tipo == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'contabilidad:plan' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Código</th>
+        <th>Cuenta</th>
+        <th class="col-dato">Saldo</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+        <tr{% if fila.hijas %} class="fila-madre"{% endif %}>
+          <td class="cifra">{{ fila.cuenta.codigo }}</td>
+          <td style="padding-left: {% widthratio fila.cuenta.nivel 1 14 %}px">
+            {% if fila.hijas %}<strong>{{ fila.cuenta.nombre }}</strong>{% else %}{{ fila.cuenta.nombre }}{% endif %}
+            {% if not fila.cuenta.activa %}<span class="chip warning soft"><span class="label">inactiva</span></span>{% endif %}
+            {% if not fila.cuenta.permite_movimientos %}<span class="tenue"> · suma</span>{% endif %}
+          </td>
+          <td class="col-dato cifra {% if fila.saldo < 0 %}sale{% endif %}">{{ fila.saldo|floatformat:2 }}</td>
+          <td class="col-acciones">
+            <a class="button small square outline dark" href="{% url 'contabilidad:cuenta' fila.cuenta.pk %}"
+               title="Editar la cuenta" aria-label="Editar"><span class="mif-pencil"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">El saldo incluye las cuentas hijas. Las cuentas marcadas «suma» no reciben asientos: solo agrupan.</p>
+{% else %}
+  <div class="vacio">
+    <p>No hay cuentas con esos filtros.</p>
+    <p><a class="enlace" href="{% url 'contabilidad:plan' %}">Ver todo el plan</a></p>
+  </div>
+{% endif %}
+
+{% endblock %}

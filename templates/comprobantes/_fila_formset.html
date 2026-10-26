@@ -1,0 +1,29 @@
+{% comment %}
+Una fila de una tabla de comprobante. En la hoja solo se lee: cada celda enseña su
+valor y los campos de verdad viajan escondidos, porque se envían con el formulario.
+Lo que se escribe se cambia en la ventana de la fila, que es donde caben las
+etiquetas y la ayuda. A la derecha van los dos botones: el lápiz para editarla y la
+× para quitarla.
+{% endcomment %}
+<tr class="linea">
+  {% for campo in fila.visible_fields %}{% if campo.name != "DELETE" %}
+    <td class="{{ campo.field.widget.attrs.columna|default:campo.name }}{% if campo.errors %} con-error{% endif %}">
+      <span class="celda-oculta">{{ campo }}</span>
+      <span class="celda-valor cifra" data-valor="{{ campo.name }}"></span>
+      {% if forloop.first %}
+        <span class="linea-oculta">{% for oculto in fila.hidden_fields %}{{ oculto }}{% endfor %}</span>
+        {# Lo que falle se dice aquí: estas celdas no llevan el error de su campo. #}
+        {% for faltas in fila.errors.values %}<span class="error">{{ faltas.0 }}</span>{% endfor %}
+      {% endif %}
+    </td>
+  {% endif %}{% endfor %}
+  <td class="col-acciones">
+    <button type="button" class="button small square outline primary" data-editar-fila
+            title="Editar la fila" aria-label="Editar la fila">
+      <span class="mif-pencil" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="quitar" data-quitar tabindex="-1"
+            title="Quitar esta fila" aria-label="Quitar">&times;</button>
+    <span class="linea-oculta">{{ fila.DELETE }}</span>
+  </td>
+</tr>

@@ -1,0 +1,59 @@
+{% comment %}
+La pantalla de bloqueo. La usan dos sitios:
+
+  · bloqueado.html — cuando la manda el servidor (sesión bloqueada, una recarga)
+  · base.html      — el aviso que aparece sin recargar al pasar el rato de inactividad
+
+Lleva el mismo formulario en los dos casos; con JavaScript se responde sin salir de
+la página y sin él se envía el formulario y el servidor redirige igual.
+{% endcomment %}
+{% load marca %}
+{% if overlay %}{% imagen_marca "fondo-bloqueo" "fondo-entrar" "fondo" as fondo %}{% endif %}
+<div class="bloqueo{% if overlay %} bloqueo-capa{% endif %}{% if overlay and fondo %} bloqueo-con-fondo{% endif %}"
+     {% if overlay and fondo %}style="background-image: linear-gradient(var(--velo-fondo), var(--velo-fondo)), url('{{ fondo }}')"{% endif %}
+     data-bloqueo
+     data-desbloquear="{% url 'desbloquear' %}"
+     data-minutos="{{ limite|default:0 }}"
+     {% if overlay %}hidden{% endif %}>
+
+  <div class="bloqueo-caja">
+    <p class="bloqueo-titulo">
+      <span class="mif-lock" aria-hidden="true"></span> Aplicación bloqueada
+    </p>
+
+    <div class="bloqueo-avatar" aria-hidden="true">
+      {% imagen_marca "bloqueo" "logo-blanco" "logo" "marca" as imagen %}
+      {% if imagen %}
+        <img class="bloqueo-marca" src="{{ imagen }}" alt="">
+      {% else %}
+        <span>{{ request.user.get_username|first|upper }}</span>
+      {% endif %}
+    </div>
+
+    <p class="bloqueo-nombre">{{ request.user.get_username }}</p>
+
+    <p class="bloqueo-error" role="alert" data-bloqueo-error {% if not error %}hidden{% endif %}>{% if error %}{{ error }}{% endif %}</p>
+
+    <form method="post" action="{% url 'desbloquear' %}" class="bloqueo-form" data-bloqueo-form>
+      {% csrf_token %}
+      <input type="hidden" name="next" value="{{ siguiente|default:'' }}">
+      <span class="mif-lock bloqueo-icono" aria-hidden="true"></span>
+      <input type="password" name="password" id="clave-bloqueo{% if overlay %}-capa{% endif %}"
+             placeholder="Escriba su clave…" autocomplete="current-password" required>
+      <button type="submit" class="bloqueo-flecha" aria-label="Desbloquear">
+        <span class="mif-arrow-right" aria-hidden="true"></span>
+      </button>
+    </form>
+
+    <p class="bloqueo-ayuda">Escriba su clave para retomar su sesión.</p>
+
+    <form method="post" action="{% url 'salir' %}" class="bloqueo-otro">{% csrf_token %}
+      <button type="submit">o entre con otro usuario</button>
+    </form>
+  </div>
+
+  <p class="bloqueo-pie">
+    <span>Facturación electrónica del SRI</span>
+    <span>Emitido con factec</span>
+  </p>
+</div>

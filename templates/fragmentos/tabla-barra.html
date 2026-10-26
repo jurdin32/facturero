@@ -1,0 +1,30 @@
+{% comment %}
+La barra de una tabla: el buscador (lo busca el servidor, no el navegador) y cuántas
+filas por página. El orden que se traiga la lista se mantiene al buscar, para que
+buscar no descoloque las columnas.
+{% endcomment %}
+<form class="tabla-barra" method="get">
+  {% if tabla.orden %}
+    <input type="hidden" name="orden" value="{{ tabla.orden }}">
+    <input type="hidden" name="dir" value="{{ tabla.direccion }}">
+  {% endif %}
+
+  <div class="tabla-buscar">
+    <span class="mif-search" aria-hidden="true"></span>
+    <input type="search" name="q" id="tabla-q" value="{{ tabla.q }}"
+           placeholder="{{ buscador|default:'Buscar…' }}" aria-label="Buscar en la tabla">
+    {% if tabla.q %}<a class="enlace" href="{{ tabla.enlace_limpio }}">Limpiar</a>{% endif %}
+  </div>
+
+  <button type="submit" class="button small primary"><span class="mif-search"></span> Buscar</button>
+
+  <label class="tabla-tamano">
+    Mostrar
+    <select name="por_pagina" onchange="this.form.requestSubmit()">
+      {% for tamano in tabla.tamanos %}
+        <option value="{{ tamano }}"{% if tamano == tabla.por_pagina %} selected{% endif %}>{{ tamano }}</option>
+      {% endfor %}
+    </select>
+    por página
+  </label>
+</form>

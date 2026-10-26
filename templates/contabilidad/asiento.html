@@ -1,0 +1,94 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{% if es_nuevo %}Nuevo asiento{% else %}Asiento {{ asiento.numero|default:"borrador" }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  <div class="titulo-fila">
+    <div>
+      <h1 class="titulo">
+        {% if es_nuevo %}Nuevo asiento{% else %}Asiento {{ asiento.numero|default:"borrador" }}{% endif %}
+      </h1>
+      <p class="subtitulo">
+        {% if es_nuevo %}
+          Partida doble: lo que va al debe y lo que va al haber tienen que sumar lo mismo.
+        {% else %}
+          {{ asiento.fecha|date:"d/m/Y" }} · {{ asiento.get_tipo_display }} ·
+          {{ asiento.get_estado_display }}
+          {% if asiento.periodo %}· {{ asiento.periodo.nombre }}{% endif %}
+        {% endif %}
+        · <a class="enlace" href="{% url 'contabilidad:asientos' %}">volver a los asientos</a>
+      </p>
+    </div>
+    <div class="titulo-acciones">
+      <button type="submit" name="accion" value="guardar" class="button outline dark">
+        <span class="mif-save"></span> Guardar borrador
+      </button>
+      <button type="submit" name="accion" value="contabilizar" class="button success"
+              data-confirmar="Se guarda el asiento y queda contabilizado en los libros. Revise que el debe y el haber sumen lo mismo."
+              data-titulo="Contabilizar el asiento" data-aceptar="Contabilizar">
+        <span class="mif-check"></span> Guardar y contabilizar
+      </button>
+    </div>
+  </div>
+
+  {% if formulario.non_field_errors %}
+    <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+  {% endif %}
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Cabecera</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.fecha.id_for_label }}">{{ formulario.fecha.label }}</label>
+          {{ formulario.fecha }}
+          {% if formulario.fecha.errors %}<p class="error">{{ formulario.fecha.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
+          {{ formulario.tipo }}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.periodo.id_for_label }}">{{ formulario.periodo.label }}</label>
+          {{ formulario.periodo }}
+          {% if formulario.periodo.errors %}<p class="error">{{ formulario.periodo.errors.0 }}</p>{% endif %}
+          <p class="ayuda">{{ formulario.periodo.help_text }}</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.referencia.id_for_label }}">{{ formulario.referencia.label }}</label>
+          {{ formulario.referencia }}
+        </div>
+      </div>
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.concepto.id_for_label }}">{{ formulario.concepto.label }}</label>
+          {{ formulario.concepto }}
+          {% if formulario.concepto.errors %}<p class="error">{{ formulario.concepto.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Líneas</h2>
+    {% include "contabilidad/_formset.html" with conjunto=conjunto %}
+  </section>
+
+  <noscript><p class="aviso aviso-aviso">Esta hoja necesita JavaScript para añadir líneas.</p></noscript>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/comprobantes.js' %}?v={{ sello_estatico }}"></script>
+  <script src="{% static 'js/contabilidad.js' %}?v={{ sello_estatico }}"></script>
+{% endblock %}

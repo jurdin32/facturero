@@ -1,0 +1,4546 @@
+@charset "UTF-8";
+/* Manrope (variable, 200–800), servida desde static/fonts/ —sin CDN— y usada para
+ * TODO el texto de la aplicación. Origen y licencia: static/fonts/PROCEDENCIA.md. */
+@font-face {
+  font-family: "Manrope";
+  src: url("../fonts/manrope-latin.woff2") format("woff2-variations"),
+       url("../fonts/manrope-latin.woff2") format("woff2");
+  font-weight: 200 800;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* La interfaz de facturación.
+ *
+ * Metro UI (static/css/metro/, MIT) pone el motor: los componentes y su
+ * JavaScript. Todo su aspecto se reescribe aquí con un sistema único, para que
+ * no se vea «de plantilla»: se redefinen sus variables (--sidenav-*, --input-*,
+ * --table-*, --card-*, --button-*) y se añade lo que no trae (el marco de la
+ * aplicación, los avisos, el comprobante).
+ *
+ *   · espaciado en múltiplos de 4 (--e1..--e7)
+ *   · una sola letra y dos tamaños: el texto y los títulos, sin valores sueltos
+ *   · un solo color de marca; el resto son grises y tres semánticos
+ *   · bordes de 1px, radios de 6/8px y sombras casi invisibles
+ */
+
+/* --------------------------------------------------------------------- base */
+
+:root {
+  /* medidas del marco */
+  --lateral: 248px;
+  --barra: 58px;
+  /* El ancho del contenido: crece con la pantalla hasta un tope, para que en un
+   * monitor grande no quede todo apretado en el centro. */
+  --ancho: min(1560px, 94vw);
+
+  /* espaciado */
+  --e1: 4px;
+  --e2: 8px;
+  --e3: 12px;
+  --e4: 16px;
+  --e5: 24px;
+  --e6: 32px;
+  --e7: 48px;
+
+  /* El velo que se pinta sobre la imagen de fondo de la entrada y del bloqueo,
+   * para que el texto se lea sobre cualquier foto. */
+  --velo-fondo: rgba(16, 24, 40, .3);
+
+  /* El redondel de marca de la entrada y del bloqueo: el color de siempre del
+   * bloqueo, que es el que combina con los logos en blanco de static/img/. */
+  --marca-fondo: linear-gradient(160deg, #2a6fb0, #4f7fae 60%, #8fb4d8);
+
+  /* tipografía: una sola letra y dos tamaños para toda la aplicación. El texto va
+   * al mismo tamaño en todas partes (tablas, botones, etiquetas, importes) y los
+   * títulos solo un paso por encima; la jerarquía la hacen la negrita y el color,
+   * no el tamaño. Los nombres --texto-* se conservan para no tocar cada regla. */
+  --texto-base: 14px;
+  --texto-titulo: 16.5px;
+
+  --texto-xs: var(--texto-base);
+  --texto-s: var(--texto-base);
+  --texto-m: var(--texto-base);
+  --texto-l: var(--texto-base);
+  --texto-xl: var(--texto-titulo);
+  --texto-2xl: var(--texto-titulo);
+  --texto-3xl: var(--texto-titulo);
+
+  /* tinta y líneas */
+  --tinta: #101828;
+  --tinta-2: #475467;
+  --tinta-3: #667085;
+  --tinta-4: #98a2b3;
+  /* El borde de las cajas de texto: más marcado que las líneas de la página,
+   * para que un campo en blanco se vea como un campo. */
+  --borde-campo: #b4bdca;
+  --linea: #eaecf0;
+  --linea-2: #d0d5dd;
+  --fondo: #f9fafb;
+  --hoja: #fff;
+  --hoja-2: #fcfcfd;
+
+  /* marca y estados */
+  --marca: #1570ef;
+  --marca-osc: #175cd3;
+  --marca-tinte: #eff8ff;
+  --verde: #067647;
+  --verde-tinte: #ecfdf3;
+  --ambar: #b54708;
+  --ambar-tinte: #fffaeb;
+  --rojo: #b42318;
+  --rojo-tinte: #fef3f2;
+
+  /* el lateral, casi negro azulado */
+  --lateral-fondo: #101828;
+  --lateral-tinta: #98a2b3;
+  --lateral-activo: #1d2939;
+
+  /* sombras y radios */
+  --radio-s: 6px;
+  --radio-m: 8px;
+  --sombra-1: 0 1px 2px rgba(16, 24, 40, .05);
+  --sombra-2: 0 1px 3px rgba(16, 24, 40, .1), 0 1px 2px rgba(16, 24, 40, .06);
+  --sombra-3: 0 4px 8px -2px rgba(16, 24, 40, .1), 0 2px 4px -2px rgba(16, 24, 40, .06);
+  --anillo: 0 0 0 3px rgba(21, 112, 239, .16);
+
+  /* Una sola letra para todo: la fuente que viaja en static/fonts/ y, si no
+   * cargara, la del sistema. Los números van con cifras de ancho fijo
+   * (font-variant-numeric), que es para lo que antes hacía falta una monoespaciada. */
+  --sans: "Manrope", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --mono: var(--sans);
+
+  /* --- Metro: el tema. Sus componentes se pintan con estas variables. ----- */
+  --control-height-normal: 40px;
+  --control-height-small: 28px;
+  --control-height-medium: 32px;
+  --control-height-large: 42px;
+  --border-color: var(--linea);
+  --font-family: var(--sans);
+  --font-name: var(--sans);
+  --font-size: var(--texto-m);
+  --body-background: var(--fondo);
+  --body-color: var(--tinta-2);
+
+  --button-border-radius: var(--radio-s);
+  --button-background: var(--hoja);
+  --button-color: var(--tinta-2);
+  --button-font-size: var(--texto-s);
+
+  --input-height: 40px;
+  --input-font-size: var(--texto-m);
+  --input-border-color: var(--borde-campo);
+  --input-border-color-hover: var(--tinta-4);
+  --input-color: var(--tinta);
+  --input-background: var(--hoja);
+  --input-background-disabled: var(--fondo);
+  --input-color-disabled: var(--tinta-3);
+  --input-box-shadow: transparent;
+  --input-label-font-size: var(--texto-xs);
+  --select-height: 40px;
+  --select-font-size: var(--texto-m);
+
+  --sidenav-width: var(--lateral);
+  --sidenav-border-radius: var(--radio-s);
+  --sidenav-background: var(--lateral-fondo);
+  --sidenav-color: #d0d5dd;
+  --sidenav-icon-color: var(--lateral-tinta);
+  --sidenav-background-hover: var(--lateral-activo);
+  --sidenav-color-hover: #fff;
+  --sidenav-background-active: rgba(21, 112, 239, .18);
+  --sidenav-color-active: #fff;
+
+  --table-border-color: var(--linea);
+  --table-background: transparent;
+  --table-color: var(--tinta-2);
+  --table-header-background: var(--hoja-2);
+  --table-header-color: var(--tinta-3);
+  --table-hover-background: var(--hoja-2);
+  --table-border-radius: var(--radio-m);
+  --table-body-font-size: var(--texto-m);
+  --table-head-font-size: var(--texto-s);
+  --table-footer-font-size: var(--texto-s);
+  --table-caption-font-size: var(--texto-s);
+
+  --card-background: var(--hoja);
+  --card-color: var(--tinta-2);
+  --card-header-background: var(--hoja-2);
+  --card-header-color: var(--tinta-3);
+  --card-border-radius: var(--radio-m);
+
+  --badge-background: var(--fondo);
+  --badge-color: var(--tinta-3);
+
+  --dialog-background: var(--hoja);
+  --dialog-color: var(--tinta);
+  --dialog-border-radius: var(--radio-m);
+  --toast-background: #1d2939;
+  --toast-color: #fff;
+  --toast-border-radius: var(--radio-m);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background: var(--fondo);
+  color: var(--tinta-2);
+  font-family: var(--sans);
+  font-size: var(--texto-base);
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Una sola letra para todo: los controles y las tablas de Metro traen la suya
+ * puesta, así que se les dice que la hereden. Los iconos (.mif) no: ésos son una
+ * fuente de iconos y tienen que quedarse con la suya. */
+input, select, textarea, button, .button, .table, .chip, .badge, .progress, .dialog,
+.caption, .label, .tabs, .breadcrumbs, .pagination { font-family: inherit; }
+
+h1, h2, h3 { color: var(--tinta); font-weight: 600; letter-spacing: -.011em; }
+
+a { color: var(--marca); text-decoration: none; }
+a:hover { color: var(--marca-osc); text-decoration: none; }
+
+/* Las cifras, siempre en mono y con los mismos anchos: así cuadran las columnas. */
+.cifra, td.cifra, .col-importe, .col-precio, .col-cantidad, .col-num, .col-fecha,
+.libro-partes td, .comprobante-serie, .comprobante-clave, .totales td, .totales th {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--texto-base);
+}
+
+.tenue { color: var(--tinta-4); }
+.oculto, .oculto * { display: none !important; }
+
+/* Para los ojos de los lectores de pantalla y para nadie más. */
+.oculto-visual {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  border: 0;
+  clip-path: inset(50%);
+  overflow: hidden;
+  white-space: nowrap;
+}
+.alineado-derecha { text-align: right; }
+
+/* El foco, siempre visible y siempre igual. */
+:focus-visible, a:focus-visible, button:focus-visible {
+  outline: 2px solid var(--marca);
+  outline-offset: 1px;
+}
+
+/* ------------------------------------------------------- la barra de arriba */
+
+.barra {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--e2) var(--e4);
+  background: var(--hoja);
+  border-bottom: 1px solid var(--linea);
+  min-height: var(--barra);
+  padding: var(--e2) var(--e5);
+  position: sticky;
+  top: 0;
+  z-index: 980;
+}
+
+.barra .emisor { display: flex; align-items: baseline; gap: var(--e3); flex-wrap: wrap; min-width: 0; }
+
+/* En pantallas justas la barra se queda con lo esencial y no se parte en dos
+ * líneas: el RUC ya está en la cabecera del menú, y el usuario, en el menú de
+ * la sesión. */
+@media (max-width: 1200px) {
+  .barra .emisor-datos,
+  .barra .usuario { display: none; }
+}
+.emisor-nombre { font-weight: 600; font-size: var(--texto-m); color: var(--tinta); }
+.emisor-datos { font-family: var(--mono); font-size: var(--texto-s); color: var(--tinta-3); }
+
+.cabecera-lado {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-left: auto;
+  font-size: var(--texto-s);
+  color: var(--tinta-3);
+  flex-wrap: wrap;
+}
+
+.cabecera-lado form { margin: 0; }
+
+.usuario { font-size: var(--texto-s); color: var(--tinta-2); font-weight: 500; }
+
+.ambiente {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--tinta-3);
+  border: 1px solid var(--linea-2);
+  white-space: nowrap;
+}
+
+.ambiente::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--tinta-4);
+}
+
+.ambiente-produccion { background: var(--rojo-tinte); color: var(--rojo); border-color: #fecdca; }
+.ambiente-produccion::before { background: var(--rojo); }
+
+/* El botón del menú: solo aparece cuando el lateral no cabe. */
+.barra-menu {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--radio-s);
+  background: transparent;
+  color: var(--tinta-2);
+  cursor: pointer;
+  flex: none;
+}
+
+.barra-menu:hover { background: var(--fondo); color: var(--tinta); }
+.barra-menu .mif { font-size: 18px; }
+
+/* -------------------------------------------------------------- el lateral */
+
+/* El armazón: el lateral a la izquierda de arriba abajo, y a su derecha la
+ * barra superior con el contenido. Así el lateral y la barra forman una sola
+ * pieza, que es lo que hacía que la cabecera pareciera colgando. */
+.marco {
+  display: grid;
+  grid-template-columns: var(--lateral) minmax(0, 1fr);
+  align-items: start;
+  min-height: 100vh;
+}
+
+.columna {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 100vh;
+}
+
+.rail {
+  position: sticky;
+  top: 0;
+  width: 100%;
+  height: 100vh;
+  min-width: 0;
+  overflow: hidden auto;
+  background: var(--lateral-fondo);
+}
+
+.rail::-webkit-scrollbar { width: 10px; }
+.rail::-webkit-scrollbar-thumb { background: #344054; border-radius: 999px; border: 3px solid var(--lateral-fondo); }
+.rail::-webkit-scrollbar-track { background: transparent; }
+
+.rail-cabecera {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: var(--barra);
+  padding: var(--e2) var(--e5);
+  border-bottom: 1px solid rgba(255, 255, 255, .07);
+  white-space: nowrap;
+}
+
+.rail-cabecera strong {
+  display: block;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: #f2f4f7;
+}
+
+/* El logo del lateral, si el proyecto ha puesto uno (static/img/logo-ancho-blanco.*).
+ * El lateral es oscuro, así que el logo que va ahí es el blanco. */
+.rail-logo {
+  display: block;
+  align-self: flex-start;
+  width: auto;
+  max-width: 100%;
+  max-height: 42px;
+  object-fit: contain;
+}
+
+.rail-cabecera span {
+  display: block;
+  margin-top: 2px;
+  font-family: var(--mono);
+  font-size: var(--texto-xs);
+  color: var(--lateral-tinta);
+}
+
+.rail .sidenav {
+  width: auto;
+  margin: var(--e3) var(--e2) var(--e5);
+  background: transparent;
+  height: auto;
+}
+
+.rail .sidenav li { margin: 0 0 2px; font-size: var(--texto-m); }
+.rail .sidenav li + li { border-top: 0; }
+.rail .sidenav > li > a { width: auto; min-height: 40px; padding: 9px 12px 9px 40px; }
+.rail .sidenav .icon { left: 12px; color: var(--lateral-tinta); }
+
+/* Metro esconde lo que no sea el icono en su menú lateral: aquí se enseña,
+ * que el menú va siempre con sus etiquetas. */
+.rail .sidenav a > *:not(.icon, .badge),
+.panel-menu .sidenav a > *:not(.icon, .badge) { visibility: visible; }
+
+.rail .sidenav a, .rail .sidenav .caption, .panel-menu .sidenav a, .panel-menu .sidenav .caption {
+  font-size: var(--texto-m);
+}
+
+.rail .sidenav .caption { white-space: nowrap; color: inherit; }
+
+.rail .sidenav > li.active > a {
+  background: var(--sidenav-background-active);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: inset 2px 0 0 var(--marca);
+}
+
+.rail .sidenav > li.active .icon { color: #84adff; }
+.rail .sidenav > li > a:hover { background: var(--lateral-activo); color: #fff; }
+.rail .sidenav > li > a:hover .icon { color: #fff; }
+
+/* ------------------------------------- el menú con apartados plegables (menú) */
+
+/* Cada apartado es un `<details>`: se abre y se cierra solo, sin JavaScript, y el
+ * de la pantalla en la que se está viene abierto desde el servidor. Sustituye a
+ * los títulos de sección de antes (`.lateral-titulo`): el apartado es el título. */
+.sidenav .menu-grupo > details { margin: 0; }
+
+.sidenav .menu-grupo > details > summary {
+  position: relative;
+  display: block;
+  min-height: 40px;
+  padding: 9px 30px 9px 40px;
+  border-radius: var(--sidenav-border-radius);
+  color: var(--sidenav-color);
+  font-size: var(--texto-m);
+  white-space: nowrap;
+  cursor: pointer;
+  list-style: none;
+}
+
+/* El triángulo que trae el `<summary>` de serie no se usa: la flecha es de la casa. */
+.sidenav .menu-grupo > details > summary::-webkit-details-marker { display: none; }
+.sidenav .menu-grupo > details > summary::marker { content: ""; }
+
+.sidenav .menu-grupo > details > summary:hover,
+.sidenav .menu-grupo > details > summary:focus-visible {
+  background: var(--lateral-activo);
+  color: #fff;
+}
+
+/* El apartado desplegado se lee como el activo: es donde uno está. */
+.sidenav .menu-grupo > details[open] > summary { color: #fff; }
+.sidenav .menu-grupo > details[open] > summary .icon,
+.sidenav .menu-grupo > details[open] > summary .menu-grupo-flecha { color: #84adff; }
+.sidenav .menu-grupo > details > summary:hover .icon,
+.sidenav .menu-grupo > details > summary:hover .menu-grupo-flecha { color: #fff; }
+
+.sidenav .menu-grupo-flecha {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  font-size: 14px;
+  color: var(--lateral-tinta);
+  transition: transform .15s ease;
+}
+
+.sidenav .menu-grupo > details[open] > summary .menu-grupo-flecha {
+  transform: translateY(-50%) rotate(180deg);
+}
+
+/* Las opciones de dentro, con su guía a la izquierda para que se vea qué cuelga
+ * de qué: van un punto más adentro que el título del apartado. */
+.sidenav .menu-submenu {
+  width: auto;
+  margin: 2px 0 var(--e3) 40px;
+  padding: 0 0 0 10px;
+  border-left: 1px solid rgba(255, 255, 255, .1);
+  background: transparent;
+  list-style: none;
+}
+
+.sidenav .menu-submenu > li { margin: 0 0 2px; }
+.sidenav .menu-submenu > li > a {
+  width: auto;
+  min-height: 34px;
+  padding: 7px 12px 7px 32px;
+  color: var(--sidenav-color);
+}
+/* El icono de la opción, más pequeño y más adentro que el del apartado, y con su
+ * margen dentro del recuadro: el de la opción elegida lleva fondo y borde, y el
+ * icono pegado al borde se veía apretado. */
+.sidenav .menu-submenu .icon {
+  left: 8px;
+  top: 9px;
+  width: 16px;
+  height: 16px;
+  font-size: 15px;
+  line-height: 16px;
+}
+.sidenav .menu-submenu .caption {
+  font-size: var(--texto-s);
+  white-space: nowrap;
+  color: inherit;
+}
+.sidenav .menu-submenu > li > a:hover { background: var(--lateral-activo); color: #fff; }
+.sidenav .menu-submenu > li > a:hover .icon { color: #fff; }
+.sidenav .menu-submenu > li.active > a {
+  background: var(--sidenav-background-active);
+  color: #fff;
+  font-weight: 500;
+  box-shadow: inset 2px 0 0 var(--marca);
+}
+.sidenav .menu-submenu > li.active .icon { color: #84adff; }
+
+/* Metro pinta el `li` entero al pasar por encima: en un apartado eso encendería
+ * también a sus opciones, así que ahí el fondo se deja al `<details>`. */
+.sidenav li.menu-grupo,
+.sidenav li.menu-grupo:hover,
+.sidenav li.menu-grupo:active {
+  background: transparent;
+  color: inherit;
+}
+
+.rail .sidenav hr,
+.lateral-separador { margin: var(--e2) 10px; border: 0; border-top: 1px solid rgba(255, 255, 255, .07); }
+
+
+/* La flecha de ordenar de Metro: va pegada al borde derecho de su columna y
+ * centrada. Por defecto se coloca con `left: 100%`, que en una columna estrecha
+ * la deja encima del texto o descolgada de la línea. */
+.table .sortable-column { padding-right: 18px; }
+.table .sortable-column::after {
+  left: auto;
+  right: 6px;
+  top: 50%;
+  margin: 0;
+  transform: translateY(-50%);
+}
+
+/* ------------------------------------------------------------------ botones */
+
+.button, button, input[type="submit"], input[type="button"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--sans);
+  font-size: var(--texto-m);
+  font-weight: 500;
+  line-height: 1;
+  height: 40px;
+  padding: 0 var(--e4);
+  border-radius: var(--radio-s);
+  border: 1px solid var(--linea-2);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  box-shadow: var(--sombra-1);
+  text-transform: none;
+  letter-spacing: 0;
+  transition: background-color .12s ease, border-color .12s ease, color .12s ease;
+}
+
+.button:hover, button:hover, input[type="submit"]:hover, input[type="button"]:hover {
+  background: var(--fondo);
+  border-color: var(--tinta-4);
+  color: var(--tinta);
+}
+
+.boton-peligro {
+  background: var(--hoja);
+  border-color: #fecdca;
+  color: var(--rojo);
+  box-shadow: none;
+}
+
+.boton-peligro:hover { background: var(--rojo-tinte); border-color: var(--rojo); }
+
+.button.small, button.small, .button-small {
+  height: 32px;
+  padding: 0 var(--e3);
+  font-size: var(--texto-s);
+}
+
+.button.large, button.large { height: 44px; padding: 0 var(--e5); font-size: var(--texto-m); }
+
+/* Un botón sin caja: para las acciones de segunda fila de una tabla. */
+.boton-plano {
+  height: auto;
+  padding: 2px 6px;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--marca);
+  font-weight: 500;
+}
+
+.boton-plano:hover { background: var(--marca-tinte); border: 0; color: var(--marca-osc); }
+
+/* ------------------------------------------------------------------- campos */
+
+.etiqueta {
+  display: block;
+  margin-bottom: 5px;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .01em;
+  color: var(--tinta-2);
+}
+
+label { font-size: var(--texto-s); }
+
+input[type="text"], input[type="number"], input[type="password"], input[type="email"],
+input[type="date"], input[type="search"], input:not([type]), select, textarea {
+  font-family: var(--sans);
+  font-size: var(--texto-m);
+  color: var(--tinta);
+  background: var(--hoja);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-s);
+  padding: 0 var(--e3);
+  height: 40px;
+  box-shadow: var(--sombra-1);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+/* Dentro de un componente de Metro (`.input`, `.select`, `.textarea`…) la caja
+ * la pone el componente: el control de dentro va sin borde ni relleno propios,
+ * que si no se suman las dos cajas y el contenido se ve recortado. */
+.input > input,
+.input > textarea,
+.select > select,
+.textarea > textarea,
+.tag-input > input,
+.spinner > input,
+.color-picker > input {
+  width: 100%;
+  height: 100%;
+  padding: 0 var(--e3);
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: inherit;
+  color: inherit;
+}
+
+/* La casilla y el interruptor de Metro se pintan solos: aquí no se les toca. */
+input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--marca);
+  vertical-align: -2px;
+}
+.switch > input[type="checkbox"],
+.checkbox > input[type="checkbox"],
+.radio > input[type="radio"] {
+  width: auto;
+  height: auto;
+  vertical-align: baseline;
+}
+
+textarea { height: auto; padding: var(--e2) var(--e3); line-height: 1.5; resize: vertical; }
+
+input:hover, select:hover, textarea:hover { border-color: var(--tinta-4); }
+
+input:focus, select:focus, textarea:focus {
+  border-color: var(--marca);
+  box-shadow: var(--anillo);
+  outline: 0;
+}
+
+input::placeholder, textarea::placeholder { color: var(--tinta-4); }
+input:disabled, select:disabled, input[readonly] { background: var(--fondo); color: var(--tinta-3); box-shadow: none; }
+
+input.campo-num, input.campo-fecha { font-family: var(--mono); }
+select { padding-right: var(--e6); }
+
+/* El interruptor de un filtro: se queda a la altura de las demás cajas. */
+/* El interruptor va en fila y pegado a su celda: `.filtro` pone la columna, y con
+ * `align-items: flex-end` de columna el interruptor se iba a la derecha y quedaba
+ * flotando en mitad de la tarjeta. Va con las dos clases para ganarle a `.filtro`,
+ * que se declara más abajo. */
+.filtro-interruptor { display: flex; align-items: flex-end; padding-bottom: 4px; }
+.filtro.filtro-interruptor { flex-direction: row; }
+.filtro-interruptor .switch { height: 38px; margin: 0; }
+.filtro-interruptor .caption-append { color: var(--tinta-2); font-size: var(--texto-m); }
+
+/* ------------------------------------------------------------------ la hoja */
+
+/* El contenido ocupa lo que sobre de la columna: así el pie queda abajo. */
+.contenido { flex: 1 1 auto; min-width: 0; }
+
+.hoja {
+  /* El aire de los lados, en una variable: la cabecera pegada de la factura
+   * tiene que salirse justo eso para llegar a los bordes. */
+  --hoja-x: var(--e5);
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: var(--e5) var(--hoja-x) var(--e7);
+}
+
+@media (min-width: 1600px) {
+  .hoja { --hoja-x: var(--e6); }
+}
+
+.banda, .avisos {
+  max-width: var(--ancho);
+  margin: var(--e4) auto 0;
+  padding: 0 var(--e5);
+}
+
+.avisos .aviso { margin: 0 0 var(--e2); }
+
+/* Los avisos: tarjeta con barra de color a la izquierda. */
+.aviso {
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--linea);
+  border-left-width: 3px;
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  font-size: var(--texto-m);
+}
+
+.aviso-info    { border-left-color: var(--marca); background: var(--marca-tinte); border-color: #b2ddff; color: var(--marca-osc); }
+.aviso-success { border-left-color: var(--verde); background: var(--verde-tinte); border-color: #abefc6; color: var(--verde); }
+.aviso-warning { border-left-color: var(--ambar); background: var(--ambar-tinte); border-color: #fedf89; color: #93370d; }
+.aviso-error,
+.aviso-error  { border-left-color: var(--rojo); background: var(--rojo-tinte); border-color: #fecdca; color: var(--rojo); }
+
+/* El encabezado de cada pantalla. Se queda pegado bajo la barra para que el
+ * título y los botones de la página no se vayan con el scroll: se sale del aire
+ * de la hoja (`--hoja-x`) para llegar a los bordes y se lee como una barra más. */
+.titulo-fila {
+  position: sticky;
+  top: var(--barra);
+  z-index: 900;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3) var(--e5);
+  margin: calc(var(--e5) * -1) calc(var(--hoja-x) * -1) var(--e6);
+  padding: var(--e3) var(--hoja-x);
+  background: var(--hoja);
+  border-bottom: 1px solid var(--linea);
+}
+
+.titulo {
+  margin: 0;
+  font-size: var(--texto-2xl);
+  font-weight: 600;
+  letter-spacing: -.02em;
+  line-height: 1.15;
+}
+
+.subtitulo { margin: 5px 0 0; font-size: var(--texto-m); color: var(--tinta-3); }
+
+/* Las acciones de la cabecera van en una sola línea: son muchas y, si se envuelven,
+ * la barra crece y se ve desordenada. Para que quepan se aprieta un poco el botón
+ * (letra y aire) y no se deja partir el texto de ninguno. */
+.titulo-acciones {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: var(--e2);
+  min-width: 0;
+  margin-left: auto;
+}
+.titulo-acciones .button {
+  height: 34px;
+  padding: 0 11px;
+  font-size: .78rem;
+  white-space: nowrap;
+}
+.titulo-acciones .button [class^="mif-"], .titulo-acciones .button [class*=" mif-"] {
+  font-size: .88rem;
+}
+
+/* En una pantalla angosta no hay manera de que entren en una línea: se envuelven
+ * antes que salirse de la hoja. */
+@media (max-width: 1180px) {
+  .titulo-acciones { flex-wrap: wrap; justify-content: flex-end; }
+}
+
+/* Las acciones que son un formulario (reintentar, preguntar al SRI) se leen como
+ * un botón más, sin el aire que trae el formulario por defecto ni el salto que le
+ * mete al botón de dentro. Va con `.titulo-fila` delante porque el aire de los
+ * formularios de la hoja (`.hoja form`) llega después y, si no, ganaba él. */
+.titulo-fila .titulo-acciones form {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+/* La cabecera de la factura es la misma de todas las pantallas; aquí solo cambia
+ * el tamaño del título y que los botones de guardar y emitir caben en su fila. */
+.factura-cabecera .titulo { font-size: var(--texto-xl); }
+.factura-cabecera .titulo-acciones { flex-wrap: wrap; }
+.factura-cabecera .cabecera-aviso { flex: 1 1 100%; margin: 0; }
+
+@media (max-width: 700px) {
+  .factura-cabecera .titulo-acciones { width: 100%; }
+  .factura-cabecera .titulo-acciones > button { flex: 1 1 auto; }
+}
+
+/* Las secciones son tarjetas: fondo blanco, borde y nada más. */
+.bloque {
+  margin-bottom: var(--e6);
+  padding: var(--e5);
+  background: var(--hoja);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+}
+
+.bloque[hidden] { display: none; }
+.bloque:last-child { margin-bottom: 0; }
+
+/* Las tarjetas de lista (el `.desliza` de primer nivel) también respiran: sin
+ * esto el listado quedaba pegado a lo que va debajo. */
+.hoja > .desliza { margin-bottom: var(--e6); }
+.hoja > .desliza:last-child { margin-bottom: 0; }
+
+.bloque-titulo {
+  margin: 0 0 var(--e4);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.bloque-suave { border: 0; padding: 0; background: transparent; }
+
+/* La hoja va en dos columnas: lo que se factura a la izquierda y, a la derecha,
+ * a quién se le factura encima del resumen. La columna derecha se lleva el ancho
+ * que necesita la caja del cliente, que es la que trae los campos. */
+.columnas {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) clamp(340px, 32%, 460px);
+  gap: var(--e5);
+  align-items: start;
+}
+
+/* Solo cuando la hoja lleva la caja del cliente se colocan las tres piezas a
+ * mano: lo que se factura ocupa las dos filas y el resumen baja debajo del
+ * cliente. En las demás pantallas manda el orden normal de la rejilla, que si
+ * no la columna derecha se iba a una segunda fila y dejaba un hueco arriba. */
+.columnas:has(> .columna-cliente) > .columna-principal { grid-column: 1; grid-row: 1 / span 2; }
+.columnas:has(> .columna-cliente) > .columna-cliente { grid-column: 2; grid-row: 1; }
+.columnas:has(> .columna-cliente) > .columna-lateral { grid-column: 2; grid-row: 2; }
+
+/* En una sola columna se lee en el orden del documento: el cliente primero,
+ * luego las líneas y al final el resumen. */
+@media (max-width: 1100px) {
+  .columnas { grid-template-columns: minmax(0, 1fr); }
+  .columnas > .columna-principal,
+  .columnas > .columna-cliente,
+  .columnas > .columna-lateral { grid-column: 1; grid-row: auto; }
+}
+
+/* Sin columna lateral (una hoja que no tiene resumen) el contenido ocupa todo el
+ * ancho: si no, quedaría media pantalla vacía a la derecha. */
+.columnas-sola { grid-template-columns: minmax(0, 1fr); }
+
+.columna-principal, .columna-cliente, .columna-lateral { min-width: 0; }
+
+.dato-fuerte { font-size: var(--texto-s); color: var(--tinta-3); }
+.dato-fuerte .cifra { font-size: var(--texto-l); color: var(--tinta); font-weight: 600; }
+
+.acciones { display: flex; flex-direction: column; gap: var(--e2); margin-top: var(--e4); }
+.acciones > button, .acciones > a.button { width: 100%; }
+.acciones-fila { display: flex; flex-wrap: wrap; gap: var(--e3); align-items: center; }
+.acciones-fila form { margin: 0; }
+
+.vacio {
+  padding: var(--e7) var(--e5);
+  border: 1px dashed var(--linea-2);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  text-align: center;
+  color: var(--tinta-3);
+}
+
+.vacio p { margin: 0 0 var(--e2); font-size: var(--texto-m); }
+.vacio p:first-child { font-size: var(--texto-l); color: var(--tinta); font-weight: 500; }
+
+.ayuda { margin: 5px 0 0; font-size: var(--texto-s); color: var(--tinta-4); line-height: 1.45; }
+
+/* El detalle de un aviso del SRI viene con renglones e ítems: se lee tal cual, que
+ * es donde el SRI dice qué campo está mal. */
+.sri-detalle {
+  padding-left: var(--e3);
+  border-left: 2px solid var(--linea-2);
+  white-space: pre-line;
+  overflow-wrap: anywhere;
+}
+.error { margin: 5px 0 0; font-size: var(--texto-s); color: var(--rojo); }
+.errorlist { list-style: none; margin: 5px 0 0; padding: 0; }
+.errorlist li { font-size: var(--texto-s); color: var(--rojo); }
+
+.campo-caja { display: flex; flex-direction: column; }
+
+/* Metro reserva 54 px para el icono de delante (con 20 px de aire a cada lado) y
+ * otros 38 para el aspa de borrar, que ni se ve si el campo no la pide
+ * (`data-clear-button`): en un formulario de tres columnas eso dejaba las cajas
+ * en la mitad de su sitio. Se ajusta el aire del icono y se quita la botonera
+ * cuando no se ha pedido el aspa. */
+.campo-caja .input > .prepend { padding: 0 var(--e3); }
+.campo-caja .input > .button-group { display: none; }
+.campo-caja .input:has(> input[data-clear-button="true"]) > .button-group { display: flex; }
+
+.campo-caja .input > input,
+.campo-caja .input > textarea { width: 100%; min-width: 0; }
+
+/* Cuando el buscador de clientes ocupa el sitio del desplegable, la fecha y la
+ * forma de pago pasan a su propia fila: se reparten el ancho en vez de quedarse
+ * en un cuarto cada una, que dejaba medio bloque vacío. */
+#fecha-forma-pago > [class*="cell"] { flex: 1 1 18rem; width: auto; max-width: none; }
+.campo-angosto { max-width: 180px; }
+.campo-accion { justify-content: flex-end; }
+.campo-ancho { grid-column: span 1; }
+
+.filtro { display: flex; flex-direction: column; }
+.filtro-boton { flex-direction: row; align-items: center; gap: var(--e3); }
+
+.filtros {
+  margin-bottom: var(--e6);
+  padding: var(--e5);
+  background: var(--hoja);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+}
+
+.filtros { display: block; }
+
+.filtros .filtro-boton { padding-top: 20px; }
+.filtros .row { margin: 0; row-gap: var(--e3); }
+
+/* La barra de búsqueda de la tabla y su paginación van dentro de la caja: con
+ * aire, que si no se pegan al borde y a la tabla. */
+.desliza .table-top { padding: var(--e5) var(--e5) var(--e3); }
+.desliza .table-container { margin: 0; }
+.desliza .table-bottom { padding: var(--e3) var(--e5) var(--e5); }
+
+/* ---------------------------------------------------------------- listados
+ *
+ * Las listas se leen como las de Metro: una fila por registro, con su marca a
+ * la izquierda, lo esencial en medio, el dato a la derecha y las acciones al
+ * final. Por dentro siguen siendo la tabla de Metro, que es la que trae el
+ * buscador, el «Mostrar» y la paginación; sólo se esconde la cabecera.
+ */
+.listado[data-tabla] thead { display: none; }
+.listado[data-tabla] tbody { display: block; }
+.listado[data-tabla] tbody tr {
+  display: flex;
+  align-items: center;
+  gap: var(--e4) var(--e5);
+  padding: var(--e4) var(--e5);
+  border-top: 1px solid var(--linea);
+}
+.listado[data-tabla] tbody tr:first-child { border-top: 0; }
+.listado[data-tabla] tbody tr:hover { background: var(--hoja-2); }
+.listado[data-tabla] tbody td {
+  display: block;
+  width: auto;
+  max-width: none;
+  padding: 0;
+  border: 0;
+  text-align: left;
+  vertical-align: middle;
+}
+/* Cada columna lleva su ancho. Sin él, como cada fila reparte el espacio según
+ * lo que mida su propio texto, las columnas no caen en el mismo sitio de una
+ * fila a otra y el listado se ve desalineado. */
+.listado[data-tabla] td.col-marca { flex: 0 0 36px; }
+/* Cuando la marca es el chip del estado (la lista de facturas) la columna es más
+ * ancha; el ancho es el mismo en todas las filas aunque el estado sea más corto. */
+.listado[data-tabla] td.col-marca:has(.chip) { flex: 0 0 7.5rem; }
+.listado[data-tabla] td.col-principal { flex: 1 1 auto; min-width: 0; }
+.listado[data-tabla] td.col-detalles { flex: 0 0 16rem; }
+.listado[data-tabla] td.col-stock { flex: 0 0 6.5rem; }
+.listado[data-tabla] td.col-tipo { flex: 0 0 5.5rem; }
+.listado[data-tabla] td.col-dato { flex: 0 0 7.5rem; text-align: right; }
+.listado[data-tabla] td.col-acciones {
+  display: flex;
+  flex: 0 0 4.5rem;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e1);
+  text-align: right;
+  white-space: nowrap;
+}
+/* Los botones que guardan algo (apagar un rol, anular un movimiento) van dentro de
+ * su formulario: en la fila tienen que quedar como uno más. */
+.listado[data-tabla] td.col-acciones form { margin: 0; }
+/* Con tres botones en la fila, la columna necesita su hueco: si no, se apilan. */
+.listado[data-tabla].tres-acciones td.col-acciones { flex: 0 0 7rem; }
+
+.listado-titulo { display: block; font-size: var(--texto-l); font-weight: 500; letter-spacing: -.01em; color: var(--tinta); }
+.listado-meta { display: block; margin-top: 5px; font-size: var(--texto-s); color: var(--tinta-3); }
+.listado-meta.cifra { font-size: var(--texto-s); }
+.listado-cifra { display: block; font-size: var(--texto-l); font-weight: 600; color: var(--tinta); }
+.listado-chips { display: flex; flex-wrap: wrap; gap: var(--e1); margin-top: var(--e2); }
+.listado-dato { display: inline-flex; align-items: center; gap: var(--e2); color: var(--tinta-2); }
+.listado-dato .mif { color: var(--tinta-4); font-size: var(--texto-l); }
+.listado-dato .cifra { font-weight: 600; color: var(--tinta); }
+
+/* La marca de la izquierda: el icono del registro en su círculo. */
+.marca {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--fondo);
+  color: var(--tinta-3);
+  font-size: var(--texto-l);
+}
+
+/* La rejilla de Metro, con el aire que le falta por defecto.
+ *
+ * Las columnas de Metro (`cell-md-4`…) no están llegando: sus reglas no se acaban
+ * de aplicar, así que las celdas se quedaban todas al 100% y cada campo salía en
+ * su propia línea. Se declaran aquí con el ancho que promete Metro.
+ *
+ * El ancho de cada columna descuenta el aire de las celdas (`var(--e4)` = los 8 px
+ * de cada lado), que es lo que hacía Metro: si no, tres celdas de un tercio *no*
+ * caben en la misma fila y cada una se va a la suya. */
+.row { display: flex; flex-wrap: wrap; row-gap: var(--e4); margin: 0 calc(var(--e2) * -1); }
+.row > [class*="cell"] { padding: 0 var(--e2); }
+.row > .cell { flex: 1 1 0; min-width: 0; }
+
+.row > .cell-12 { flex: 0 0 calc(100% - var(--e4)); max-width: calc(100% - var(--e4)); }
+.row > .cell-6 { flex: 0 0 calc(50% - var(--e4)); max-width: calc(50% - var(--e4)); }
+
+@media (min-width: 768px) {
+  .row > .cell-md-3 { flex: 0 0 calc(25% - var(--e4)); max-width: calc(25% - var(--e4)); }
+  .row > .cell-md-4 { flex: 0 0 calc(33.3333% - var(--e4)); max-width: calc(33.3333% - var(--e4)); }
+  .row > .cell-md-6 { flex: 0 0 calc(50% - var(--e4)); max-width: calc(50% - var(--e4)); }
+  .row > .cell-md-8 { flex: 0 0 calc(66.6667% - var(--e4)); max-width: calc(66.6667% - var(--e4)); }
+  .row > .cell-md-9 { flex: 0 0 calc(75% - var(--e4)); max-width: calc(75% - var(--e4)); }
+  .row > .cell-md-12 { flex: 0 0 calc(100% - var(--e4)); max-width: calc(100% - var(--e4)); }
+}
+
+@media (min-width: 1200px) {
+  .row > .cell-lg-2 { flex: 0 0 calc(16.6667% - var(--e4)); max-width: calc(16.6667% - var(--e4)); }
+  .row > .cell-lg-3 { flex: 0 0 calc(25% - var(--e4)); max-width: calc(25% - var(--e4)); }
+  .row > .cell-lg-4 { flex: 0 0 calc(33.3333% - var(--e4)); max-width: calc(33.3333% - var(--e4)); }
+  .row > .cell-lg-one-fifth { flex: 0 0 calc(20% - var(--e4)); max-width: calc(20% - var(--e4)); }
+  .row > .cell-lg-two-fifth { flex: 0 0 calc(40% - var(--e4)); max-width: calc(40% - var(--e4)); }
+}
+
+/* Metro deja los formularios en fila y sus `<section>` con `margin: 0 auto`, de
+ * modo que cada bloque se encogía al ancho de su contenido y quedaba centrado:
+ * los formularios de las pantallas se veían desarmados y estrechos. Aquí van en
+ * columna y a lo ancho, que es como están pensados: */
+.hoja form { flex-direction: column; margin-bottom: var(--e5); }
+.hoja form:last-child { margin-bottom: 0; }
+.hoja form > .bloque,
+.hoja form > .columnas,
+.hoja form > .row { width: 100%; }
+
+/* De una nota al formulario que viene detrás, y de la sección a sus botones:
+ * sin esto quedaba todo pegado. */
+.bloque > .ayuda + .row { margin-top: var(--e4); }
+.hoja .bloque + .acciones-fila { margin-top: var(--e4); }
+
+/* Y las columnas del formulario llenan la suya, que el `margin: auto` de las
+ * secciones las dejaba al ancho del texto. */
+.columnas > .columna-principal,
+.columnas > .columna-cliente,
+.columnas > .columna-lateral { width: 100%; }
+
+.desplegable { margin-top: var(--e4); }
+.desplegable > summary { list-style: none; cursor: pointer; }
+.desplegable > summary::-webkit-details-marker { display: none; }
+
+.desplegable-titulo {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--texto-s);
+  font-weight: 500;
+  color: var(--marca);
+}
+
+.desplegable-titulo::before { content: "+"; font-size: var(--texto-l); line-height: 1; }
+.desplegable[open] > .desplegable-titulo::before { content: "–"; }
+
+/* El pie: quién emite, en qué ambiente y con qué se emitió. Una línea lo separa
+ * del contenido; si la pantalla es estrecha, las dos mitades se apilan. Va como
+ * hijo de la columna (no del contenido), así el alto de la columna lo empuja
+ * siempre al final de la pantalla aunque el contenido sea corto. */
+.pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3) var(--e5);
+  /* `width: 100%` junto al `margin: auto`: sin el ancho, el `auto` del margen hace
+   * que el pie se encoja a su contenido en vez de estirarse con la columna. */
+  width: 100%;
+  max-width: var(--ancho);
+  margin: 0 auto;
+  padding: var(--e5) var(--e5) var(--e5);
+  border-top: 1px solid var(--linea);
+}
+
+.pie-lado { display: flex; flex-wrap: wrap; align-items: center; gap: var(--e2) var(--e3); min-width: 0; }
+.pie-derecha { justify-content: flex-end; }
+
+/* La pastilla de marca, para que el pie no sea solo texto suelto. */
+.pie-marca {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border-radius: 6px;
+  background: linear-gradient(150deg, var(--marca), #5ba6e8);
+}
+
+.pie-texto { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.pie-titulo { font-size: var(--texto-s); font-weight: 600; color: var(--tinta-2); }
+.pie-nota { font-size: var(--texto-xs); color: var(--tinta-4); }
+.pie-nota .cifra { font-size: var(--texto-xs); }
+.pie-nota strong { font-weight: 600; color: var(--tinta-3); }
+
+@media (max-width: 640px) {
+  .pie-lado, .pie-derecha { justify-content: flex-start; width: 100%; }
+}
+
+/* ------------------------------------------------------------------ tablas */
+
+.desliza {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bloque .desliza { border: 0; border-radius: 0; }
+
+.table {
+  margin: 0;
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--texto-m);
+  background: transparent;
+}
+
+.table th {
+  padding: 10px var(--e3);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  background: var(--hoja-2);
+  border: 0;
+  border-bottom: 1px solid var(--linea);
+  white-space: nowrap;
+  vertical-align: bottom;
+  text-align: left;
+}
+
+.table td {
+  padding: 11px var(--e3);
+  border: 0;
+  border-bottom: 1px solid var(--linea);
+  color: var(--tinta-2);
+  vertical-align: middle;
+  background: transparent;
+}
+
+.table tbody tr:last-child td { border-bottom: 0; }
+.table tbody tr:hover td { background: var(--hoja-2); }
+.table.small th, .table.small td, .table-small th, .table-small td { padding: 12px var(--e3); }
+
+/* Lo que se lee en una celda no toca el borde de su columna. */
+.table th, .table td { padding-left: var(--e3); padding-right: var(--e3); }
+
+/* La paginación de Metro sale 4px por cada lado con un margen negativo, y con eso
+ * la tabla pedía barra de desplazamiento aunque no sobrara nada: se anula. */
+.pagination { margin-left: 0; margin-right: 0; }
+
+
+.libro { width: 100%; }
+.col-fecha, .col-estado, .col-acciones, .col-num,
+.col-tipo, .col-unidad, .col-ubicacion { white-space: nowrap; }
+
+/* Las tablas de las listas: el texto largo se recorta con puntos suspensivos (el
+ * detalle se lee al abrir la ficha) para que la tabla quepa a lo ancho, sin tener
+ * que arrastrar de lado, y el buscador, el contador y la paginación de Metro caen
+ * justo debajo. El ancho de cada columna lo decide el texto que puede crecer. */
+table[data-tabla] .col-num > span,
+table[data-tabla] .cliente,
+table[data-tabla] .col-descripcion > span {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+/* Las celdas con el texto suelto se recortan en la propia celda. */
+table[data-tabla] .col-num,
+table[data-tabla] .col-fecha,
+table[data-tabla] .col-importe {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* Un poco menos de aire a los lados: así entra el número de comprobante entero. */
+.libro[data-tabla] th, .libro[data-tabla] td { padding-left: 8px; padding-right: 8px; }
+
+table[data-tabla] .col-num { max-width: 11.5rem; }
+table[data-tabla] .col-fecha { max-width: 7.5rem; }
+table[data-tabla] .col-acciones { max-width: 6.5rem; }
+table[data-tabla] .cliente { max-width: 11rem; }
+table[data-tabla] .col-descripcion > span { max-width: 8.5rem; }
+
+/* Las columnas de texto libre (descripción, razón social, motivo…) se recortan. */
+table[data-tabla] td:not([class*="col-"]),
+table[data-tabla] th:not([class*="col-"]):not([class*="sortable"]) {
+  max-width: 15rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Las listas apretadas (el libro del kardex va en una columna estrecha). */
+/* El libro del kardex va en una columna estrecha y tiene siete columnas: aquí se
+ * aprieta cada columna para que entre sin arrastrar de lado. */
+.libro-kardex[data-tabla] .col-fecha { max-width: 6rem; }
+.libro-kardex[data-tabla] .col-tipo { max-width: 5.5rem; }
+.libro-kardex[data-tabla] .col-cantidad { max-width: 4rem; }
+.libro-kardex[data-tabla] .col-acciones { max-width: 5rem; }
+.libro-kardex[data-tabla] td:not([class*="col-"]) { max-width: 7rem; }
+
+/* Lo que Metro pone encima y debajo de la tabla, con los aires de la casa. */
+.table-top, .table-bottom { display: flex; flex-wrap: wrap; gap: var(--e3); align-items: center; }
+.table-top { margin-bottom: var(--e3); justify-content: space-between; }
+.table-bottom { margin-top: var(--e3); justify-content: space-between; }
+.table-search-block { flex: 0 1 28rem; min-width: 200px; }
+.table-search-block .input { width: 100%; }
+.table-rows-block { flex: 0 0 auto; }
+.table-info { color: var(--tinta-3); font-size: var(--texto-s); }
+.table-pagination { flex: 0 0 auto; }
+
+/* Los títulos de las tablas del formulario y del comprobante van pequeños y con
+ * poco aire: las columnas de las cifras son estrechas a propósito y, con el
+ * tamaño del cuerpo, el navegador recortaba los títulos por la mitad. Si aun así
+ * no caben, parten en dos líneas antes que recortarse. */
+.libro-lineas thead th,
+.libro-detalles thead th,
+.libro-grupos thead th {
+  padding: 8px 4px;
+  font-size: .68rem;
+  letter-spacing: 0;
+  line-height: 1.2;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.col-codigo { width: 96px; }
+.col-cantidad { width: 78px; }
+.col-precio { width: 92px; }
+.col-descuento { width: 76px; }
+.col-iva { width: 74px; }
+.col-importe { width: 100px; }
+.col-quitar { width: 32px; }
+.col-tipo { width: 92px; }
+.col-unidad { width: 76px; }
+.col-ubicacion { width: 124px; }
+.col-descripcion { max-width: 380px; }
+/* El concepto de la retención se lee entero si cabe; si no, se corta con puntos
+ * suspensivos y el texto completo queda en el title de la celda. */
+.col-retencion { width: 260px; }
+
+/* El concepto del código del SRI es largo: en la celda se parte en dos o tres
+ * líneas, que es mejor que una línea que se sale de la tabla. */
+.libro-lineas td.col-retencion .celda-valor {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+/* El código de retención no se despliega dentro del comprobante: son más de cien
+ * conceptos y el desplegable desarmaba el formulario. En su lugar va la barra del
+ * buscador, y el desplegable se queda puesto pero escondido, que es el que lleva
+ * el valor. */
+.campo-caja .select:has(select[name$="-codigo_retencion"]) { display: none; }
+
+/* La barra de esa búsqueda, dentro de la ventana de la fila: el campo y el botón
+ * en un renglón, que si no el código ocupa dos y desarma la rejilla. */
+.campo-caja .buscador-barra {
+  margin-bottom: 0;
+  flex-wrap: nowrap;
+  gap: var(--e2);
+}
+.campo-caja .buscador-barra .buscador-barra-campo {
+  flex: 1 1 auto;
+  height: 38px;
+  font-size: var(--texto-s);
+  cursor: pointer;
+}
+.campo-caja .buscador-barra .button { flex: 0 0 auto; height: 38px; }
+.campo-caja .buscador-barra .buscador-barra-campo:focus { cursor: pointer; }
+
+.libro .col-importe, .libro .col-precio, .libro .col-cantidad, .libro .col-descuento,
+.libro .col-num { text-align: right; }
+.libro th.col-importe, .libro th.col-precio, .libro th.col-cantidad, .libro th.col-descuento { text-align: right; }
+
+.cliente { display: block; font-weight: 500; color: var(--tinta); white-space: nowrap; }
+
+.stock-bajo { color: var(--rojo); font-weight: 600; }
+
+.stock-celda { display: flex; align-items: center; gap: var(--e2); max-width: 11rem; }
+.stock-celda .cifra { font-size: var(--texto-s); }
+.stock-celda .progress-component { flex: 1 1 4rem; }
+.entra { color: var(--verde); font-weight: 500; }
+.sale { color: var(--rojo); font-weight: 500; }
+
+/* La hoja de líneas de la factura: es un formulario, no una tabla de leer. */
+.libro-lineas { min-width: 640px; table-layout: fixed; }
+.libro-lineas th { background: transparent; border-bottom: 1px solid var(--linea); }
+.libro-lineas td { padding: var(--e1) 3px; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+.libro-lineas tr:last-child td { border-bottom: 1px solid var(--linea); }
+
+.libro-lineas input, .libro-lineas select {
+  height: 32px;
+  padding: 0 var(--e2);
+  font-size: var(--texto-s);
+  box-shadow: none;
+  border-color: var(--linea);
+  width: 100%;
+}
+
+.libro-lineas input:hover, .libro-lineas select:hover { border-color: var(--linea-2); }
+.libro-lineas input:focus, .libro-lineas select:focus { border-color: var(--marca); box-shadow: var(--anillo); }
+
+/* La hoja pide lo que se teclea: la descripción se lleva el resto. */
+.libro-lineas col.col-cantidad { width: 78px; }
+.libro-lineas col.col-precio { width: 96px; }
+.libro-lineas col.col-descuento { width: 96px; }
+.libro-lineas col.col-importe { width: 106px; }
+.libro-lineas col.col-quitar { width: 32px; }
+
+/* Los números de una factura se leen pegados a la derecha. */
+.libro-lineas th.col-cantidad, .libro-lineas td.col-cantidad,
+.libro-lineas th.col-precio, .libro-lineas td.col-precio,
+.libro-lineas th.col-descuento, .libro-lineas td.col-descuento,
+.libro-lineas th.col-importe, .libro-lineas td.col-importe {
+  text-align: right;
+}
+
+.libro-lineas td.col-cantidad input,
+.libro-lineas td.col-descuento input,
+.libro-lineas td.col-precio input { text-align: right; }
+
+/* El precio que viene del catálogo se lee, no se toca: se queda sin caja, como si
+ * fuera texto. El descuento, en cambio, es para escribirlo. */
+.libro-lineas input.solo-lectura {
+  border-color: transparent;
+  background: transparent;
+  color: var(--tinta);
+  cursor: default;
+}
+
+.libro-lineas input.solo-lectura:hover,
+.libro-lineas input.solo-lectura:focus {
+  border-color: transparent;
+  box-shadow: none;
+}
+
+.libro-lineas tbody td.col-importe { font-size: var(--texto-m); color: var(--tinta); padding-right: var(--e2); }
+
+/* La fila de la hoja no se escribe: se lee. El campo de verdad sigue ahí —es el
+ * que se envía—, pero escondido; en su sitio va su valor, escrito como se lee.
+ * Lo que se cambia se cambia en la ventana de la fila. */
+.libro-lineas .celda-oculta { display: none; }
+
+.libro-lineas .celda-valor {
+  display: block;
+  min-height: 32px;
+  padding: 0 var(--e2);
+  line-height: 32px;
+  font-size: var(--texto-s);
+  color: var(--tinta);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.libro-lineas .celda-valor:empty::after { content: "—"; color: var(--tinta-4); }
+
+/* La columna «Opción»: el lápiz y la × a la derecha, con el mismo aire que en
+ * las tablas de cabeceras. */
+.libro-lineas .col-acciones { width: 84px; text-align: right; white-space: nowrap; }.libro-lineas td.col-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e2);
+}
+.libro-lineas td.col-acciones .quitar { width: 32px; height: 32px; margin-left: 0; }
+
+/* El + de añadir, al pie de la tabla y a la derecha: debajo de «Opción». */
+.fila-anadir { display: flex; justify-content: flex-end; padding: var(--e3) 0 var(--e2); }
+
+.linea.tachada td { color: var(--tinta-4); text-decoration: line-through; }
+.linea.tachada .quitar { display: none; }
+
+.quitar {
+  border: 0;
+  background: transparent;
+  color: var(--tinta-4);
+  font-size: var(--texto-l);
+  line-height: 1;
+  padding: 2px 5px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.quitar:hover { color: var(--rojo); background: var(--rojo-tinte); }
+.fila-error td { border-bottom: 0; padding: 0 3px var(--e2); }
+
+/* ------------------------------------------------------------------ resumen */
+
+.resumen {
+  padding: var(--e4) var(--e5) var(--e5);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  box-shadow: var(--sombra-1);
+}
+
+.pega { position: sticky; top: calc(var(--barra) + var(--e4)); }
+
+.totales { width: 100%; border-collapse: collapse; }
+
+/* La caja de los totales del resumen. La tabla va sin aire a los lados (para que
+ * las cifras se lean pegadas a su línea en el comprobante), así que el aire de la
+ * caja lo pone la caja. */
+.caja-totales { padding: var(--e2) var(--e3); }
+
+.totales th {
+  padding: 6px 0;
+  font-family: var(--sans);
+  font-size: var(--texto-s);
+  font-weight: 400;
+  color: var(--tinta-3);
+  text-align: left;
+  white-space: normal;
+}
+
+.totales td { padding: 6px 0; text-align: right; font-size: var(--texto-m); color: var(--tinta); }
+.totales tr + tr th, .totales tr + tr td { border-top: 1px solid var(--linea); }
+
+.total-final th, .total-final td {
+  border-top: 1px solid var(--linea-2);
+  padding-top: var(--e3);
+  font-family: var(--sans);
+  font-size: var(--texto-xl);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.total-final th { font-size: var(--texto-m); font-weight: 500; color: var(--tinta-2); }
+.totales .fila-tarifa th { font-size: var(--texto-s); color: var(--tinta-3); }
+
+/* -------------------------------------------------------------- comprobante */
+
+.comprobante {
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+  padding: 32px;
+  background: var(--hoja);
+  border: 1px solid #e4eaf2;
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(16, 24, 40, .06), 0 2px 6px rgba(16, 24, 40, .03);
+}
+
+.comprobante::before {
+  position: absolute;
+  top: -1px;
+  right: 24px;
+  left: 24px;
+  height: 3px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, var(--marca), #5ba6e8);
+  content: "";
+}
+
+.comprobante-cabecera {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 32px;
+  padding-bottom: 28px;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.comprobante-emisor { max-width: 60%; min-width: 0; }
+.comprobante-nombre { margin: 0; font-size: var(--texto-titulo); font-weight: 650; color: var(--tinta); }
+.comprobante-dato { margin: 4px 0 0; font-size: var(--texto-s); color: var(--tinta-3); }
+.comprobante-titulo { min-width: 245px; text-align: right; }
+
+.comprobante-tipo {
+  display: inline-block;
+  margin: 0 0 6px;
+  padding: 4px 9px;
+  border-radius: 999px;
+  background: var(--marca-tinte);
+  color: var(--marca-osc);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+
+.comprobante-serie { margin: 0; font-size: var(--texto-titulo); font-weight: 650; color: var(--tinta); }
+.comprobante-fecha { margin: 2px 0 0; font-size: var(--texto-s); color: var(--tinta-4); }
+
+.comprobante-datos {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  padding: 18px 0;
+  border-bottom: 1px solid #e8edf3;
+}
+
+.comprobante-datos > div {
+  min-width: 0;
+  padding: 14px 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+/* La clave de acceso y la autorización, en una franja de lado a lado: así se lee
+ * de una sola línea y no compite con el receptor. */
+.comprobante-clave-caja {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+@media (max-width: 640px) { .comprobante-datos { grid-template-columns: 1fr; gap: 12px; } }
+
+.comprobante-etiqueta {
+  margin: 0;
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-4);
+}
+
+.comprobante-datos .comprobante-nombre { margin-top: 5px; font-size: var(--texto-m); font-weight: 600; }
+.comprobante-etiqueta.segundo { margin-top: 12px; }
+
+.comprobante-clave {
+  margin: 3px 0 0;
+  font-size: var(--texto-s);
+  color: var(--tinta-2);
+  letter-spacing: .01em;
+  word-break: break-all;
+}
+
+.comprobante .comprobante-detalles {
+  margin-top: 22px;
+  border-color: #e4eaf2;
+  border-radius: 10px;
+}
+
+.comprobante .libro-detalles { min-width: 560px; table-layout: fixed; }
+.comprobante .libro-detalles th {
+  padding-top: 13px;
+  padding-bottom: 13px;
+  background: #f3f6fa;
+  color: #475467;
+}
+
+/* Dentro del comprobante las columnas se aprietan para que la tabla quepa en la
+ * columna, sin arrastrar de lado; la descripción se lleva lo que sobre. */
+.comprobante .libro-detalles .col-codigo { width: 84px; }
+.comprobante .libro-detalles .col-cantidad { width: 64px; }
+.comprobante .libro-detalles .col-precio { width: 90px; }
+.comprobante .libro-detalles .col-descuento { width: 62px; }
+.comprobante .libro-detalles .col-importe { width: 96px; }
+
+/* La descripción se lleva lo que sobre: las cifras de la derecha caen siempre en
+ * la misma vertical, aunque el texto de la línea sea largo. */
+.comprobante .libro-detalles .col-descripcion { width: auto; }
+.detalle-descripcion { display: block; color: var(--tinta); }
+.detalle-adicional { display: block; margin-top: 2px; font-size: var(--texto-xs); color: var(--tinta-4); }
+
+.comprobante .libro-detalles td { padding-top: 15px; padding-bottom: 15px; }
+.comprobante .libro-detalles th.col-cantidad,
+.comprobante .libro-detalles th.col-precio,
+.comprobante .libro-detalles th.col-descuento,
+.comprobante .libro-detalles th.col-importe { text-align: right; }
+.comprobante .libro-detalles td.col-cantidad,
+.comprobante .libro-detalles td.col-precio,
+.comprobante .libro-detalles td.col-descuento,
+.comprobante .libro-detalles td.col-importe { text-align: right; }
+
+.comprobante .libro-detalles tfoot th,
+.comprobante .libro-detalles tfoot td {
+  padding-top: 9px;
+  padding-bottom: 9px;
+  border: 0;
+  background: #fbfcfe;
+}
+
+.comprobante .libro-detalles tfoot th { text-align: right; font-weight: 400; }
+.comprobante .libro-detalles tfoot tr.total-final th { font-weight: 600; }
+
+.comprobante .libro-detalles tfoot tr:first-child th,
+.comprobante .libro-detalles tfoot tr:first-child td { padding-top: 16px; }
+.comprobante .libro-detalles tfoot tr.total-final th,
+.comprobante .libro-detalles tfoot tr.total-final td {
+  padding-top: 14px;
+  padding-bottom: 16px;
+  border-top: 1px solid #dce4ee;
+  background: #f3f7fc;
+}
+
+.comprobante .libro-detalles tfoot tr.total-final td { color: var(--marca-osc); font-size: var(--texto-titulo); }
+
+.comprobante-notas {
+  margin-top: 20px;
+  padding: 16px 18px 10px;
+  border: 1px solid #e8edf3;
+  border-radius: 10px;
+  background: #f8fafc;
+  font-size: var(--texto-s);
+}
+
+.comprobante-notas p { margin: 0 0 6px; color: var(--tinta-2); }
+.comprobante-notas .comprobante-etiqueta { margin-bottom: 2px; }
+
+/* Al pie del documento: el desglose de la clave de acceso, para leerla sin contar
+ * dígitos a ojo. Es una ayuda de la pantalla, así que no sale en el papel. */
+.comprobante-clave-partes {
+  margin-top: 24px;
+  padding-top: 16px;
+  border-top: 1px solid #e8edf3;
+}
+
+.comprobante-clave-partes .libro-partes { width: auto; }
+.comprobante-clave-partes .libro-partes th { width: 130px; padding-left: 0; }
+.libro-partes { width: auto; margin-top: var(--e2); }
+
+/* El sello de AUTORIZADA: estampado, con el número de autorización debajo. */
+.estampa {
+  display: inline-block;
+  margin-top: 12px;
+  padding: 7px 12px;
+  border: 1px solid #a6f4c5;
+  border-radius: 8px;
+  background: var(--verde-tinte);
+  color: var(--verde);
+  font-size: var(--texto-s);
+  font-weight: 700;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+}
+
+.estampa-numero {
+  display: block;
+  max-width: 320px;
+  margin-top: 4px;
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: .02em;
+  word-break: break-all;
+}
+
+@media (max-width: 720px) {
+  .comprobante { padding: 28px 24px 24px; }
+  .comprobante-cabecera { flex-direction: column; gap: 20px; }
+  .comprobante-emisor { max-width: none; }
+  .comprobante-titulo { min-width: 0; text-align: left; }
+  .estampa-numero { max-width: min(320px, 100%); }
+}
+
+@media (max-width: 480px) {
+  .comprobante { padding: 24px 16px 18px; }
+  .comprobante::before { right: 16px; left: 16px; }
+  .comprobante-datos > div { padding: 12px 14px; }
+  .estampa { font-size: var(--texto-xs); letter-spacing: .1em; padding: 6px 8px; }
+  .estampa-numero { font-size: 8px; }
+}
+
+/* --------------------------------------------------------------- para entrar
+ *
+ * Dos pantallas del mismo estilo: la de entrar (usuario y clave sobre el fondo
+ * abstracto) y la de bloqueo (la sesión abierta pero tapada hasta escribir la
+ * clave otra vez). Las dos van sobre el mismo lienzo claro.
+ */
+
+.cuerpo-entrar,
+.cuerpo-bloqueo {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--e5);
+  background: #c9d8e8;
+  overflow: hidden;
+}
+
+.entrar-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  background: url("../img/fondo-entrar.svg") center / cover no-repeat;
+  transform: scale(1.02);
+  pointer-events: none;
+}
+
+/* Cuando el proyecto pone su propia imagen de fondo (static/img/fondo-entrar.*),
+ * se pinta con un velo suave encima para que el texto blanco se lea sobre
+ * cualquier foto. */
+.entrar-fondo-propio { background-position: center; background-size: cover; background-repeat: no-repeat; }
+
+.entrar {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 340px;
+  text-align: center;
+}
+
+.entrar-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto var(--e5);
+  border-radius: 50%;
+  background: var(--marca-fondo);
+  box-shadow: 0 12px 30px -10px rgba(16, 24, 40, .45);
+  color: #fff;
+  overflow: hidden;
+}
+.entrar-avatar .mif-person { font-size: 56px; line-height: 1; }
+
+/* La imagen de marca, cuando el proyecto ha puesto una en static/img/ (lo cuenta
+ * el LEEME de esa carpeta). Va dentro del redondel, así que la caja es la de
+ * siempre y la imagen se ajusta sin deformarse. No lo llena: deja aire alrededor.
+ * La del bloqueo es blanca (`logo-blanco.png`): símbolo y nombre sobre el azul. */
+.entrar-marca,
+.bloqueo-marca {
+  display: block;
+  width: 80%;
+  height: 80%;
+  margin: auto;
+  object-fit: contain;
+}
+
+.entrar-error {
+  margin: 0 0 var(--e3);
+  color: #fff;
+  font-size: var(--texto-s);
+  text-shadow: 0 1px 2px rgba(16, 24, 40, .45);
+}
+
+.entrar-campo { position: relative; margin-bottom: var(--e2); }
+
+.entrar-campo input {
+  width: 100%;
+  height: 44px;
+  padding: 0 var(--e3);
+  border: 1px solid rgba(255, 255, 255, .65);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, .72);
+  color: var(--tinta);
+  font-size: var(--texto-l);
+  backdrop-filter: blur(6px);
+}
+
+.entrar-campo input::placeholder { color: #667085; }
+
+.entrar-campo input:focus {
+  outline: none;
+  background: #fff;
+  border-color: rgba(21, 112, 239, .8);
+  box-shadow: 0 0 0 3px rgba(21, 112, 239, .25);
+}
+
+.entrar-campo-clave input { padding-right: 52px; }
+
+.entrar-flecha,
+.bloqueo-flecha {
+  position: absolute;
+  top: 50%;
+  right: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  transform: translateY(-50%);
+  border: 1px solid rgba(16, 24, 40, .18);
+  border-radius: 5px;
+  background: #fff;
+  color: var(--tinta-2);
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.entrar-flecha:hover,
+.bloqueo-flecha:hover { background: var(--marca-tinte); color: var(--marca-osc); }
+
+.entrar-opciones {
+  margin-top: var(--e4);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: #fff;
+  font-size: var(--texto-s);
+  text-shadow: 0 1px 2px rgba(16, 24, 40, .45);
+  cursor: pointer;
+}
+
+/* Es un botón de texto: al pasar por encima —o al llegar con el tabulador— se
+ * subraya, en vez de convertirse en la caja que llevan los botones de la casa. */
+.entrar-opciones:hover,
+.entrar-opciones:focus {
+  border: 0;
+  background: none;
+  box-shadow: none;
+  color: #fff;
+  text-decoration: underline;
+}
+
+.entrar-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin-top: var(--e3);
+  padding: var(--e2);
+  border-radius: var(--radio-m);
+  background: rgba(255, 255, 255, .86);
+  box-shadow: 0 12px 30px -12px rgba(16, 24, 40, .4);
+}
+
+.entrar-opcion {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: 10px var(--e3);
+  border: 0;
+  border-radius: var(--radio-s);
+  background: transparent;
+  color: var(--tinta);
+  font-size: var(--texto-m);
+  text-align: left;
+  cursor: pointer;
+}
+
+.entrar-opcion:hover { background: var(--marca-tinte); }
+
+.entrar-pie {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  gap: var(--e3);
+  margin: var(--e6) 0 0;
+  color: rgba(255, 255, 255, .9);
+  font-size: var(--texto-xs);
+  text-shadow: 0 1px 2px rgba(16, 24, 40, .45);
+}
+
+/* -------------------------------------------------- la pantalla de bloqueo */
+
+.bloqueo {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: var(--e5);
+}
+
+/* Encima de la aplicación: tapa todo y se queda con el teclado. */
+.bloqueo-capa {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  background: var(--fondo);
+  overflow-y: auto;
+}
+
+/* La imagen de fondo de la pantalla de bloqueo, cuando el proyecto ha puesto una
+ * (static/img/fondo-bloqueo.*, o la de la entrada si no hay otra). */
+.bloqueo-con-fondo { background-position: center; background-size: cover; background-repeat: no-repeat; }
+
+.bloqueo-caja {
+  width: 100%;
+  max-width: 360px;
+  text-align: center;
+}
+
+.bloqueo-titulo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e6);
+  color: var(--tinta);
+  font-size: var(--texto-xl);
+  font-weight: 600;
+}
+
+.bloqueo-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 140px;
+  height: 140px;
+  margin: 0 auto var(--e4);
+  border-radius: 50%;
+  background: var(--marca-fondo);
+  box-shadow: 0 12px 30px -10px rgba(16, 24, 40, .45);
+  color: #fff;
+  font-size: 56px;
+  font-weight: 600;
+  overflow: hidden;
+}
+
+.bloqueo-nombre {
+  margin: 0 0 var(--e5);
+  color: var(--tinta);
+  font-size: var(--texto-xl);
+  font-weight: 600;
+}
+
+.bloqueo-error {
+  margin: 0 0 var(--e3);
+  color: #b42318;
+  font-size: var(--texto-s);
+}
+
+.bloqueo-form { position: relative; }
+
+.bloqueo-form input {
+  width: 100%;
+  height: 48px;
+  padding: 0 56px 0 44px;
+  border: 1px solid var(--linea-2);
+  border-radius: 6px;
+  background: var(--hoja);
+  color: var(--tinta);
+  font-size: var(--texto-l);
+  box-shadow: var(--sombra-1);
+}
+
+.bloqueo-form input:focus {
+  outline: none;
+  border-color: var(--marca);
+  box-shadow: var(--anillo);
+}
+
+.bloqueo-icono {
+  position: absolute;
+  top: 50%;
+  left: 14px;
+  z-index: 1;
+  transform: translateY(-50%);
+  color: var(--tinta-4);
+  font-size: 18px;
+  pointer-events: none;
+}
+
+.bloqueo-ayuda { margin: var(--e3) 0 var(--e6); color: var(--tinta-3); font-size: var(--texto-s); }
+
+.bloqueo-otro button {
+  height: 42px;
+  padding: 0 var(--e5);
+  border: 1px solid var(--linea-2);
+  border-radius: 999px;
+  background: var(--hoja);
+  color: var(--tinta);
+  font-size: var(--texto-m);
+  cursor: pointer;
+}
+
+.bloqueo-otro button:hover { background: var(--hoja-2); border-color: var(--tinta-4); }
+
+.bloqueo-pie {
+  display: flex;
+  gap: var(--e3);
+  margin: var(--e5) 0 0;
+  color: var(--tinta-4);
+  font-size: var(--texto-xs);
+}
+
+/* Con imagen de fondo el texto va en blanco y con su sombra, como en la entrada:
+ * el de serie es oscuro porque el fondo era claro. */
+.bloqueo-con-fondo .bloqueo-titulo,
+.bloqueo-con-fondo .bloqueo-nombre,
+.bloqueo-con-fondo .bloqueo-ayuda,
+.bloqueo-con-fondo .bloqueo-pie {
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(16, 24, 40, .45);
+}
+
+/* Con la pantalla bloqueada no se toca nada de detrás. */
+body.pantalla-bloqueada { overflow: hidden; }
+body.pantalla-bloqueada > .marco,
+body.pantalla-bloqueada > .barra,
+body.pantalla-bloqueada > .velo,
+body.pantalla-bloqueada > .panel-menu { filter: blur(2px) saturate(.7); pointer-events: none; }
+
+/* ------------------------------------------- el menú desplegable del móvil */
+
+.panel-menu {
+  display: none;
+  position: fixed;
+  inset: 0 auto 0 0;
+  z-index: 1100;
+  width: min(300px, 84vw);
+  background: var(--lateral-fondo);
+  box-shadow: 0 12px 32px -8px rgba(16, 24, 40, .4);
+  overflow-y: auto;
+}
+
+.panel-menu .rail-cabecera { padding: var(--e5) var(--e4) var(--e4); }
+.panel-menu .sidenav { width: auto; margin: var(--e3) var(--e2) var(--e5); background: transparent; }
+.panel-menu .sidenav li { margin: 0 0 2px; font-size: var(--texto-m); }
+.panel-menu .sidenav li + li { border-top: 0; }
+.panel-menu .sidenav > li > a { width: auto; padding: 10px 12px 10px 40px; }
+.panel-menu .sidenav .icon { left: 12px; color: var(--lateral-tinta); }
+.panel-menu .sidenav a > *:not(.icon, .badge) { visibility: visible; }
+.panel-menu .sidenav > li.active > a { background: var(--sidenav-background-active); color: #fff; box-shadow: inset 2px 0 0 var(--marca); }
+
+.velo {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 1090;
+  background: rgba(16, 24, 40, .45);
+}
+
+body.menu-abierto .panel-menu { display: block; }
+body.menu-abierto .velo { display: block; }
+body.menu-abierto { overflow: hidden; }
+
+/* ------------------------------------------- los componentes de Metro (JS) */
+
+/* Los avisos del servidor salen flotantes arriba (Metro.toast). */
+.aviso-flotante {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e2);
+  max-width: min(460px, 92vw);
+  padding: var(--e3) var(--e4);
+  border: 1px solid rgba(255, 255, 255, .08);
+  border-left: 3px solid var(--tinta-4);
+  border-radius: var(--radio-m);
+  background: #1d2939;
+  color: #f2f4f7;
+  font-family: var(--sans);
+  font-size: var(--texto-m);
+  line-height: 1.45;
+  box-shadow: var(--sombra-3);
+}
+
+.aviso-flotante a { color: #84adff; text-decoration: underline; }
+.aviso-flotante a:hover { color: #b2ddff; }
+.aviso-flotante .aviso-icono { font-size: 17px; line-height: 1.25; }
+
+.aviso-flotante-success { border-left-color: #47cd89; }
+.aviso-flotante-success .aviso-icono { color: #47cd89; }
+.aviso-flotante-warning { border-left-color: #fdb022; }
+.aviso-flotante-warning .aviso-icono { color: #fdb022; }
+.aviso-flotante-error { border-left-color: #f97066; }
+.aviso-flotante-error .aviso-icono { color: #f97066; }
+.aviso-flotante-info { border-left-color: #53b1fd; }
+.aviso-flotante-info .aviso-icono { color: #53b1fd; }
+
+/* Los diálogos de confirmación (Metro.dialog). */
+.dialog {
+  border-radius: var(--radio-m);
+  border: 1px solid var(--linea);
+  box-shadow: 0 18px 40px -12px rgba(16, 24, 40, .35);
+}
+
+.dialog-title {
+  padding: var(--e4) var(--e5) var(--e2);
+  font-family: var(--sans);
+  font-size: var(--texto-l);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.dialog-content {
+  padding: var(--e2) var(--e5) var(--e4);
+  font-family: var(--sans);
+  font-size: var(--texto-m);
+  color: var(--tinta-2);
+  line-height: 1.5;
+}
+
+/* El pie del diálogo: los botones con el mismo aire entre ellos —ni pegados ni
+ * separados de más—, altura de botón de verdad y sin los márgenes que trae cada
+ * uno por su cuenta (se sumaban al hueco y quedaban desparejos). */
+.dialog-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e3) var(--e5) var(--e5);
+}
+
+.dialog-actions > button,
+.dialog-actions > .button {
+  min-width: 104px;
+  min-height: 40px;
+  margin: 0;
+}
+
+/* Tres opciones del mismo peso —el tamaño del papel— se reparten el ancho. */
+.dialogo-imprimir .dialog-actions > button { flex: 1 1 0; }
+
+/* En un teléfono no caben en fila: una debajo de otra, la principal arriba. */
+@media (max-width: 560px) {
+  .dialog-actions { flex-direction: column-reverse; align-items: stretch; }
+  .dialog-actions > button,
+  .dialog-actions > .button { width: 100%; }
+}
+
+/* El anillo de espera mientras el SRI responde (Metro.activity). */
+.activity .text-center {
+  margin-top: var(--e3);
+  font-family: var(--sans);
+  font-size: var(--texto-m);
+  color: #f2f4f7;
+}
+
+/* Las columnas que se ordenan al pulsarlas. El indicador va anclado a su
+ * columna: el de Metro flota y se mezcla con el encabezado siguiente. */
+thead th.sortable-column {
+  position: relative;
+  cursor: pointer;
+  user-select: none;
+  padding-right: var(--e5);
+}
+
+thead th.sortable-column::after {
+  content: "⇅";
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  margin: 0;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--tinta-4);
+  opacity: .75;
+}
+
+thead th.sortable-column:hover { color: var(--tinta); }
+thead th.sortable-column:hover::after { opacity: 1; }
+thead th.sort-asc::after { content: "↑"; color: var(--marca); opacity: 1; }
+thead th.sort-desc::after { content: "↓"; color: var(--marca); opacity: 1; }
+
+/* Los iconos de Metro dentro de botones y enlaces. */
+.button .mif, button .mif, .boton-plano .mif, .enlace .mif {
+  font-size: 14px;
+  vertical-align: -2px;
+  margin-right: 5px;
+}
+
+.button .mif:only-child, button .mif:only-child { margin-right: 0; }
+
+/* -------------------------------------------------------------- móvil y papel */
+
+@media (max-width: 991px) {
+  .marco { grid-template-columns: minmax(0, 1fr); }
+  .rail { display: none; }
+  .barra-menu { display: inline-flex; }
+  .hoja, .banda, .avisos, .pie { padding-left: var(--e4); padding-right: var(--e4); }
+  .barra { padding: var(--e2) var(--e4); }
+  .titulo { font-size: var(--texto-xl); }
+  .bloque { padding: var(--e4); }
+  .filtros { padding: var(--e3) var(--e4); }
+  .emisor { flex-direction: column; align-items: flex-start; gap: 0; }
+  .cabecera-lado { gap: var(--e3); }
+  .pega { position: static; }
+  .table th, .table td { padding-left: var(--e2); padding-right: var(--e2); }
+
+  /* Fuera del escritorio, las listas muestran lo que se mira de un vistazo: lo
+   * demás está en la ficha de cada fila. Se oculta por posición para que la
+   * cabecera y sus celdas desaparezcan juntas: si no, la tabla se descuadra. */
+  .libro-facturas th:nth-child(4), .libro-facturas td:nth-child(4),
+  .libro-productos th:nth-child(3), .libro-productos td:nth-child(3),
+  .libro-productos th:nth-child(4), .libro-productos td:nth-child(4),
+  .libro-productos th:nth-child(6), .libro-productos td:nth-child(6),
+  .libro-productos th:nth-child(8), .libro-productos td:nth-child(8),
+  .libro-clientes th:nth-child(3), .libro-clientes td:nth-child(3),
+  .libro-clientes th:nth-child(4), .libro-clientes td:nth-child(4),
+  .libro-inventario th:nth-child(3), .libro-inventario td:nth-child(3),
+  .libro-inventario th:nth-child(5), .libro-inventario td:nth-child(5),
+  .libro-inventario th:nth-child(8), .libro-inventario td:nth-child(8),
+  .libro-kardex th:nth-child(5), .libro-kardex td:nth-child(5),
+  .libro-kardex th:nth-child(6), .libro-kardex td:nth-child(6) { display: none; }
+  .libro .col-descripcion { max-width: none; }
+
+  /* La lista, un punto más densa: así entra entera y se lee de un vistazo. */
+  .libro { font-size: var(--texto-s); }
+  .libro .cifra, .libro .col-num, .libro .col-fecha { font-size: var(--texto-s); }
+}
+
+@media (max-width: 700px) {
+  /* En una pantalla de teléfono la barra lleva lo esencial: el menú, quién
+   * factura y en qué ambiente se está. El RUC y el usuario están en el menú. */
+  .emisor { flex: 1 1 120px; min-width: 0; }
+  .emisor-nombre { font-size: var(--texto-s); }
+  .emisor-datos, .usuario { display: none; }
+  .barra { gap: var(--e2) var(--e3); }
+}
+
+
+@media print {
+  body { background: #fff; }
+  .rail, .barra, .panel-menu, .velo, .banda, .avisos, .pie, .barra-menu,
+  .titulo-fila, .acciones, .acciones-fila, .sin-imprimir { display: none !important; }
+  .marco { display: block; min-height: 0; }
+  .hoja { padding: 0; max-width: none; }
+  /* La ficha se imprime a una sola columna: el panel de documentos no va al papel. */
+  .columnas { display: block; }
+  .comprobante { border: 0; box-shadow: none; padding: 0; max-width: none; }
+  .comprobante::before { display: none; }
+  .estampa { opacity: 1; }
+  .desliza { border: 0; }
+}
+
+/* ------------------------------------------- el cliente y las líneas de la hoja */
+
+.cliente-caja {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+.cliente-identificacion {
+  flex: 1 1 240px;
+}
+
+.cliente-tipo-documento {
+  flex: 1 1 220px;
+}
+
+/* En la columna derecha no caben los campos en fila: cada uno ocupa el ancho que
+ * hay, sin dejar huecos al lado. */
+.columna-cliente .cliente-caja {
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.columna-cliente .cliente-identificacion,
+.columna-cliente .cliente-tipo-documento,
+.columna-cliente .cliente-ficha {
+  flex: 0 0 auto;
+  width: 100%;
+}
+
+.columna-cliente .cliente-caja .row > [class*="cell"] {
+  flex: 1 1 100%;
+  max-width: 100%;
+}
+
+.cliente-identificacion input {
+  width: 100%;
+}
+
+.cliente-identificacion .ayuda {
+  margin-top: .2rem;
+  line-height: 1.35;
+}
+
+#cliente-aviso.aviso-cliente-ok { color: var(--verde); }
+#cliente-aviso.aviso-cliente-error { color: var(--rojo); }
+#cliente-aviso.aviso-cliente-info { color: var(--tinta-3); }
+
+/* La confirmación del cliente va en una notificación de Metro, arriba a la
+ * derecha, y se cierra sola; el aviso de debajo del campo se queda para los
+ * errores y para el tipo que se está escribiendo. */
+.notify.notify-cliente-ok {
+  background: var(--verde);
+  color: #fff;
+  border-color: transparent;
+}
+
+.notify.notify-cliente-ok .notify-title,
+.notify.notify-cliente-ok .notify-message {
+  color: #fff;
+}
+
+.notify.notify-error {
+  background: var(--rojo);
+  color: #fff;
+  border-color: transparent;
+}
+
+.notify.notify-error .notify-title,
+.notify.notify-error .notify-message {
+  color: #fff;
+}
+
+/* Los productos sin existencia se ven, pero no se pueden elegir. */
+.buscador-libro tr.sin-stock {
+  opacity: .55;
+}
+
+.cliente-ficha {
+  display: flex;
+  flex: 1 1 240px;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--hoja-2);
+}
+
+.cliente-nombre { font-size: var(--texto-l); font-weight: 600; color: var(--tinta); }
+.cliente-datos { font-size: var(--texto-s); color: var(--tinta-3); }
+
+/* Lo que el documento lleva pero no se pregunta: viaja, no se ve. */
+.linea-oculta { display: none; }
+
+.linea-pie {
+  display: block;
+  margin-top: 3px;
+  font-size: var(--texto-xs);
+  color: var(--tinta-4);
+}
+
+.lineas-vacio {
+  margin-bottom: var(--e4);
+  padding: var(--e6) var(--e5);
+  border: 1px dashed var(--linea-2);
+  border-radius: var(--radio-m);
+  background: var(--hoja-2);
+  text-align: center;
+  color: var(--tinta-3);
+}
+
+.lineas-vacio p { margin: 0; font-size: var(--texto-m); }
+.lineas-vacio p + p { margin-top: var(--e1); }
+
+/* ------------------------------------------------------ el buscador (modal) */
+
+/* La ventana de los buscadores: barra de título de Metro con los colores de la casa.
+ * En Metro la barra toma su color de --window-border-color, así que se pinta ahí y
+ * el borde se pone aparte. */
+.window.ventana-buscador-win {
+  --window-caption-background: var(--marca);
+  --window-caption-color: var(--hoja);
+  --window-border-color: var(--marca);
+  --window-sys-button-color: var(--hoja);
+  --window-close-button-backgroud-hover: var(--rojo);
+  --window-close-button-color-hover: var(--hoja);
+  --window-background: var(--hoja);
+  --window-button-size: 2.5rem;
+  width: min(620px, 94vw);
+  height: min(460px, 82vh);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, .28);
+}
+
+.window.ventana-buscador-win .window-caption { height: 2.5rem; cursor: default; }
+.window.ventana-buscador-win .window-caption .title { font-size: var(--texto-m); font-weight: 600; }
+.window.ventana-buscador-win .window-caption .buttons { margin-right: 0; }
+.window.ventana-buscador-win .window-caption .buttons .sys-button { border-radius: 0; }
+.window.ventana-buscador-win .window-content {
+  height: calc(100% - 2.5rem);
+  border: none;
+  background: var(--hoja);
+  overflow: hidden;
+}
+
+/* El buscador ocupa la ventana y solo scrollea la tabla de resultados. */
+.window.ventana-buscador-win .buscador { display: flex; flex-direction: column; height: 100%; }
+.window.ventana-buscador-win .buscador-campo { flex: none; }
+.window.ventana-buscador-win .buscador-cuerpo { flex: 1 1 auto; min-height: 0; overflow-y: auto; }
+
+.buscador-campo { margin: var(--e3) var(--e5); }
+
+.buscador-campo input {
+  width: 100%;
+  height: 42px;
+  font-size: var(--texto-m);
+}
+
+/* La barra de búsqueda de la hoja de facturar: se escribe y al hacer clic se
+ * abre el buscador con lo escrito dentro. */
+.buscador-barra {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e4);
+}
+
+.buscador-barra-campo { flex: 1 1 260px; min-width: 0; }
+.buscador-barra-campo input { width: 100%; height: 42px; font-size: var(--texto-m); }
+
+/* Los resultados, en tabla: lo elegido a la izquierda y las cifras a la derecha. */
+.buscador-libro { width: 100%; table-layout: fixed; }
+.buscador-libro th { padding-top: 10px; padding-bottom: 10px; }
+.buscador-libro td { padding-top: 11px; padding-bottom: 11px; }
+.buscador-libro tbody tr { cursor: pointer; }
+.buscador-libro tbody tr:hover td { background: var(--marca-tinte); }
+
+/* El renglón que se va a elegir: se marca con un clic y se elige con doble clic. */
+.buscador-libro tbody tr.elegida td { background: var(--marca-tinte); }
+.buscador-libro tbody tr.elegida td:first-child { box-shadow: inset 3px 0 0 var(--marca); }
+
+/* La tabla de códigos de retención: el concepto se lleva el ancho y las cifras van
+ * estrechas, que es lo que se lee. */
+.ventana-codigos .buscador-libro th:nth-child(1) { width: 90px; }
+.ventana-codigos .buscador-libro th:nth-child(3) { width: 104px; }
+.ventana-codigos .buscador-libro th:nth-child(4) { width: 84px; text-align: right; }
+.ventana-codigos .buscador-libro td:nth-child(4) { text-align: right; white-space: nowrap; }
+.ventana-codigos .buscador-libro td:nth-child(1) { white-space: nowrap; font-weight: 600; }
+.buscador-libro .col-elegir { width: 38px; padding-right: 0; text-align: left; }
+.buscador-libro .col-codigo { width: 112px; }
+.buscador-libro .col-cifra { width: 96px; }
+.buscador-libro .col-iva { width: 104px; }
+.buscador-libro .num { text-align: right; }
+
+.buscador-todos, .buscador-elegir { cursor: pointer; }
+
+/* Sin resultados, el mensaje ocupa el hueco de la tabla (y no se pega al pie). */
+.buscador-vacio { flex: 1 1 auto; margin: 0 var(--e5); padding-top: var(--e3); }
+
+/* El pie del buscador: cuántas líneas van elegidas y el botón que las añade. */
+.buscador-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  flex: none;
+  padding: var(--e3) var(--e5);
+  border-top: 1px solid var(--linea);
+  background: var(--hoja-2);
+}
+
+.buscador-pie[hidden] { display: none; }
+.buscador-cuenta { font-size: var(--texto-s); color: var(--tinta-3); }
+.buscador-cuenta.fuerte { font-weight: 600; color: var(--tinta); }
+
+/* La tabla de las cabeceras repetibles —los destinatarios de una guía, los documentos
+ * del proveedor de una retención—: una fila por cabecera, con lo suyo en corto. Lo que
+ * se escribe de cada una se abre en su ventana. */
+.libro-grupos {
+  width: 100%;
+  min-width: 520px;
+  table-layout: fixed;
+}
+.libro-grupos th {
+  background: transparent;
+  border-bottom: 1px solid var(--linea);
+  text-align: left;
+  white-space: normal;
+  font-size: var(--texto-xs);
+}
+.libro-grupos td { padding: var(--e3) var(--e3); border-bottom: 1px solid var(--linea); }
+.libro-grupos tbody tr.grupo { cursor: pointer; }
+.libro-grupos tbody tr.grupo:hover td { background: var(--marca-tinte); }
+.libro-grupos tr.grupo.tachada td { color: var(--tinta-4); text-decoration: line-through; }
+.libro-grupos tr.grupo.tachada .quitar { display: none; }
+.libro-grupos td.grupo-dato { color: var(--tinta-2); overflow-wrap: anywhere; }
+/* La columna de las tablas de dentro: solo lleva el número, así que se queda estrecha y
+ * su título se reparte en varias líneas. */
+.libro-grupos .col-cuenta,
+.libro-grupos th.col-cuenta {
+  width: 5.5rem;
+  text-align: center;
+  line-height: 1.25;
+}
+.libro-grupos .col-acciones { width: 7rem; text-align: right; white-space: nowrap; }
+/* La columna «Opción»: los dos botones a la derecha, alineados y con el mismo
+ * aire entre ellos. */
+.libro-grupos td.col-acciones {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e2);
+}
+.libro-grupos td.col-acciones .quitar {
+  width: 32px;
+  height: 32px;
+  margin-left: 0;
+}
+.libro-grupos td.grupo-dato:first-child { color: var(--tinta); font-weight: 600; }
+
+/* La cabecera que tiene algo mal: el fallo está dentro de su ventana, así que se
+ * avisa en su fila, que si no no se ve dónde está el rojo. */
+.libro-grupos tr.con-fallo td { color: var(--rojo); }
+.libro-grupos tr.con-fallo td.grupo-dato:first-child {
+  box-shadow: inset 3px 0 0 var(--rojo);
+  font-weight: 600;
+}
+
+/* La fila de «añadir» va al pie de la tabla, a la derecha —debajo de «Opción»,
+ * que es la columna de los botones— y con aire para no tocar el borde. */
+.libro-grupos tfoot td {
+  padding: var(--e3) 0 var(--e2);
+  border: 0;
+  text-align: right;
+}
+
+/* El cajón de lo que se escribe de cada cabecera: en la hoja va escondido, y el
+ * navegador lo lleva a su ventana y lo devuelve (ver comprobantes.js). */
+.grupos-detalles { display: none; }
+
+/* La ventana donde se escribe una cabecera. Va dentro del formulario —de ahí se envían
+ * sus campos— y por encima de la hoja, con su fondo tapando lo de atrás. */
+.window.ventana-modal-win {
+  --window-caption-background: var(--marca);
+  --window-caption-color: var(--hoja);
+  --window-border-color: var(--marca);
+  --window-sys-button-color: var(--hoja);
+  --window-background: var(--hoja);
+  --window-button-size: 2.5rem;
+  width: min(940px, 94vw);
+  height: min(620px, 86vh);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  overflow: hidden;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, .28);
+}
+
+.window.ventana-modal-win .window-caption { height: 2.5rem; cursor: default; }
+.window.ventana-modal-win .window-caption .title { font-size: var(--texto-m); font-weight: 600; }
+.window.ventana-modal-win .window-content {
+  height: calc(100% - 2.5rem);
+  border: none;
+  background: var(--hoja);
+  overflow: hidden;
+}
+
+/* El contenido lo envuelve Metro en un div sin nombre: ahí dentro se reparten el cuerpo
+ * —lo que se escribe, que se desplaza si no cabe— y el pie. */
+.window.ventana-modal-win .window-content > div {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.ventana-modal-win .ventana-cuerpo {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+.ventana-modal-win .grupo-campos { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: var(--e5); }
+.ventana-modal-win .grupo-campos > .row { margin: 0; }
+
+/* Los botones de una ventana que pide datos (añadir una fila): al pie del cuerpo,
+ * con el mismo aire que los de los diálogos. */
+.ventana-modal-win .ventana-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  align-items: center;
+  gap: var(--e3);
+  flex: none;
+  padding: var(--e3) var(--e5) var(--e5);
+  border-top: 1px solid var(--linea);
+}
+.ventana-modal-win .ventana-acciones > .button {
+  min-width: 104px;
+  min-height: 40px;
+  margin: 0;
+}
+.ventana-modal-win .grupo-titulo {
+  margin: var(--e6) 0 var(--e3);
+  font-size: var(--texto-l);
+  font-weight: 600;
+}
+/* Dentro de la ventana hay más sitio: que la tabla lo aproveche y las cabeceras de sus
+ * columnas no se aprieten unas contra otras. */
+.ventana-modal-win .libro-lineas { min-width: 100%; table-layout: auto; }
+
+/* Mientras hay una ventana abierta, la hoja no se mueve. */
+body.con-ventana { overflow: hidden; }
+
+/* El campo que el servidor marca en rojo se ve en rojo: si no, el aviso manda a
+ * buscar algo que no está señalado en ningún sitio. */
+.con-error input, .con-error select { border-color: var(--rojo); box-shadow: 0 0 0 3px rgba(180, 35, 24, .1); }
+.fila-error td { padding: 0 3px var(--e2); }
+
+/* ==========================================================================
+ * Los controles de Metro, con los colores de la casa
+ *
+ * Metro trae sus botones, chips y ribbons en su paleta (el `primary` es rojo y
+ * los `!important` mandan). Aquí se conservan sus formas y sus clases —que son
+ * las que pide el proyecto— y se les pone el azul de la marca y los colores de
+ * los estados, para que todo hable el mismo idioma.
+ * ======================================================================== */
+
+/* ------------------------------------------------------------------ botones */
+
+.button.primary,
+.button.primary:focus {
+  background-color: var(--marca) !important;
+  color: #fff !important;
+  border-color: var(--marca) !important;
+}
+.button.primary:hover { background-color: var(--marca-osc) !important; border-color: var(--marca-osc) !important; }
+
+.button.success,
+.button.success:focus {
+  background-color: var(--verde) !important;
+  color: #fff !important;
+  border-color: var(--verde) !important;
+}
+.button.success:hover { background-color: #055c37 !important; border-color: #055c37 !important; }
+
+.button.warning,
+.button.warning:focus {
+  background-color: var(--ambar) !important;
+  color: #fff !important;
+  border-color: var(--ambar) !important;
+}
+.button.warning:hover { background-color: #93390a !important; border-color: #93390a !important; }
+
+.button.alert,
+.button.alert:focus {
+  background-color: var(--rojo) !important;
+  color: #fff !important;
+  border-color: var(--rojo) !important;
+}
+.button.alert:hover { background-color: #912018 !important; border-color: #912018 !important; }
+
+.button.info,
+.button.info:focus {
+  background-color: var(--marca-tinte) !important;
+  color: var(--marca-osc) !important;
+  border-color: var(--marca) !important;
+}
+.button.info:hover { background-color: #d1e9ff !important; color: var(--marca-osc) !important; }
+
+.button.dark,
+.button.dark:focus {
+  background-color: var(--lateral-fondo) !important;
+  color: #fff !important;
+  border-color: var(--lateral-fondo) !important;
+}
+.button.dark:hover { background-color: var(--lateral-activo) !important; }
+
+.button.outline,
+.button.outline:focus {
+  background-color: transparent !important;
+  color: var(--tinta-2) !important;
+  border-color: var(--linea-2) !important;
+}
+/* Metro pinta el texto de blanco en el `:hover` de los botones con color
+ * (`.primary`, `.success`, `.info`, `.dark`…) —también en los `.outline`— con
+ * `color:#fff!important`. Como esos botones tienen el fondo blanco o un tinte
+ * claro, al pasar por encima el texto desaparecía. Aquí se fija también el color
+ * del `:hover`: al ser reglas posteriores, ganan a las de Metro. */
+.button.outline:hover { background-color: var(--hoja-2) !important; color: var(--tinta) !important; }
+
+.button.outline.primary,
+.button.outline.primary:focus { color: var(--marca) !important; border-color: var(--marca) !important; background: transparent !important; }
+.button.outline.primary:hover { background-color: var(--marca-tinte) !important; color: var(--marca) !important; }
+
+.button.outline.info,
+.button.outline.info:focus { color: var(--marca-osc) !important; border-color: var(--marca) !important; background: transparent !important; }
+.button.outline.info:hover { background-color: var(--marca-tinte) !important; color: var(--marca-osc) !important; }
+
+.button.outline.success,
+.button.outline.success:focus { color: var(--verde) !important; border-color: var(--verde) !important; background: transparent !important; }
+.button.outline.success:hover { background-color: var(--verde-tinte) !important; color: var(--verde) !important; }
+
+.button.outline.alert,
+.button.outline.alert:focus { color: var(--rojo) !important; border-color: var(--rojo) !important; background: transparent !important; }
+.button.outline.alert:hover { background-color: var(--rojo-tinte) !important; color: var(--rojo) !important; }
+
+.button.outline.warning,
+.button.outline.warning:focus { color: var(--ambar) !important; border-color: var(--ambar) !important; background: transparent !important; }
+.button.outline.warning:hover { background-color: var(--ambar-tinte) !important; color: var(--ambar) !important; }
+
+.button.outline.dark,
+.button.outline.dark:focus { color: var(--tinta) !important; border-color: var(--tinta-4) !important; background: transparent !important; }
+.button.outline.dark:hover { background-color: var(--hoja-2) !important; color: var(--tinta) !important; border-color: var(--tinta-4) !important; }
+
+.button.pill { border-radius: 999px; }
+.button.square { width: var(--control-height, 36px); padding: 0; justify-content: center; }
+
+/* Los grupos de botones: pegados y con una sola esquina redondeada. */
+.button-group { display: inline-flex; }
+.button-group > .button { border-radius: 0; margin-left: -1px; }
+.button-group > .button:first-child { border-radius: var(--radio-s) 0 0 var(--radio-s); margin-left: 0; }
+.button-group > .button:last-child { border-radius: 0 var(--radio-s) var(--radio-s) 0; }
+.button-group > .button.primary { position: relative; z-index: 1; }
+
+/* ------------------------------------------------------------------- chips */
+
+.chip {
+  height: 26px;
+  padding: 0 10px;
+  font-size: var(--texto-s);
+  font-weight: 600;
+  border-radius: 999px;
+  background: #f2f4f7;
+  color: var(--tinta-2);
+  gap: 6px;
+}
+
+.chip .label { margin: 0; order: 2; font-size: inherit; }
+.chip .icon { width: 16px; height: 26px; font-size: 14px; order: 1; }
+.chip .action { order: 3; width: 18px; height: 18px; border-radius: 50%; font-size: 10px; }
+.chip .action:before { line-height: 18px; }
+
+.chip.primary { background: var(--marca) !important; color: #fff !important; }
+.chip.success { background: var(--verde) !important; color: #fff !important; }
+.chip.warning { background: var(--ambar) !important; color: #fff !important; }
+.chip.alert { background: var(--rojo) !important; color: #fff !important; }
+.chip.info { background: var(--marca-osc) !important; color: #fff !important; }
+.chip.dark { background: var(--lateral-fondo) !important; color: #fff !important; }
+
+.chip.soft { background: #f2f4f7 !important; color: var(--tinta-2) !important; }
+.chip.success.soft { background: var(--verde-tinte) !important; color: var(--verde) !important; }
+.chip.warning.soft { background: var(--ambar-tinte) !important; color: var(--ambar) !important; }
+.chip.alert.soft { background: var(--rojo-tinte) !important; color: var(--rojo) !important; }
+.chip.primary.soft, .chip.info.soft { background: var(--marca-tinte) !important; color: var(--marca-osc) !important; }
+
+.chip.small { height: 22px; padding: 0 8px; font-size: var(--texto-xs); }
+.chip .action { background: rgba(16, 24, 40, .18) !important; color: #fff !important; }
+
+/* ------------------------------------------------- barras de progreso (Metro)
+ *
+ * Metro pinta la barra con `.progress` (el carril) y `.bar` (lo lleno), y saca
+ * los colores de tres variables suyas. Aquí se les dan los de la casa; las
+ * clases y las variables son las de Metro.
+ */
+
+.progress-component {
+  --progress-bar-height: 8px;
+  --progress-bar-radius: 999px;
+  --progress-bar-back-color: var(--linea);
+  --progress-bar-color: var(--marca);
+}
+
+.progress-component .bar { transition: width .45s ease; }
+
+.progress-component.exito   { --progress-bar-color: var(--verde); }
+.progress-component.cuidado { --progress-bar-color: var(--ambar); }
+.progress-component.peligro { --progress-bar-color: var(--rojo); }
+.progress-component.fina    { --progress-bar-height: 6px; }
+.progress-component.gruesa  { --progress-bar-height: 12px; }
+
+/* Una barra con su etiqueta y su valor, para las tarjetas. */
+.progreso-dato {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+}
+.progreso-dato .progress-component { flex: 1 1 auto; }
+.progreso-dato .progreso-valor {
+  font-family: var(--mono);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-2);
+  white-space: nowrap;
+}
+
+/* -------------------------------------------------------- actividad (Metro)
+ *
+ * Los giros y los latidos son de Metro (`activity-ring`, `activity-metro`…);
+ * lo único que se cambia es el color, para que sea el azul de la casa.
+ */
+
+.activity-ring,
+.activity-square,
+.activity-cycle,
+.activity-atom,
+.activity-simple,
+.activity-bars { --activity-color: var(--marca); }
+
+.activity-en-linea {
+  display: inline-block;
+  vertical-align: -3px;
+  --activity-size: 14px;
+}
+
+.activity-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e2);
+  color: var(--tinta-2);
+  font-size: var(--texto-s);
+  font-weight: 600;
+}
+
+/* La barra deslizante de Metro, que es la que se usa en las tarjetas. */
+.activity-metro { --activity-color: var(--marca); --activity-box-size: 8px; height: 8px; }
+
+/* ----------------------------------------------------------------- ribbons */
+
+.ribbon {
+  font-size: var(--texto-xs);
+  letter-spacing: .02em;
+  text-transform: uppercase;
+  padding: 5px 12px;
+  border-radius: 4px 0 0 4px;
+}
+.ribbon.right { border-radius: 4px 0 0 4px; }
+.ribbon.primary { background: var(--marca); color: #fff; }
+.ribbon.primary:before { color: var(--marca-osc); }
+.ribbon.success { background: var(--verde); color: #fff; }
+.ribbon.success:before { color: #055c37; }
+.ribbon.warning { background: var(--ambar); color: #fff; }
+.ribbon.warning:before { color: #93390a; }
+.ribbon.alert { background: var(--rojo); color: #fff; }
+.ribbon.alert:before { color: #912018; }
+
+/* -------------------------------------------- aspa, casilla, interruptor
+ *
+ * El interruptor de Metro es la casilla misma convertida en pastilla. Su tamaño
+ * lo pisa la regla general de las casillas, así que aquí se dice otra vez; los
+ * colores salen de sus variables, con el azul de la casa al encenderse.
+ */
+
+label.switch { --switch-background: var(--linea-2); --switch-background-checked: var(--marca); }
+
+label.switch > input[type=checkbox] {
+  width: 48px;
+  height: 20px;
+  border: 0;
+  border-radius: 10px;
+}
+label.switch > input[type=checkbox]::before {
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+}
+label.switch > input[type=checkbox]:focus { box-shadow: var(--anillo); }
+
+.checkbox input:focus ~ .check, .radio input:focus ~ .check { box-shadow: var(--anillo); }
+
+/* Las cajas de texto de Metro, con los aires de la casa. */
+.input, .textarea, .select, .tag-input, .spinner { border-color: var(--borde-campo); }
+
+/* Metro pone un margen alrededor de sus cajas (4px arriba, 2px a los lados y
+ * 6px abajo) que aquí descuadra las rejillas: el aire lo pone la casa. */
+.input, .textarea, .select, .tag-input, .spinner { margin: 0; width: 100%; }
+.input:focus, .textarea:focus, .select.focused, .tag-input.focused { border-color: var(--marca); box-shadow: var(--anillo); }
+
+/* El desplegable de Metro reserva 68 px de margen para su flecha y el texto se
+ * salía de la caja. Va en fila —icono, texto, flecha— y el texto se recorta con
+ * puntos suspensivos, que en un contenedor flex no se recortaría.
+ */
+.select { display: flex; align-items: stretch; height: auto; min-height: var(--select-height, 38px); }
+.select .prepend { order: 1; flex: none; }
+.select .select-input {
+  order: 2;
+  flex: 1 1 auto;
+  width: auto;
+  min-width: 0;
+  margin-right: 0;
+  /* El aire de la derecha deja libre la flecha del desplegable. */
+  padding: 8px 24px 8px var(--e3);
+  display: block;
+  overflow: hidden;
+  text-overflow: clip;
+  /* Un nombre de cuenta largo ocupa dos líneas y se lee completo; antes se
+   * cortaba con puntos suspensivos y no se sabía qué cuenta se iba a elegir. */
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.35;
+  height: auto;
+  min-height: 36px;
+}
+/* La caja del icono: ocupa el alto del campo, pegada a su borde y con el fondo
+ * gris de los iconos. Antes quedaba una franja gris pequeña en medio. */
+.input .prepend, .input .append,
+.select .prepend, .select .append,
+.textarea .prepend, .textarea .append {
+  align-self: stretch;
+  background: var(--fondo);
+  color: var(--tinta-2);
+  min-width: 48px;
+}
+.input .prepend, .select .prepend, .textarea .prepend {
+  border-right: 1px solid var(--linea);
+  border-radius: var(--radio-s) 0 0 var(--radio-s);
+}
+.input .append, .select .append, .textarea .append {
+  border-left: 1px solid var(--linea);
+  border-radius: 0 var(--radio-s) var(--radio-s) 0;
+}
+
+/* El campo de fecha. No se monta con el componente de Metro: su envoltorio le
+ * come el icono del calendario que dibuja el navegador. La franja gris de la
+ * derecha se pinta con un degradado, porque darle altura al icono nativo (con
+ * `height`) hace que el navegador deje de dibujarlo. */
+input.campo-fecha {
+  padding-right: 0;
+  background-image: linear-gradient(
+    to right,
+    transparent calc(100% - 39px),
+    var(--linea) calc(100% - 39px),
+    var(--linea) calc(100% - 38px),
+    var(--fondo) calc(100% - 38px)
+  );
+}
+input.campo-fecha::-webkit-calendar-picker-indicator {
+  padding: 0 11px;
+  cursor: pointer;
+  opacity: .8;
+}
+input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+/* El desplegable, con su flecha y su aire. Metro trae su texto a 16px y lo
+ * define en el propio componente, así que se iguala aquí, con sus variantes de
+ * tamaño, a la medida de las cajas de texto. */
+.select,
+.select.small,
+.select.medium,
+.select.large,
+.select.largest { --select-font-size: var(--texto-m); }
+.select .dropdown-toggle { order: 3; flex: none; }
+
+/* La caja de texto larga: dos renglones, como se lee un texto largo. */
+.textarea > textarea { min-height: 46px !important; height: 46px !important; }
+
+/* Metro pone un aspa para borrar en cada caja. Se enseña al entrar en ella, que
+ * en reposo no se está borrando nada. */
+.input .button-group,
+.textarea .input-clear-button,
+.select .input-clear-button { opacity: 0; transition: opacity .15s ease; }
+.input:hover .button-group,
+.input:focus-within .button-group,
+.textarea:hover .input-clear-button,
+.textarea:focus-within .input-clear-button,
+.select:hover .input-clear-button,
+.select:focus-within .input-clear-button { opacity: 1; }
+
+/* ==========================================================================
+ * El tablero
+ * ======================================================================== */
+
+.tablero {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--e5);
+}
+
+.dato {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: var(--e2);
+  padding: var(--e4) var(--e5);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  box-shadow: var(--sombra-1);
+}
+
+/* El lazo de Metro («Revisar») se cose a la esquina y sale un poco de la
+ * tarjeta: es lo que lo hace parecer un lazo, así que no se recorta. */
+.dato > .ribbon { top: 16px; }
+
+.dato-fuerte { border-color: var(--marca); box-shadow: 0 0 0 1px var(--marca) inset, var(--sombra-2); }
+.dato-atencion { border-color: #fec84b; background: var(--ambar-tinte); }
+
+.dato-etiqueta {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .04em;
+}
+
+.dato-cifra { margin: 0; font-family: var(--mono); font-size: var(--texto-2xl); font-weight: 600; color: var(--tinta); line-height: 1.1; }
+.dato-pie { margin: 0; color: var(--tinta-3); font-size: var(--texto-s); }
+
+.tarjeta {
+  position: relative;
+  padding: var(--e5);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  box-shadow: var(--sombra-1);
+}
+
+.tarjeta-atencion { border-color: #fec84b; }
+
+.tarjeta-cabecera {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--e4);
+}
+
+.tarjeta-titulo { margin: 0; font-size: var(--texto-l); font-weight: 600; }
+.tarjeta-pie { margin: 2px 0 0; color: var(--tinta-4); font-size: var(--texto-xs); }
+.tarjeta-pie-fila { display: flex; flex-wrap: wrap; gap: var(--e2); margin-top: var(--e4); padding-top: var(--e4); border-top: 1px solid var(--linea); }
+
+/* El gráfico ocupa tres columnas y no se estira con la tarjeta alta de al lado:
+ * el alto que sobra se queda fuera de la tarjeta, que se ve más limpio. */
+.grafico { grid-column: span 4; align-self: start; display: flex; flex-direction: column; }
+
+.grafico-total { margin: 0 0 var(--e4); font-family: var(--mono); font-size: var(--texto-3xl); font-weight: 600; }
+
+.barras {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  height: 200px;
+  padding-top: var(--e2);
+  border-bottom: 1px solid var(--linea);
+}
+
+/* Una barra del gráfico de ventas. Ojo con el nombre: la barra de arriba de la
+ * página es `.barra`, y con el mismo nombre se pisaban (la de arriba se quedaba
+ * en 17px). */
+.barra-grafico {
+  position: relative;
+  flex: 1 1 0;
+  max-width: 64px;
+  height: calc(var(--alto, 0) * 1%);
+  min-height: 3px;
+  border-radius: 3px 3px 0 0;
+  background: var(--linea-2);
+}
+
+.barra-grafico.llena { background: linear-gradient(180deg, #4a9bf5, var(--marca)); }
+
+.barra-dia {
+  position: absolute;
+  bottom: -20px;
+  left: 50%;
+  transform: translateX(-50%);
+  color: var(--tinta-4);
+  font-size: var(--texto-base);
+  white-space: nowrap;
+}
+
+.barras { margin-bottom: 22px; }
+
+.lista-compacta { display: flex; flex-direction: column; gap: var(--e2); margin: 0; padding: 0; list-style: none; }
+.lista-compacta li { display: flex; flex-wrap: wrap; gap: var(--e2); align-items: center; padding: 6px 0; border-bottom: 1px solid var(--linea); }
+.lista-compacta li:last-child { border-bottom: 0; }
+.lista-serie { flex: none; font-size: var(--texto-s); color: var(--tinta-2); }
+.lista-receptor { flex: 1 1 8rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--texto-s); color: var(--tinta-3); }
+.lista-importe { flex: none; margin-left: auto; font-weight: 600; }
+.lista-nombre { flex: 1 1 10rem; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.lista-barras { display: flex; flex-direction: column; gap: var(--e3); margin: 0; padding: 0; list-style: none; }
+.lista-barras li { display: flex; gap: var(--e3); align-items: center; }
+.lista-barras .lista-nombre { font-size: var(--texto-s); color: var(--tinta-2); }
+
+.lista-barras .progreso-dato { flex: 1 1 6rem; }
+
+/* El gráfico de lo que más se mueve: una barra por producto o servicio, del que
+ * más al que menos, con su puesto delante y las cuentas al lado. */
+.ranking { display: flex; flex-direction: column; gap: var(--e3); margin: 0; padding: 0; list-style: none; }
+
+.ranking li {
+  display: grid;
+  grid-template-columns: 1.25rem minmax(5rem, 1.1fr) minmax(3rem, 2fr) auto;
+  gap: var(--e3);
+  align-items: center;
+}
+
+.ranking-puesto { color: var(--tinta-4); font-size: var(--texto-s); text-align: right; }
+.ranking-nombre {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--texto-s);
+  color: var(--tinta-2);
+}
+.ranking-barra { display: block; height: 10px; border-radius: 999px; background: var(--linea); overflow: hidden; }
+.ranking-barra > i {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, #4a9bf5, var(--marca));
+}
+.ranking-dato { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.ranking-valor { font-weight: 600; }
+.ranking-meta { color: var(--tinta-4); font-size: var(--texto-xs); }
+
+/* El tablero en pantallas medianas y pequeñas. */
+/* Las dos tarjetas del pie se reparten el ancho: con una columna cada una
+ * quedaba media fila vacía. */
+@media (min-width: 1201px) {
+  .tablero .tarjeta.ancha { grid-column: span 2; }
+}
+
+/* ------------------------------- el asistente de configuración del SRI
+ *
+ * La configuración se conduce en cuatro pasos. Arriba van la barra de progreso
+ * de Metro y los cuatro pasos, que se pueden pulsar para saltar de uno a otro:
+ * el que se está viendo queda marcado y los ya resueltos en verde.
+ */
+
+.fichas-configuracion {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--e2);
+  margin-bottom: var(--e4);
+}
+
+.fichas-configuracion form { margin: 0; }
+
+.asistente { padding: var(--e4) var(--e5); }
+
+.asistente-barra { display: flex; align-items: center; gap: var(--e3); }
+.asistente-barra .progress-component { flex: 1 1 auto; }
+
+.asistente-cuenta {
+  font-family: var(--mono);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-3);
+  white-space: nowrap;
+}
+
+.pasos {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3) var(--e5);
+  margin: var(--e4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.paso { min-width: 0; }
+
+.paso a {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  color: var(--tinta-3);
+  text-decoration: none;
+}
+
+.paso a:hover .paso-titulo { color: var(--marca); }
+.paso a:hover .paso-numero { border-color: var(--marca); color: var(--marca); }
+
+.paso-numero {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border: 1px solid var(--linea-2);
+  border-radius: 50%;
+  background: var(--hoja);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+}
+
+.paso-texto { display: flex; flex-direction: column; min-width: 0; }
+.paso-titulo { font-size: var(--texto-m); font-weight: 600; color: var(--tinta-2); }
+.paso-que { font-size: var(--texto-xs); color: var(--tinta-4); }
+
+.paso-activo .paso-numero { background: var(--marca); border-color: var(--marca); color: #fff; }
+.paso-activo .paso-titulo { color: var(--tinta); }
+.paso-hecho .paso-numero { background: var(--verde); border-color: var(--verde); color: #fff; }
+/* El paso que se está viendo manda sobre lo de «ya hecho»: azul, no verde. */
+.paso-activo.paso-hecho .paso-numero { background: var(--marca); border-color: var(--marca); }
+
+/* Lo que falta, en el lateral. */
+.lista-falta { margin: 0; padding: 0; list-style: none; }
+.lista-falta li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--e2);
+  padding: var(--e2) 0;
+  border-top: 1px solid var(--linea);
+  font-size: var(--texto-m);
+}
+.lista-falta li:first-child { border-top: 0; }
+.lista-falta .ayuda { flex: 1 1 100%; margin: 0; }
+
+/* La ficha del certificado, en el paso 4. */
+.lista-datos {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 6px var(--e4);
+  margin: 0;
+  font-size: var(--texto-m);
+}
+.lista-datos dt { color: var(--tinta-3); }
+.lista-datos dd { margin: 0; color: var(--tinta); }
+
+.campo-traer-sri {
+  margin-top: var(--e4);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--linea);
+}
+
+.campo-centrado { justify-content: center; }
+
+@media (max-width: 1200px) {
+  .tablero { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .grafico { grid-column: span 2; }
+  .tablero .tarjeta.ancha { grid-column: span 2; }
+}
+
+@media (max-width: 720px) {
+  .tablero { grid-template-columns: minmax(0, 1fr); }
+  .grafico { grid-column: span 1; }
+  .barras { height: 120px; }
+  .dato-cifra { font-size: var(--texto-xl); }
+
+  /* El gráfico de lo que más se mueve no cabe en cuatro columnas: el nombre y su
+   * cuenta arriba, y la barra debajo, a todo lo ancho. */
+  .ranking li {
+    grid-template-columns: 1.25rem minmax(0, 1fr) auto;
+    grid-template-areas:
+      "puesto nombre dato"
+      "barra barra barra";
+    row-gap: 6px;
+  }
+  .ranking-puesto { grid-area: puesto; }
+  .ranking-nombre { grid-area: nombre; }
+  .ranking-barra { grid-area: barra; }
+  .ranking-dato { grid-area: dato; flex-direction: row; align-items: baseline; gap: var(--e2); }
+
+  /* En el móvil no cabe una fila de columnas: cada registro es una tarjeta con
+   * sus datos apilados, y la caja se la lleva la tarjeta, no el contenedor. */
+  .desliza:has(.listado) { border: 0; border-radius: 0; background: transparent; }
+  .desliza:has(.listado) .table-top,
+  .desliza:has(.listado) .table-bottom {
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-m);
+    background: var(--hoja);
+    margin-bottom: var(--e3);
+  }
+  .listado[data-tabla] tbody tr,
+  .listado[data-tabla] tbody tr:first-child {
+    flex-wrap: wrap;
+    gap: var(--e2) var(--e3);
+    padding: var(--e3);
+    border: 1px solid var(--linea);
+    border-radius: var(--radio-m);
+    background: var(--hoja);
+    margin-bottom: var(--e3);
+  }
+  .listado[data-tabla] tbody tr:last-child { margin-bottom: 0; }
+  .listado[data-tabla] td.col-marca { flex: 0 0 36px; }
+  .listado[data-tabla] td.col-marca:has(.chip) { flex: 1 1 100%; }
+  .listado[data-tabla] td.col-principal,
+  .listado[data-tabla] td.col-detalles,
+  .listado[data-tabla] td.col-dato { flex: 1 1 100%; text-align: left; }
+  .listado[data-tabla] td.col-stock,
+  .listado[data-tabla] td.col-tipo { flex: 1 1 40%; }
+  .listado[data-tabla] td.col-acciones { flex: 1 1 100%; text-align: right; }
+
+  /* La fecha y la forma de pago van una debajo de la otra, sin pedir su ancho. */
+  #fecha-forma-pago > [class*="cell"] { flex: 1 1 100%; min-width: 0; }
+  #fecha-forma-pago .campo-caja { min-width: 0; }
+}
+
+/* -------------------------------------------------- el ciclo del comprobante
+ *
+ * En la ficha de la factura: el estado, cuánto ha avanzado y las cuatro etapas
+ * por las que pasa. Es la barra de progreso de Metro, con sus nombres debajo.
+ */
+
+.ciclo { display: flex; flex-direction: column; gap: var(--e2); min-width: 15rem; }
+.ciclo-cabecera { display: flex; align-items: center; gap: var(--e2); }
+.ciclo .progreso-dato { gap: var(--e2); }
+
+.ciclo-etapas {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  color: var(--tinta-4);
+  font-size: var(--texto-xs);
+  text-transform: uppercase;
+  letter-spacing: .02em;
+}
+
+/* El nombre del archivo de firma ya subido es larguísimo y sin espacios: en una
+ * pantalla estrecha estiraba la caja. */
+.campo-caja a { overflow-wrap: anywhere; }
+
+/* El asistente en pantallas pequeñas: la barra y los pasos se aprietan. */
+@media (max-width: 720px) {
+  .asistente { padding: var(--e3) var(--e4); }
+  .pasos { gap: var(--e2) var(--e4); }
+  .paso-que { display: none; }
+}
+
+/* ------------------------------------------------ los documentos del comprobante
+ *
+ * En la ficha de la factura, al lado: cada XML, la respuesta del SRI y el error
+ * que dejó el envío, con su tamaño y sus dos botones (ver y guardar).
+ */
+
+.documentos {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.documento {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--e2) var(--e3);
+  padding: var(--e3);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--hoja-2);
+}
+
+/* El documento que manda (el XML autorizado) se distingue del resto. */
+.documento-fuerte { border-color: #abefc6; background: var(--verde-tinte); }
+
+.documento-icono { font-size: 16px; line-height: 1.35; color: var(--tinta-4); }
+.documento-fuerte .documento-icono { color: var(--verde); }
+
+.documento-cuerpo { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.documento-nombre { font-size: var(--texto-m); font-weight: 600; color: var(--tinta); }
+.documento-datos { font-size: var(--texto-xs); color: var(--tinta-3); overflow-wrap: anywhere; }
+.documento-ayuda { margin-top: 2px; font-size: var(--texto-xs); line-height: 1.4; color: var(--tinta-4); }
+.documento-fuerte .documento-datos,
+.documento-fuerte .documento-ayuda { color: var(--verde); }
+
+.documento-botones { display: flex; gap: var(--e1); }
+
+.documento-boton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  font-size: 14px;
+}
+
+.documento-boton:hover { border-color: var(--marca); background: var(--marca-tinte); color: var(--marca-osc); }
+
+/* Una lista de datos con su etiqueta a la izquierda y el valor a la derecha. */
+.datos-lista { display: flex; flex-direction: column; gap: 6px; margin: var(--e4) 0 0; padding: 0; }
+.datos-lista > div { display: flex; align-items: baseline; justify-content: space-between; gap: var(--e3); }
+.datos-lista dt { font-size: var(--texto-s); color: var(--tinta-3); }
+.datos-lista dd { margin: 0; font-size: var(--texto-s); color: var(--tinta); text-align: right; overflow-wrap: anywhere; }
+
+/* -------------------------------------------------- el RIDE (para imprimir)
+ *
+ * La representación impresa del comprobante: la hoja A4 y el tíquet de 80 mm. En
+ * pantalla se ve como saldrá en el papel; el título y los botones de arriba van en
+ * la cabecera de siempre (`.titulo-fila`) y no se imprimen.
+ */
+
+.conmutador {
+  display: inline-flex;
+  padding: 3px;
+  border: 1px solid var(--linea-2);
+  border-radius: 999px;
+  background: var(--hoja);
+}
+
+.conmutador-opcion {
+  padding: 5px 14px;
+  border-radius: 999px;
+  color: var(--tinta-3);
+  font-size: var(--texto-s);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.conmutador-opcion:hover { color: var(--marca-osc); }
+.conmutador-opcion.activa { background: var(--marca); color: #fff; }
+.conmutador-opcion.activa:hover { color: #fff; }
+
+.ride {
+  margin: 0 auto;
+  background: var(--hoja);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-3);
+  color: var(--tinta);
+}
+
+.ride-a4 { max-width: 210mm; padding: 12mm 10mm; }
+.ride-t80 { width: 80mm; max-width: 100%; padding: 4mm 3mm; font-size: 11px; line-height: 1.35; }
+
+/* La cabecera del RIDE, como la del SRI: el logo a la izquierda, el RUC y el número
+ * en medio y los datos fiscales del emisor a la derecha. */
+.ride-cabecera {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: var(--e4) var(--e5);
+  align-items: start;
+  padding-bottom: var(--e4);
+  border-bottom: 2px solid var(--tinta);
+}
+
+.ride-logo { min-width: 0; }
+.ride-logo img { display: block; max-width: 150px; max-height: 84px; object-fit: contain; }
+
+.ride-identificacion { min-width: 0; }
+/* El número de autorización es la clave entera, 49 dígitos seguidos: si no se deja
+ * partir, se sale de su columna y se mete encima de los datos del emisor. */
+.ride-identificacion p,
+.ride-fiscales p { overflow-wrap: anywhere; }
+.ride-ruc { margin: 0; font-size: var(--texto-m); font-weight: 700; color: var(--tinta); }
+.ride-tipo {
+  margin: 4px 0 0;
+  font-size: var(--texto-l);
+  font-weight: 700;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--tinta);
+}
+.ride-numero { margin: 2px 0 6px; font-size: var(--texto-m); color: var(--tinta); }
+.ride-clave { margin: 2px 0 4px; font-size: var(--texto-s); font-weight: 600; overflow-wrap: anywhere; }
+
+/* El código de barras: alto fijo y ancho de su caja, con las barras nítidas. */
+.ride-barras-caja { margin-top: 4px; }
+.ride-barras { display: block; width: 100%; max-width: 320px; height: 46px; }
+
+.ride-fiscales { min-width: 170px; max-width: 240px; text-align: left; }
+.ride-fiscales .ride-valor { margin: 1px 0 6px; font-size: var(--texto-s); color: var(--tinta); overflow-wrap: anywhere; }
+.ride-fiscales .ride-linea { margin-top: 4px; }
+
+.ride-emisor-nombre { margin: 0 0 3px; font-size: var(--texto-l); font-weight: 700; color: var(--tinta); }
+.ride-linea { margin: 2px 0 0; font-size: var(--texto-s); color: var(--tinta-2); }
+
+.ride-etiqueta {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-4);
+}
+
+/* El receptor y el comprobante: dos columnas de etiqueta y valor, como el original. */
+.ride-receptor {
+  width: 100%;
+  margin-top: var(--e4);
+  border-collapse: collapse;
+  border: 1px solid var(--linea-2);
+  font-size: var(--texto-s);
+}
+.ride-receptor th,
+.ride-receptor td { padding: 5px 8px; border: 1px solid var(--linea-2); text-align: left; vertical-align: top; }
+.ride-receptor th {
+  width: 18%;
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  background: #f7f8fa;
+}
+
+.ride-lineas {
+  width: 100%;
+  margin-top: var(--e4);
+  border-collapse: collapse;
+  border: 1px solid var(--linea-2);
+  font-size: var(--texto-s);
+  table-layout: fixed;
+}
+.ride-lineas th,
+.ride-lineas td { padding: 6px 7px; border: 1px solid var(--linea-2); text-align: left; vertical-align: top; }
+.ride-lineas thead th {
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: .04em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+  background: #f7f8fa;
+  white-space: normal;
+}
+.ride-lineas .ride-col-codigo { width: 12%; }
+.ride-lineas .ride-col-auxiliar { width: 11%; }
+.ride-lineas .ride-col-cantidad { width: 8%; text-align: right; }
+.ride-lineas .ride-col-precio { width: 13%; text-align: right; }
+.ride-lineas .ride-col-descuento { width: 10%; text-align: right; }
+.ride-lineas .ride-col-importe { width: 13%; text-align: right; }
+
+/* Los totales van a la derecha, sobre su recuadro, como en el comprobante del SRI. */
+.ride-totales-caja { display: flex; justify-content: flex-end; margin-top: var(--e4); }
+.ride-totales { min-width: 58%; border-collapse: collapse; border: 1px solid var(--linea-2); font-size: var(--texto-s); }
+.ride-totales th,
+.ride-totales td { padding: 4px 8px; border-bottom: 1px solid var(--linea); text-align: right; }
+.ride-totales th { font-weight: 400; color: var(--tinta-3); white-space: nowrap; }
+.ride-totales td { width: 40%; color: var(--tinta); }
+.ride-totales tr:last-child th,
+.ride-totales tr:last-child td { border-bottom: 0; }
+.ride-totales .ride-total th,
+.ride-totales .ride-total td {
+  padding-top: 8px;
+  padding-bottom: 6px;
+  border-top: 2px solid var(--tinta);
+  background: #f7f8fa;
+  font-size: var(--texto-m);
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+/* La información adicional: concepto y detalle, en su tabla. */
+.ride-info { margin-top: var(--e4); }
+.ride-info-titulo {
+  margin: 0 0 4px;
+  font-size: var(--texto-xs);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+.ride-info-tabla { width: 100%; border-collapse: collapse; border: 1px solid var(--linea-2); font-size: var(--texto-s); }
+.ride-info-tabla th,
+.ride-info-tabla td { padding: 5px 8px; border: 1px solid var(--linea-2); text-align: left; vertical-align: top; }
+.ride-info-tabla th { width: 24%; font-weight: 600; color: var(--tinta-3); background: #f7f8fa; }
+
+.ride-notas { margin-top: var(--e4); padding-top: var(--e3); border-top: 1px solid var(--linea); font-size: var(--texto-s); color: var(--tinta-2); }
+.ride-notas p { margin: 0 0 var(--e2); }
+.ride-notas p:last-child { margin-bottom: 0; }
+.ride-pie { margin-top: var(--e4); padding-top: var(--e3); border-top: 1px dashed var(--linea-2); font-size: var(--texto-xs); color: var(--tinta-3); }
+.ride-pie p { margin: 0; }
+.ride-pie-aviso { font-weight: 700; letter-spacing: .04em; color: var(--tinta-2); }
+
+/* --- el tíquet de 80 mm: una sola columna, apretado y sin filetes ------------
+ *
+ * Aquí no caben las tablas del A4. El tíquet se lee de arriba abajo: el emisor,
+ * a quién se le factura, cada línea con su descripción y debajo las cifras, y
+ * los totales. Las celdas pierden el ancho que tenían en la hoja. */
+
+.ride-t80 .ride-cabecera {
+  display: block;
+  text-align: center;
+  padding-bottom: var(--e3);
+  border-bottom: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-logo { display: flex; justify-content: center; margin-bottom: var(--e3); }
+.ride-t80 .ride-logo img { max-width: 60%; max-height: 42px; }
+.ride-t80 .ride-ruc { font-size: var(--texto-s); }
+.ride-t80 .ride-tipo { margin-top: 2px; font-size: var(--texto-m); letter-spacing: .1em; }
+.ride-t80 .ride-numero { margin-bottom: 4px; font-size: var(--texto-s); }
+.ride-t80 .ride-linea { font-size: 10px; line-height: 1.35; }
+.ride-t80 .ride-etiqueta { font-size: 9px; }
+.ride-t80 .ride-clave { font-size: 9px; }
+.ride-t80 .ride-barras-caja { text-align: center; }
+.ride-t80 .ride-barras { height: 40px; margin: 4px auto 0; }
+.ride-t80 .ride-fiscales { max-width: none; margin-top: var(--e3); text-align: center; }
+.ride-t80 .ride-fiscales .ride-valor { margin-bottom: 3px; font-size: 10px; }
+
+/* El receptor, en líneas: la etiqueta pequeña y el dato debajo. */
+.ride-t80 .ride-receptor,
+.ride-t80 .ride-receptor tbody,
+.ride-t80 .ride-receptor tr,
+.ride-t80 .ride-receptor th,
+.ride-t80 .ride-receptor td {
+  display: block;
+  width: auto;
+}
+.ride-t80 .ride-receptor {
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border: 0;
+  border-top: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-receptor tr { margin-bottom: 5px; }
+.ride-t80 .ride-receptor th,
+.ride-t80 .ride-receptor td { padding: 0; border: 0; background: transparent; }
+.ride-t80 .ride-receptor th { font-size: 9px; }
+.ride-t80 .ride-receptor td { font-size: 10px; }
+
+/* Las líneas: cada una, una ficha con la descripción y debajo sus cifras. */
+.ride-t80 .ride-lineas {
+  display: block;
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border: 0;
+  border-top: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-lineas colgroup,
+.ride-t80 .ride-lineas thead { display: none; }
+.ride-t80 .ride-lineas tbody { display: block; }
+
+/* En el tíquet todo va más apretado, también las cifras (que la casa pinta a 13px). */
+.ride-t80 .cifra { font-size: 10px; }
+
+.ride-t80 .ride-lineas tbody tr {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1px 6px;
+  padding: 5px 0;
+  border-bottom: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-lineas tbody tr:last-child { border-bottom: 0; }
+.ride-t80 .ride-lineas td { display: block; width: auto; padding: 0; border: 0; }
+
+.ride-t80 .ride-lineas td.ride-col-codigo,
+.ride-t80 .ride-lineas td.ride-col-auxiliar { display: none; }
+/* La descripción manda: va arriba y a lo ancho, y las cifras debajo. */
+.ride-t80 .ride-lineas td:nth-child(4) { order: 1; flex: 1 1 100%; font-size: 11px; font-weight: 600; }
+.ride-t80 .ride-lineas td.ride-col-cantidad,
+.ride-t80 .ride-lineas td.ride-col-precio,
+.ride-t80 .ride-lineas td.ride-col-descuento {
+  flex: 0 0 auto;
+  order: 2;
+  text-align: left;
+  color: var(--tinta-3);
+}
+.ride-t80 .ride-lineas td.ride-col-cantidad:before { content: "Cant. "; }
+.ride-t80 .ride-lineas td.ride-col-precio:before { content: "P.U. "; }
+.ride-t80 .ride-lineas td.ride-col-descuento:before { content: "Desc. "; }
+.ride-t80 .ride-lineas td.ride-col-importe {
+  flex: 1 1 auto;
+  order: 3;
+  text-align: right;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+/* Los totales, etiqueta a la izquierda y cifra a la derecha. */
+.ride-t80 .ride-totales-caja {
+  display: block;
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-totales { width: 100%; min-width: 0; border: 0; }
+.ride-t80 .ride-totales th,
+.ride-t80 .ride-totales td { padding: 2px 0; border: 0; }
+.ride-t80 .ride-totales th { text-align: left; font-size: 10px; }
+.ride-t80 .ride-totales td { width: 42%; font-size: 10px; }
+.ride-t80 .ride-totales .ride-total th,
+.ride-t80 .ride-totales .ride-total td {
+  padding-top: 5px;
+  border-top: 1px solid var(--tinta);
+  background: transparent;
+  font-size: var(--texto-s);
+}
+
+.ride-t80 .ride-info {
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px dashed var(--linea-2);
+}
+.ride-t80 .ride-info-titulo { font-size: 9px; }
+.ride-t80 .ride-info-tabla,
+.ride-t80 .ride-info-tabla tbody,
+.ride-t80 .ride-info-tabla tr,
+.ride-t80 .ride-info-tabla th,
+.ride-t80 .ride-info-tabla td { display: block; width: auto; }
+.ride-t80 .ride-info-tabla { border: 0; }
+.ride-t80 .ride-info-tabla tr { margin-bottom: 4px; }
+.ride-t80 .ride-info-tabla th,
+.ride-t80 .ride-info-tabla td { padding: 0; border: 0; background: transparent; }
+.ride-t80 .ride-info-tabla th { font-size: 9px; }
+.ride-t80 .ride-info-tabla td { font-size: 10px; }
+
+.ride-t80 .ride-pie {
+  margin-top: var(--e3);
+  padding-top: var(--e3);
+  border-top: 1px dashed var(--linea-2);
+  font-size: 9px;
+}
+
+.ride-t80 .detalle-adicional { font-size: 9px; }
+
+/* --- Las tablas de las listas -------------------------------------------------
+ *
+ * Todas las listas se ven igual: una tarjeta con la barra de arriba (el buscador y
+ * cuántas filas por página), la tabla con su encabezado —donde se ordena pulsando
+ * en el título— y el pie con el «mostrando de X a Y de Z» y los botones de página.
+ * El buscador y las páginas las resuelve el servidor: la barra de direcciones manda.
+ */
+
+.tabla-caja {
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  overflow: hidden;
+}
+
+.tabla-barra {
+  display: flex;
+  /* Metro pone los formularios en columna (`form { flex-flow: column }`); la barra
+   * de una tabla es una fila, y si no se dice, el buscador se estira a lo alto. */
+  flex-flow: row wrap;
+  align-items: center;
+  gap: var(--e2) var(--e3);
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--linea);
+  background: var(--hoja-2);
+}
+
+/* La casa pone los formularios en columna (`.hoja form`), que es lo que quieren los
+ * formularios de verdad; la barra de una tabla no: es una fila de controles. Va con
+ * dos clases para ganarle a aquella regla, sin recurrir a !important. */
+.hoja .tabla-barra {
+  flex-flow: row wrap;
+  margin-bottom: 0;
+}
+
+.tabla-buscar {
+  display: flex;
+  flex: 1 1 16rem;
+  max-width: 26rem;
+  align-items: center;
+  gap: var(--e2);
+  padding: 0 var(--e3);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+}
+
+.tabla-buscar:focus-within { border-color: var(--marca); box-shadow: var(--anillo); }
+.tabla-buscar .mif-search { flex: 0 0 auto; color: var(--tinta-4); font-size: var(--texto-l); }
+
+.tabla-buscar input {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 8px 0;
+  border: 0;
+  background: transparent;
+  font-size: var(--texto-m);
+  color: var(--tinta);
+}
+
+.tabla-buscar input:focus { outline: 0; }
+
+.tabla-tamano {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin-left: auto;
+  font-size: var(--texto-s);
+  color: var(--tinta-3);
+}
+
+.tabla-tamano select {
+  padding: 6px var(--e2);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  font-size: var(--texto-s);
+  color: var(--tinta);
+}
+
+/* En una pantalla estrecha la tabla se arrastra de lado antes que apretarse. */
+.tabla-envoltura { overflow-x: auto; }
+
+.datos { width: 100%; border-collapse: collapse; font-size: var(--texto-m); }
+
+.datos thead th {
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--linea-2);
+  background: var(--hoja-2);
+  text-align: left;
+  white-space: nowrap;
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-3);
+}
+
+.datos thead th a {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+  color: inherit;
+  text-decoration: none;
+}
+
+.datos thead th a:hover { color: var(--marca); }
+.datos thead th.orden-asc a, .datos thead th.orden-desc a { color: var(--tinta); }
+.orden-flecha { font-size: var(--texto-l); color: var(--marca); }
+
+.datos tbody td {
+  padding: var(--e3) var(--e4);
+  border-bottom: 1px solid var(--linea);
+  vertical-align: middle;
+  color: var(--tinta-2);
+}
+
+.datos tbody tr:last-child td { border-bottom: 0; }
+.datos tbody tr:hover { background: var(--hoja-2); }
+.datos tbody tr:hover .listado-titulo { color: var(--marca-osc); }
+
+.datos th.col-num, .datos td.col-num { text-align: right; }
+.datos th.col-acciones, .datos td.col-acciones { text-align: right; white-space: nowrap; }
+.datos td.col-acciones { display: table-cell; }
+.datos td.col-acciones > a, .datos td.col-acciones > form { vertical-align: middle; }
+.datos td.col-acciones form { display: inline-block; margin: 0 0 0 var(--e1); }
+.datos td.col-acciones > a + form { margin-left: var(--e1); }
+
+.datos .tabla-vacio {
+  padding: var(--e6) var(--e4);
+  text-align: center;
+  color: var(--tinta-3);
+}
+
+.tabla-pie {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2) var(--e3);
+  padding: var(--e3) var(--e4);
+  border-top: 1px solid var(--linea);
+  background: var(--hoja-2);
+}
+
+.tabla-cuenta { margin: 0; font-size: var(--texto-s); color: var(--tinta-3); }
+.tabla-cuenta strong { color: var(--tinta); font-weight: 600; }
+
+.paginacion { display: flex; align-items: center; gap: var(--e1); }
+
+.pagina-boton {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--e1);
+  min-width: 30px;
+  justify-content: center;
+  padding: 5px var(--e2);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  color: var(--tinta-2);
+  text-decoration: none;
+}
+
+.pagina-boton:hover { border-color: var(--marca); color: var(--marca); }
+.pagina-boton.activa { border-color: var(--marca); background: var(--marca); color: #fff; }
+.pagina-boton.apagada { opacity: .45; pointer-events: none; }
+.pagina-puntos { padding: 0 var(--e1); color: var(--tinta-4); }
+
+/* --- Seguridad: roles, permisos y quién los lleva ----------------------------
+ *
+ * La pantalla del rol es una matriz: cada opción de la aplicación con su
+ * desplegable de nivel (sin acceso, solo lectura, lectura y escritura). En el móvil
+ * el nombre va arriba y el desplegable debajo, para que el nombre de la opción no se
+ * corte y el desplegable siga siendo cómodo de tocar.
+ */
+
+.matriz { margin-top: var(--e4); padding-top: var(--e3); border-top: 1px solid var(--linea); }
+.matriz:first-of-type { margin-top: var(--e2); }
+
+.matriz-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0 0 var(--e2);
+  font-size: var(--texto-s);
+  font-weight: 700;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.matriz-cuenta {
+  padding: 1px 7px;
+  border: 1px solid var(--linea-2);
+  border-radius: 999px;
+  background: var(--fondo);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  color: var(--tinta-3);
+}
+
+.matriz-fila {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e2) 0;
+  border-bottom: 1px solid var(--linea);
+  cursor: pointer;
+}
+
+.matriz-fila:last-child { border-bottom: 0; }
+.matriz-fila:hover { background: var(--hoja-2); }
+.matriz-opcion { font-size: var(--texto-m); color: var(--tinta); }
+.matriz-fila select {
+  flex: 0 0 13rem;
+  max-width: 55%;
+  padding: 7px var(--e3);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  font-size: var(--texto-m);
+  color: var(--tinta);
+}
+
+.matriz-fila select:focus {
+  border-color: var(--marca);
+  outline: 0;
+  box-shadow: 0 0 0 3px rgba(21, 112, 239, .12);
+}
+
+.marcar-todo { margin-top: var(--e4); padding-top: var(--e3); border-top: 1px solid var(--linea); }
+.marcar-todo .etiqueta { display: block; margin-bottom: var(--e2); }
+
+/* Los roles que lleva una persona: una casilla por rol, con lo que da cada uno. */
+.roles { display: flex; flex-direction: column; gap: var(--e2); }
+
+.rol-opcion {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--e3);
+  padding: var(--e3);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  cursor: pointer;
+}
+
+.rol-opcion:hover { border-color: var(--marca); background: var(--marca-tinte); }
+.rol-opcion:has(input:checked) { border-color: var(--marca); background: var(--marca-tinte); }
+.rol-opcion input { margin: 2px 0 0; flex: 0 0 auto; }
+.rol-datos { display: flex; flex-direction: column; gap: 3px; min-width: 0; }
+
+.rol-nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  font-size: var(--texto-m);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+.rol-meta { font-size: var(--texto-s); color: var(--tinta-3); }
+
+/* Lo que puede hoy: la lista de opciones con lo que le dan sus roles. */
+.capacidades { margin-top: var(--e4); }
+
+.capacidades-lista {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr));
+  gap: 0 var(--e5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.capacidad {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  padding: var(--e2) 0;
+  border-bottom: 1px dotted var(--linea-2);
+}
+
+.capacidad-nombre { font-size: var(--texto-s); color: var(--tinta-2); }
+
+/* El selector de varios usuarios (quién lleva un rol) no es una caja de una línea. */
+.campo-caja select[multiple] { min-height: 8.5rem; padding: var(--e2); }
+
+@media (max-width: 640px) {
+  .matriz-fila { flex-direction: column; align-items: stretch; gap: var(--e2); }
+  .matriz-fila select { flex: 1 1 auto; max-width: none; width: 100%; }
+}
+
+/* --- en el papel -------------------------------------------------------------
+ *
+ * Se va el marco de la aplicación (lo quita la regla de impresión de arriba) y el
+ * documento queda solo: sin bordes, sin sombras y en negro, para que salga igual en
+ * una impresora láser y en una térmica.
+ */
+
+@media print {
+  .ride { max-width: none; border: 0; border-radius: 0; box-shadow: none; color: #000; }
+  .ride-a4 { padding: 0; }
+  .ride-t80 { width: auto; padding: 0; }
+  .ride-cabecera { border-bottom-color: #000; }
+  .ride-linea, .ride-receptor, .ride-notas, .ride-fiscales .ride-valor { color: #000; }
+  .ride-lineas thead th,
+  .ride-receptor th,
+  .ride-info-tabla th,
+  .ride-totales .ride-total th,
+  .ride-totales .ride-total td { background: transparent; color: #000; }
+  .ride-lineas th, .ride-lineas td,
+  .ride-receptor th, .ride-receptor td,
+  .ride-info-tabla th, .ride-info-tabla td { border-color: #000; }
+  .ride-totales { border-color: #000; }
+  .ride-totales .ride-total th, .ride-totales .ride-total td { border-top-color: #000; }
+  .ride-pie-aviso { color: #000; }
+  .ride-t80 .ride-cabecera { border-bottom-color: #000; }
+  .ride-t80 .ride-receptor,
+  .ride-t80 .ride-notas { border-top-color: #999; }
+  .ride-t80 .ride-lineas tbody tr { border-bottom-color: #999; }
+}
+
+/* --------------------------------------------------------------- contabilidad */
+/* Las opciones largas del menú ocupan dos líneas en vez de quedar cortadas a
+ * media palabra. El lateral tiene 248 px y «Balance de comprobación» no cabía. */
+.sidenav .menu-submenu > li > a { align-items: flex-start; }
+.sidenav .menu-submenu .caption {
+  white-space: normal;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+.sidenav .menu-submenu .icon { top: 8px; }
+
+/* En los libros contables los conceptos y las cuentas pueden ser largos: se
+ * permite que ocupen dos líneas y se lean completos, sin puntos suspensivos. */
+.libro .col-concepto,
+.libro .col-cuenta,
+.libro .col-descripcion,
+.libro .col-tercero,
+.libro .col-documento {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* Los diálogos de confirmación muestran el texto completo, sin recortarlo, y
+ * nunca se salen de la pantalla en un teléfono. */
+.dialogo-confirmar { max-width: min(92vw, 34rem); }
+.dialogo-confirmar .dialog-title,
+.dialogo-confirmar .dialog-content,
+.dialogo-confirmar .dialog-actions {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+.dialogo-confirmar .dialog-content { line-height: 1.5; }
+
+/* ------------------------------------------------- líneas del asiento contable */
+/* La tabla enseña los datos ya puestos. Los campos del formset van ocultos y la
+ * línea se escribe en la ventana; así no queda una fila de controles minúsculos
+ * cortando los nombres de las cuentas. */
+.libro-asiento { width: 100%; table-layout: auto; min-width: 720px; }
+.libro-asiento th { background: transparent; border-bottom: 1px solid var(--linea); }
+.libro-asiento td {
+  padding: .6rem .5rem;
+  border-bottom: 1px solid var(--linea);
+  vertical-align: middle;
+}
+.libro-asiento .col-cuenta { min-width: 13rem; }
+.libro-asiento .col-descripcion { min-width: 10rem; }
+.libro-asiento .col-tercero { min-width: 9rem; }
+.libro-asiento .col-documento { min-width: 7rem; }
+.libro-asiento .col-debe,
+.libro-asiento .col-haber {
+  width: 7.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.libro-asiento .col-acciones {
+  width: 5.5rem;
+  text-align: right;
+  white-space: nowrap;
+}
+.libro-asiento .linea-dato { display: block; overflow-wrap: anywhere; }
+.libro-asiento .col-debe .cifra,
+.libro-asiento .col-haber .cifra { text-align: right; }
+.libro-asiento .col-acciones .button { margin-right: .15rem; }
+.libro-asiento .linea-error td { border-bottom: 1px solid var(--linea); padding-top: 0; }
+.libro-asiento .linea-error .error { display: block; }
+
+/* La ventana donde se escribe una línea: ancha y con los campos completos. */
+.dialogo-linea { width: min(94vw, 44rem); max-width: min(94vw, 44rem); }
+.dialogo-linea .dialog-content { max-height: min(78vh, 42rem); overflow-y: auto; }
+.linea-modal .campo-caja { margin-bottom: .8rem; }
+.linea-modal .row { row-gap: .1rem; }
+.linea-modal .ayuda { margin-top: .2rem; }
+.linea-modal .aviso { margin-top: .6rem; }
+
+/* ------------------------------- consulta del RUC en clientes y facturación */
+[data-aviso-ruc] {
+  min-height: 1.15rem;
+  margin: .35rem 0 .45rem;
+  line-height: 1.35;
+}
+[data-aviso-ruc].aviso-ruc-ok { color: var(--verde); }
+[data-aviso-ruc].aviso-ruc-error { color: var(--rojo); }
+[data-aviso-ruc].aviso-ruc-info { color: var(--tinta-3); }
+.campo-caja [data-boton-consultar-ruc] { align-self: flex-start; margin-top: .35rem; }
+
+/* ----------------------------- formularios de los paneles laterales (caja) */
+/* El aire entre campos va aquí y no dentro de cada control: los campos quedan
+ * alineados, con una separación pareja y sin agrandar las cajas. */
+.resumen .campo-caja + .campo-caja { margin-top: var(--e3); }
+.resumen .campo-caja .ayuda { margin-top: 4px; }
+.resumen .acciones-fila { margin-top: var(--e4); }
+.resumen .bloque-titulo { margin-bottom: var(--e3); }
+
+/* El hueco de «no hay movimientos» no necesita ocupar media pantalla. */
+.caja-vacio { padding: var(--e5) var(--e4); }
+
+/* Alta rápida de cliente: la ventana y el botón que la abre. */
+.alta-cliente { margin-top: var(--e3); }
+.dialogo-cliente { width: min(94vw, 44rem); max-width: min(94vw, 44rem); }
+.dialogo-cliente .dialog-content { max-height: min(82vh, 42rem); overflow-y: auto; }
+.dialogo-cliente .row { row-gap: var(--e3); }
+.dialogo-cliente .acciones-fila { align-items: flex-start; margin-top: var(--e2); }
+.dialogo-cliente .campo-caja .ayuda { margin-top: .3rem; }
+
+/* ------------------------------------------------------------ orden del menú */
+.orden-menu { display: grid; gap: var(--e4); }
+.orden-grupo { padding: var(--e4) var(--e5); }
+.orden-grupo.arrastrando { opacity: .5; border-style: dashed; }
+.orden-grupo-cabecera {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  margin-bottom: var(--e3);
+  cursor: grab;
+  user-select: none;
+}
+.orden-grupo-cabecera:active { cursor: grabbing; }
+.orden-grupo-cabecera .bloque-titulo { margin: 0; flex: 1; }
+.orden-grupo-cabecera .tenue { font-size: var(--texto-s); }
+.orden-agarre {
+  border: 0;
+  background: transparent;
+  color: var(--tinta-4);
+  cursor: grab;
+  padding: .35rem;
+  border-radius: var(--radio-s);
+  line-height: 1;
+}
+.orden-agarre:hover { background: var(--fondo); color: var(--tinta-2); }
+.orden-agarre:active { cursor: grabbing; }
+.orden-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); }
+.orden-item {
+  display: flex;
+  align-items: center;
+  gap: var(--e3);
+  padding: var(--e2) var(--e3);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  cursor: grab;
+}
+.orden-item:hover { border-color: var(--marca); }
+.orden-item.arrastrando { opacity: .45; border-style: dashed; }
+.orden-item .orden-agarre { margin-left: -.35rem; }
+.orden-icono {
+  display: flex;
+  width: 2rem;
+  height: 2rem;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  background: var(--fondo);
+  border-radius: var(--radio-s);
+  color: var(--tinta-2);
+}
+.orden-texto { display: flex; flex-direction: column; min-width: 0; gap: 2px; }
+.orden-texto strong { font-weight: 600; color: var(--tinta); }
+.orden-texto small { color: var(--tinta-3); overflow-wrap: anywhere; }
+
+/* Metro deja las `section` al ancho de su texto; aquí cada apartado ocupa toda
+ * la columna y el aire lo pone la rejilla, no un margen doble. */
+.orden-menu { gap: var(--e3); }
+.orden-menu > .orden-grupo {
+  display: block;
+  width: 100%;
+  margin: 0;
+}
+.orden-agarre .mif-menu { font-size: 1rem; }
+
+/* ----------------------------------- el orden guardado del menú (flex + order) */
+
+/* El orden de los apartados y de sus opciones se guarda en `Opcion.orden`.
+ * Para aplicarlo sin reescribir el menú, cada elemento lleva un `order`; hace
+ * falta que su lista sea flex: así una opción puede subir o bajar dentro de su
+ * apartado y un apartado entero puede cambiar de sitio. */
+.sidenav[data-menu-ordenable],
+.sidenav [data-menu-ordenable] {
+  display: flex;
+  flex-direction: column;
+}
+
+.sidenav[data-menu-ordenable] > li,
+.sidenav [data-menu-ordenable] > li {
+  flex: 0 0 auto;
+}
+
+/* ---------------------------------------------------------- reportes */
+
+/* El índice de reportes: una tarjeta por reporte, con lo que trae y sus tres
+ * salidas. Las tarjetas se estiran a lo alto de su fila para que la rejilla
+ * quede pareja aunque un texto sea más largo que otro. */
+.migas { margin: 0 0 var(--e1); font-size: var(--texto-base); color: var(--tinta-3); }
+.migas a { color: var(--tinta-3); }
+
+.reportes-grupo { margin-top: var(--e5); }
+
+.reporte-tarjeta {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  height: 100%;
+  padding: var(--e4);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m, 10px);
+  background: var(--hoja);
+}
+.reporte-tarjeta-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  font-size: var(--texto-titulo);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.reporte-tarjeta-titulo .mif- { color: var(--marca); }
+.reporte-tarjeta-texto { margin: 0; color: var(--tinta-2); }
+.reporte-tarjeta-base {
+  margin: 0;
+  font-size: var(--texto-base);
+  color: var(--tinta-3);
+  border-left: 2px solid var(--linea-2);
+  padding-left: var(--e2);
+}
+.reporte-tarjeta-acciones {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+  margin-top: auto;
+  padding-top: var(--e2);
+}
+.reporte-tarjeta-acciones .button { margin: 0; }
+
+/* Las cifras del reporte: una caja por número, todas del mismo alto. */
+.reporte-metricas {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--e3);
+  margin: var(--e4) 0;
+}
+.metrica {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--e3) var(--e4);
+  border: 1px solid var(--linea);
+  border-left: 3px solid var(--marca);
+  border-radius: var(--radio-s);
+  background: var(--marca-tinte);
+}
+.metrica-etiqueta { font-size: var(--texto-base); color: var(--tinta-3); }
+.metrica-valor {
+  font-family: var(--mono);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--texto-titulo);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
+/* La serie de barras: alto fijo, barras que crecen desde abajo y su etiqueta.
+ * Es CSS puro para que se imprima igual que se ve. */
+.serie {
+  display: flex;
+  align-items: flex-end;
+  gap: 3px;
+  height: 160px;
+  padding: var(--e3) var(--e2) 0;
+  border-bottom: 1px solid var(--linea-2);
+  overflow-x: auto;
+}
+.serie-item {
+  display: flex;
+  flex: 1 0 22px;
+  flex-direction: column;
+  justify-content: flex-end;
+  align-items: center;
+  height: 100%;
+  gap: 2px;
+}
+.serie-barra {
+  width: 100%;
+  min-height: 2px;
+  border-radius: 3px 3px 0 0;
+  background: var(--marca);
+}
+.serie-item:hover .serie-barra { background: var(--marca-osc); }
+.serie-etiqueta {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--tinta-3);
+  white-space: nowrap;
+}
+
+/* La tabla del reporte: cabecera fija y cifras a la derecha. */
+/* Los números no se parten; el texto sí, para que la tabla entre sin scroll. */
+.reporte-tabla th { white-space: nowrap; }
+.reporte-tabla td.col-derecha, .reporte-tabla td.col-centro { white-space: nowrap; }
+.reporte-tabla th.col-derecha, .reporte-tabla td.col-derecha { text-align: right; }
+.reporte-tabla th.col-centro, .reporte-tabla td.col-centro { text-align: center; }
+.reporte-tabla tfoot .totales td { font-weight: 600; border-top: 2px solid var(--marca); }
+
+.reporte-notas { margin-top: var(--e4); }
+.lista-ayuda { margin: 0; padding-left: var(--e4); color: var(--tinta-2); }
+.lista-ayuda li { margin-bottom: var(--e2); }
+
+/* ------------------------------------------------------------ manual */
+
+.manual-indice {
+  margin: var(--e4) 0;
+  padding: var(--e4);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m, 10px);
+  background: var(--hoja-2);
+}
+.manual-indice-titulo {
+  margin: 0 0 var(--e2);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.manual-indice ol { margin: 0; padding-left: var(--e5); columns: 2; column-gap: var(--e6); }
+.manual-indice li { margin-bottom: var(--e1); break-inside: avoid; }
+
+.manual-seccion { margin-top: var(--e6); scroll-margin-top: var(--e5); }
+.manual-numero {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  margin-right: var(--e2);
+  border-radius: 50%;
+  background: var(--marca);
+  color: #fff;
+  font-size: var(--texto-base);
+  font-weight: 600;
+}
+.manual-resumen { color: var(--tinta-2); max-width: 80ch; }
+.manual-figura { margin: var(--e4) 0; }
+.manual-captura {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  box-shadow: 0 2px 8px rgba(16, 24, 40, .08);
+  background: var(--hoja);
+}
+.manual-pasos { margin: var(--e3) 0; padding-left: var(--e5); color: var(--tinta-2); }
+.manual-pasos li { margin-bottom: var(--e2); }
+.manual-volver { margin: 0; font-size: var(--texto-base); }
+
+/* Al imprimir el manual, las capturas no se cortan y el índice no estorba. */
+@media print {
+  .manual-indice, .manual-volver, .manual-seccion .button, .barra, .rail, .pie { display: none !important; }
+  .manual-captura { break-inside: avoid; box-shadow: none; }
+  .manual-seccion { break-inside: avoid-page; }
+}
+
+@media (max-width: 720px) {
+  .manual-indice ol { columns: 1; }
+}
+
+/* -------------------------------------------------------------- la caja */
+
+/* Los formularios del turno viven en ventanas: en el lateral solo quedan los
+ * botones que las abren. El panel se centra, tiene aire entre controles y no deja
+ * que nada se monte: cada campo va en su fila con su etiqueta encima. */
+.bloque-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  flex-wrap: wrap;
+  margin-bottom: var(--e3);
+}
+.bloque-cabecera .bloque-titulo { margin: 0; }
+
+.acciones-apiladas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e3);
+  margin-top: var(--e3);
+}
+.acciones-apiladas .button { width: 100%; margin: 0; }
+
+.modal-caja {
+  position: fixed;
+  inset: 0;
+  z-index: 9000;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: var(--e5) var(--e3);
+  overflow-y: auto;
+  background: rgba(16, 24, 40, .45);
+  backdrop-filter: blur(1px);
+}
+.modal-caja[hidden] { display: none; }
+
+body.con-modal { overflow: hidden; }
+
+.modal-caja-panel {
+  width: 100%;
+  max-width: 560px;
+  margin: auto;
+  background: var(--hoja);
+  border: 1px solid var(--linea-2);
+  border-radius: 12px;
+  box-shadow: 0 18px 48px rgba(16, 24, 40, .22);
+  overflow: hidden;
+}
+.modal-caja-panel.modal-caja-ancha { max-width: 680px; }
+
+.modal-caja-cabecera {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e3);
+  padding: var(--e4) var(--e5);
+  border-bottom: 1px solid var(--linea);
+  background: var(--hoja-2);
+}
+.modal-caja-titulo {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  font-size: var(--texto-titulo);
+  font-weight: 600;
+  color: var(--tinta);
+}
+.modal-caja-titulo .mif- { color: var(--marca); }
+.modal-caja-cerrar {
+  border: 0;
+  background: transparent;
+  color: var(--tinta-3);
+  font-size: 18px;
+  line-height: 1;
+  padding: 6px 8px;
+  border-radius: var(--radio-s);
+  cursor: pointer;
+}
+.modal-caja-cerrar:hover { background: var(--linea); color: var(--tinta); }
+
+.modal-caja-formulario { display: flex; flex-direction: column; }
+
+.modal-caja-cuerpo {
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  gap: var(--e4);
+  padding: var(--e5);
+  max-height: calc(100vh - 220px);
+  overflow-y: auto;
+}
+.modal-caja-cuerpo > .ayuda { margin: 0; }
+.modal-caja-cuerpo .campo-caja { margin: 0; }
+.modal-caja-cuerpo .campo-caja .etiqueta { display: block; margin-bottom: var(--e2); }
+
+.modal-caja-pie {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--e3);
+  padding: var(--e4) var(--e5);
+  border-top: 1px solid var(--linea);
+  background: var(--hoja-2);
+}
+.modal-caja-pie .button { margin: 0; }
+
+/* La tabla del desglose: una fila por denominación, con aire para escribir la
+ * cantidad sin que el número toque el borde. */
+.desglose { width: 100%; }
+.desglose th, .desglose td { padding: 6px 8px; vertical-align: middle; }
+.desglose td.col-dato { width: 120px; text-align: right; }
+.desglose .desglose-cantidad { width: 84px; text-align: right; }
+.desglose-moneda td:first-child { color: var(--tinta-2); }
+.desglose tfoot .totales th, .desglose tfoot .totales td {
+  border-top: 2px solid var(--marca);
+  font-weight: 600;
+}
+
+@media (max-width: 560px) {
+  .modal-caja { padding: 0; }
+  .modal-caja-panel { max-width: none; border-radius: 0; min-height: 100%; }
+  .modal-caja-cuerpo { max-height: none; }
+}

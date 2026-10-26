@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Usuarios y sus roles{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Usuarios y sus roles</h1>
+    <p class="subtitulo">
+      {{ cuantos }} usuarios · a {{ sin_rol }} no se les ha dado ningún rol ·
+      <a class="enlace" href="{% url 'seguridad:roles' %}">ver los roles</a>
+    </p>
+  </div>
+  {% puede_escribir "usuarios" as puede_usuarios %}{% if puede_usuarios %}
+    <a class="button primary" href="{% url 'seguridad:usuario_nuevo' %}"><span class="mif-plus"></span> Nuevo usuario</a>
+  {% endif %}
+</div>
+
+<div class="tabla-caja">
+  {% include "fragmentos/tabla-barra.html" with buscador="Usuario, nombre o correo" %}
+
+  <div class="tabla-envoltura">
+    <table class="datos" id="tabla-usuarios">
+      {% include "fragmentos/tabla-cabecera.html" %}
+      <tbody>
+        {% for u in tabla.filas %}
+          <tr>
+            <td>
+              <span class="listado-titulo">{{ u.get_full_name|default:u.username }}</span>
+              <span class="listado-meta cifra">
+                {{ u.username }}{% if not u.is_active %} · dado de baja{% endif %}
+                {% if u.is_superuser %} · superusuario{% endif %}
+              </span>
+              <span class="listado-chips">
+                {% for r in u.roles.all %}
+                  <span class="chip {% if r.activo %}primary{% else %}dark{% endif %}">
+                    <span class="icon mif-security"></span>
+                    <span class="label">{{ r.nombre }}{% if not r.activo %} (apagado){% endif %}</span>
+                  </span>
+                {% empty %}
+                  <span class="chip warning"><span class="icon mif-warning"></span><span class="label">Sin rol</span></span>
+                {% endfor %}
+              </span>
+            </td>
+            <td class="cifra">{{ u.email|default:"—" }}</td>
+            <td class="col-num cifra">{{ u.cuantos_roles }}</td>
+            <td class="cifra">{{ u.last_login|date:"d/m/Y H:i"|default:"—" }}</td>
+            <td class="col-acciones">
+              <a class="button small square outline primary" href="{% url 'seguridad:usuario' u.pk %}"
+                 title="Roles de {{ u.username }}" aria-label="Cambiar los roles"><span class="mif-pencil"></span></a>
+              <a class="button small square outline dark" href="{% url 'seguridad:usuario_datos' u.pk %}"
+                 title="Datos y clave de {{ u.username }}" aria-label="Datos y clave"><span class="mif-key"></span></a>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="tabla-vacio" colspan="{{ tabla.columnas|length }}">
+              {% if tabla.hay_filtros %}
+                Ningún usuario coincide con «{{ tabla.q }}».
+                <a class="enlace" href="{{ tabla.enlace_limpio }}">Ver todos</a>
+              {% else %}
+                Todavía no hay usuarios.
+                <a class="enlace" href="{% url 'seguridad:usuario_nuevo' %}">Crear el primero</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "fragmentos/tabla-pie.html" %}
+</div>
+
+<p class="ayuda">
+  Los superusuarios de Django pueden todo aunque no tengan ningún rol. Las cuentas se
+  crean y se les cambia la clave en el admin (usuarios y contraseñas); aquí solo se
+  reparten los roles.
+</p>
+
+{% endblock %}

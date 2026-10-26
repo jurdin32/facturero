@@ -1,0 +1,48 @@
+<section class="bloque">
+  <h2 class="bloque-titulo">Qué puede hacer</h2>
+  <p class="subtitulo">
+    Marque, opción por opción, qué puede este rol. <strong>Leer</strong> es entrar a
+    mirar; <strong>escribir</strong> es además guardar, anular y emitir (y ya incluye
+    leer). Lo que no marque, no se puede.
+  </p>
+
+  <div class="tabla-envoltura">
+    <table class="datos datos-permisos">
+      <thead>
+        <tr>
+          <th>Opción de la aplicación</th>
+          <th class="col-casilla">Leer</th>
+          <th class="col-casilla">Escribir</th>
+          <th class="col-estado">Queda</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grupo, opciones in grupos %}
+          <tr class="fila-grupo">
+            <td colspan="4">
+              <span class="grupo-nombre">{{ grupo }}</span>
+              <span class="grupo-acciones">
+                <button type="button" class="button small outline primary" data-grupo="{{ forloop.counter0 }}:leer">Todo leer</button>
+                <button type="button" class="button small outline success" data-grupo="{{ forloop.counter0 }}:escribir">Todo escribir</button>
+                <button type="button" class="button small outline dark" data-grupo="{{ forloop.counter0 }}:nada">Nada</button>
+              </span>
+            </td>
+          </tr>
+          {% for opcion, leer, escribir in opciones %}
+            <tr data-opcion="{{ opcion.clave }}">
+              <td>
+                {{ opcion.nombre }}
+                <span class="listado-meta">{{ grupo }}</span>
+              </td>
+              <td class="col-casilla">{{ leer }}</td>
+              <td class="col-casilla">{{ escribir }}</td>
+              <td class="col-estado">
+                <span class="chip" data-estado><span class="label">Sin acceso</span></span>
+              </td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

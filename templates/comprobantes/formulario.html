@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{{ documento.titulo }}{% endblock %}
+
+{% block contenido %}
+
+<form method="post" novalidate>
+  {% csrf_token %}
+  {% comment %}
+    Los campos ocultos, menos el de la otra parte: ese ya lo pone su barra del buscador.
+    Si se pintara aquí también, irían dos con el mismo nombre y el navegador manda los
+    dos, así que el que llega al final —el vacío— es el que se guarda.
+  {% endcomment %}
+  {% for oculto in formulario.hidden_fields %}{% if not oculto.field.widget.attrs.buscador %}{{ oculto }}{% endif %}{% endfor %}
+
+  <div class="titulo-fila">
+    <h1 class="titulo">
+      {% if objeto.pk %}{{ documento.titulo }}{% else %}{{ documento.nuevo }}{% endif %}
+      {% if objeto.comprobante_id %}
+        <span class="tenue cifra">{{ objeto.comprobante.estab }}-{{ objeto.comprobante.pto_emi }}-{{ objeto.comprobante.secuencial }}</span>
+      {% endif %}
+    </h1>
+    <a class="button outline dark" href="{% url 'comprobantes:lista' documento.clave %}">
+      <span class="mif-arrow-left" aria-hidden="true"></span> Volver a {{ documento.plural|lower }}
+    </a>
+    <div class="titulo-acciones">
+      <button type="submit" name="accion" value="guardar" class="button outline dark">Guardar borrador</button>
+      <button type="submit" name="accion" value="emitir" class="button success"
+              {% if aviso_emisor %}disabled{% endif %}>
+        <span class="mif-send" aria-hidden="true"></span> Emitir al SRI
+      </button>
+    </div>
+  </div>
+
+  {% comment %}
+    Sin totales que enseñar ni aviso del emisor no hay columna lateral: la hoja
+    ocupa todo el ancho en vez de dejar un panel de texto suelto.
+  {% endcomment %}
+  <div class="columnas{% if not totales and not aviso_emisor %} columnas-sola{% endif %}">
+    <div class="columna-principal">
+
+      {% if documento.modificado %}
+        {# Primero, de qué comprobante sale la nota: de ahí vienen el cliente y lo que se devuelve. #}
+        <section class="bloque">
+          <h2 class="bloque-titulo">Comprobante que modifica</h2>
+          <div class="buscador-barra" data-documento data-url="{% url 'comprobantes:buscar_documentos' %}">
+            <input type="text" class="buscador-barra-campo" readonly autocomplete="off"
+                   value="{% if objeto.num_doc_modificado %}{{ objeto.get_cod_doc_modificado_display }} {{ objeto.num_doc_modificado }} · {{ objeto.fecha_emision_doc_sustento|date:'d/m/Y' }}{% endif %}"
+                   placeholder="Busque por mes, por cliente o por número…">
+            <button type="button" class="button primary" data-buscar-doc>
+              <span class="mif-search" aria-hidden="true"></span> Buscar el comprobante
+            </button>
+          </div>
+          <p class="ayuda">
+            Se busca entre los comprobantes autorizados —del mes en curso, o del que se
+            elija— por su número, su clave o el cliente. Al elegirlo se apuntan su cliente,
+            su tipo y su fecha, y lo que se devuelve sale de sus propias líneas.
+          </p>
+        </section>
+      {% endif %}
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Datos de {{ documento.titulo|lower }}</h2>
+        {% if formulario.non_field_errors %}
+          <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+        {% endif %}
+        <div class="row">
+          {% for campo in formulario %}
+            {% if campo.field.widget.attrs.buscador %}
+              {# La otra parte se busca en una ventana: puede haber cientos. #}
+              <div class="cell-12">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}_nombre">{{ campo.label }}</label>
+                  <div class="buscador-barra" data-buscador="{{ campo.field.widget.attrs.buscador }}"
+                       data-llena="{{ campo.name }}"
+                       data-url="{% url 'facturacion:buscar_clientes' %}">
+                    {{ campo }}
+                    <input type="text" id="{{ campo.id_for_label }}_nombre"
+                           class="buscador-barra-campo" readonly autocomplete="off"
+                           value="{{ contraparte.razon_social|default:'' }}"
+                           placeholder="{% if documento.modificado %}Viene del comprobante que modifica{% else %}Busque y elija…{% endif %}">
+                    {% if not documento.modificado %}
+                      <button type="button" class="button primary" data-buscar>
+                        <span class="mif-search" aria-hidden="true"></span> Buscar y elegir
+                      </button>
+                    {% endif %}
+                  </div>
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                  {% if documento.modificado %}
+                    <p class="ayuda">
+                      El cliente es el del comprobante que modifica: sale de él y no se cambia.
+                    </p>
+                  {% endif %}
+                </div>
+              </div>
+            {% elif not campo.is_hidden %}
+              <div class="cell-12 cell-md-6">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+                  {{ campo }}
+                  {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+                  {% if campo.help_text %}<p class="ayuda">{{ campo.help_text }}</p>{% endif %}
+                </div>
+              </div>
+            {% endif %}
+          {% endfor %}
+        </div>
+      </section>
+
+      {% if conjuntos %}
+        <section class="bloque">
+          <p class="ayuda">
+            Un mismo comprobante puede llevar varios. Añada los que necesite y escriba lo
+            suyo en la ventana de cada uno: en la hoja queda cada uno en su fila.
+          </p>
+          {% include "comprobantes/_grupos.html" %}
+        </section>
+      {% endif %}
+
+      {% if formset %}
+        <section class="bloque">
+          <h2 class="bloque-titulo">{{ documento.lineas_titulo }}</h2>
+          {% if formset.non_form_errors %}
+            <p class="aviso aviso-error">{{ formset.non_form_errors.0 }}</p>
+          {% endif %}
+          {% include "comprobantes/_formset.html" with conjunto=formset %}
+        </section>
+      {% endif %}
+
+      {% if formset2 %}
+        <section class="bloque">
+          <h2 class="bloque-titulo">{{ documento.lineas2_titulo }}</h2>
+          {% if formset2.non_form_errors %}
+            <p class="aviso aviso-error">{{ formset2.non_form_errors.0 }}</p>
+          {% endif %}
+          {% include "comprobantes/_formset.html" with conjunto=formset2 %}
+        </section>
+      {% endif %}
+
+      <noscript><p class="aviso aviso-aviso">Esta hoja necesita JavaScript para añadir filas.</p></noscript>
+    </div>
+
+    {% if totales or aviso_emisor %}
+      <aside class="columna-lateral">
+        <div class="resumen pega">
+          <h2 class="bloque-titulo">Resumen</h2>
+
+          {% if totales %}
+            <div class="desliza caja-totales"><table class="totales">
+              <tbody>
+                {% if totales.total_descuento %}
+                  <tr><th>Suma de líneas</th><td class="cifra">{{ totales.total_bruto|floatformat:2 }}</td></tr>
+                  <tr><th>Descuento</th><td class="cifra">−{{ totales.total_descuento|floatformat:2 }}</td></tr>
+                {% endif %}
+                <tr><th>Subtotal</th><td class="cifra">{{ totales.total_sin_impuestos|floatformat:2 }}</td></tr>
+                {% for grupo in iva_por_tarifa %}
+                  <tr><th>IVA {{ grupo.tarifa|floatformat:"-2" }} %</th><td class="cifra">{{ grupo.valor|floatformat:2 }}</td></tr>
+                {% empty %}
+                  <tr><th>IVA</th><td class="cifra">{{ totales.total_impuestos|floatformat:2 }}</td></tr>
+                {% endfor %}
+                <tr class="total-final"><th>Total</th><td class="cifra">{{ totales.importe_total|floatformat:2 }}</td></tr>
+              </tbody>
+            </table></div>
+          {% else %}
+            <p class="ayuda">
+              {{ documento.ayuda }}
+              Los totales —subtotal, IVA por tarifa y total— los calcula el comprobante al
+              guardarlo.
+            </p>
+          {% endif %}
+
+          {% if aviso_emisor %}
+            <p class="aviso aviso-aviso">{{ aviso_emisor }}</p>
+          {% endif %}
+
+          <p class="ayuda">
+            Guardar no envía nada al SRI: queda como borrador y se puede seguir corrigiendo.
+            Emitir lo firma, lo manda y espera la autorización; después ya no se cambia.
+            {% if es_produccion %}<strong>Está en producción: el comprobante tiene validez legal.</strong>{% endif %}
+          </p>
+        </div>
+      </aside>
+    {% endif %}
+  </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/comprobantes.js' %}?v={{ sello_estatico }}"></script>
+{% endblock %}

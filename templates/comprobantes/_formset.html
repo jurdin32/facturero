@@ -1,0 +1,41 @@
+{% comment %}
+Una tabla de filas del comprobante (líneas, motivos, bienes, impuestos del sustento o
+retenciones). Las columnas salen de los campos del propio formulario, así la misma
+tabla sirve para los cinco; el JavaScript la usa para añadir y quitar filas con la
+plantilla que dice data-plantilla, y para llevar la cuenta con data-total.
+{% endcomment %}
+<div class="oculto">{{ conjunto.management_form }}</div>
+<div class="desliza">
+  <table class="table libro libro-lineas" data-formset="{{ conjunto.prefix }}"
+         data-total="id_{{ conjunto.prefix }}-TOTAL_FORMS"
+         data-plantilla="plantilla-{{ conjunto.prefix }}">
+    <thead>
+      <tr>
+        {% for campo in conjunto.empty_form.visible_fields %}{% if campo.name != "DELETE" %}
+          <th class="{{ campo.field.widget.attrs.columna|default:campo.name }}">{{ campo.label }}</th>
+        {% endif %}{% endfor %}
+        <th class="col-acciones">Opción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in conjunto %}{% include "comprobantes/_fila_formset.html" %}{% endfor %}
+    </tbody>
+  </table>
+</div>
+
+{% if not sin_boton %}
+  {# Añadir, con el mismo signo + y en el mismo sitio que en las cabeceras. #}
+  <div class="fila-anadir">
+    <button type="button" class="button small square outline primary"
+            {% if conjunto.empty_form.descripcion %}data-anadir-fila data-url="{% url 'facturacion:buscar_productos' %}" data-productos{% else %}data-anadir{% endif %}
+            data-para="{{ conjunto.prefix }}"
+            title="{% if conjunto.empty_form.descripcion %}Añadir del catálogo{% else %}Añadir fila{% endif %}"
+            aria-label="{% if conjunto.empty_form.descripcion %}Añadir del catálogo{% else %}Añadir fila{% endif %}">
+      <span class="mif-plus" aria-hidden="true"></span>
+    </button>
+  </div>
+{% endif %}
+
+<template id="plantilla-{{ conjunto.prefix }}">
+  {% include "comprobantes/_fila_formset.html" with fila=conjunto.empty_form %}
+</template>

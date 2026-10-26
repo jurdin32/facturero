@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nuevo %}Nuevo producto o servicio{% else %}{{ producto.descripcion }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nuevo %}Nuevo producto o servicio{% else %}{{ producto.descripcion }}{% endif %}</h1>
+    <p class="subtitulo">
+      {% if es_nuevo %}
+        Lo que se elige en la línea de una factura.
+      {% else %}
+        Código <span class="cifra">{{ producto.codigo_principal }}</span> ·
+        <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">ver su inventario</a> ·
+        <a class="enlace" href="{% url 'catalogos:productos' %}">volver al catálogo</a>
+      {% endif %}
+    </p>
+  </div>
+  {% if not es_nuevo and existencia %}
+    <div class="titulo-acciones">
+      <span class="dato-fuerte">
+        En existencia: <span class="mono {% if existencia.bajo_minimo %}stock-bajo{% endif %}">{{ existencia.cantidad|floatformat:"-3" }}</span>
+      </span>
+    </div>
+  {% endif %}
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-producto" class="button success"><span class="mif-checkmark"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'catalogos:productos' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-producto" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">Lo que es</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
+              {{ formulario.tipo }}
+              <p class="ayuda">Un bien lleva inventario; un servicio no se agota.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.codigo_principal.id_for_label }}">{{ formulario.codigo_principal.label }}</label>
+              {{ formulario.codigo_principal }}
+              {% if formulario.codigo_principal.errors %}<p class="error">{{ formulario.codigo_principal.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
+              {{ formulario.descripcion }}
+              {% if formulario.descripcion.errors %}<p class="error">{{ formulario.descripcion.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Es el texto que sale en la factura: escríbalo como quiere que lo lea el cliente.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
+              {{ formulario.unidad_medida }}
+              <p class="ayuda">Si la deja vacía se usa UNIDAD o SERVICIO.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-9">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.datos_adicionales.id_for_label }}">Detalles adicionales</label>
+              {{ formulario.datos_adicionales }}
+              <p class="ayuda">Se copian en cada línea (hasta 3 campos): MARCA=ACME; GARANTIA=12 MESES</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">A cómo se factura</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
+              {{ formulario.precio_unitario }}
+              {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
+              {{ formulario.codigo_porcentaje_iva }}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
+              {{ formulario.codigo_auxiliar }}
+              <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloque" id="bloque-inventario">
+        <h2 class="bloque-titulo">Inventario</h2>
+        <div class="row">
+          {% if es_nuevo %}
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.stock_inicial.id_for_label }}">Con cuánto empieza</label>
+                {{ formulario.stock_inicial }}
+                <p class="ayuda">Queda como el primer movimiento del libro.</p>
+              </div>
+            </div>
+          {% endif %}
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.minimo.id_for_label }}">Mínimo para reponer</label>
+              {{ formulario.minimo }}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
+              {{ formulario.ubicacion }}
+            </div>
+          </div>
+        </div>
+        {% if not es_nuevo %}
+          <p class="ayuda">
+            La existencia no se cambia aquí: se mueve con entradas, salidas y ajustes, para que
+            el libro cuadre. <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">Mover el inventario</a>.
+          </p>
+        {% endif %}
+      </section>
+
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Estado</h2>
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.activo }}
+            <span class="caption-append">Ofrecerlo en las facturas nuevas</span>
+          </label>
+        </div>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

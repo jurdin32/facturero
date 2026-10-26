@@ -1,0 +1,272 @@
+{% extends "base.html" %}
+{% load chips %}
+{% block titulo %}Factura {{ factura.secuencial|default:"sin número" }}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila sin-imprimir">
+  <div>
+    <h1 class="titulo">
+      Factura {% if registro %}<span class="cifra">{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}</span>{% else %}sin emitir{% endif %}
+    </h1>
+    <p class="subtitulo">
+      Del {{ factura.fecha_emision|date:"d/m/Y" }} ·
+      <a class="enlace" href="{% url 'facturacion:facturas' %}">volver a la lista</a>
+      {% if not factura.autorizado %} · <a class="enlace" href="{% url 'facturacion:editar_factura' factura.pk %}">corregir y reintentar</a>{% endif %}
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    {% include "fragmentos/estado.html" with estado=registro.estado|default:"BORRADOR" texto=estado %}
+    <a class="button primary" href="{% url 'facturacion:ride' factura.pk %}"
+       data-imprimir="{% url 'facturacion:ride' factura.pk %}" data-titulo="Imprimir la factura">
+      <span class="mif-printer" aria-hidden="true"></span> Imprimir el RIDE
+    </a>
+    {% if registro and not factura.autorizado %}
+      <form method="post" action="{% url 'facturacion:accion' factura.pk 'reintentar' %}">{% csrf_token %}
+        <button class="button warning" type="submit"><span class="mif-refresh"></span> Reintentar el envío</button>
+      </form>
+      <form method="post" action="{% url 'facturacion:accion' factura.pk 'consultar' %}">{% csrf_token %}
+        <button class="button info outline" type="submit"><span class="mif-info"></span> Preguntar al SRI</button>
+      </form>
+      {% if registro.intentos == 0 %}
+        <form method="post" action="{% url 'facturacion:accion' factura.pk 'fecha' %}"
+              data-confirmar="Se rehace el comprobante con la fecha de hoy y cambia la clave de acceso."
+              data-titulo="Refechar a hoy"
+              data-aceptar="Rehacerlo">
+          {% csrf_token %}
+          <button class="button outline dark" type="submit"><span class="mif-calendar"></span> Refechar a hoy</button>
+        </form>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+
+{% if registro and registro.mensajes %}
+  <section class="bloque sin-imprimir">
+    <h2 class="bloque-titulo">Lo que respondió el SRI</h2>
+    <div class="desliza"><table class="table small libro libro-mensajes">
+      <thead><tr><th class="col-codigo">Código</th><th>Tipo</th><th>Mensaje</th><th>Información adicional</th></tr></thead>
+      <tbody>
+        {% for aviso in registro.mensajes %}
+          <tr>
+            <td class="cifra">{{ aviso.codigo }}</td>
+            <td>{{ aviso.tipo|default:"—" }}</td>
+            <td>{{ aviso.mensaje }}</td>
+            <td class="tenue">{{ aviso.informacion_adicional|default:"—" }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table></div>
+    {% if registro.error %}<p class="error">{{ registro.error }}</p>{% endif %}
+  </section>
+{% endif %}
+
+    <article class="comprobante">
+  <header class="comprobante-cabecera">
+    <div class="comprobante-emisor">
+      <p class="comprobante-nombre">{{ emisor.razon_social|default:"Emisor sin configurar" }}</p>
+      {% if emisor %}
+        <p class="comprobante-dato">RUC <span class="cifra">{{ emisor.ruc }}</span></p>
+        <p class="comprobante-dato">{{ emisor.dir_establecimiento|default:emisor.dir_matriz }}</p>
+      {% endif %}
+      <p class="comprobante-dato tenue">
+        Ambiente {% if es_produccion %}de producción{% else %}de pruebas{% endif %}
+      </p>
+    </div>
+    <div class="comprobante-titulo">
+      <p class="comprobante-tipo">Factura</p>
+      <p class="comprobante-serie cifra">
+        {% if registro %}{{ registro.estab }}-{{ registro.pto_emi }}-{{ registro.secuencial }}{% else %}sin número{% endif %}
+      </p>
+      <p class="comprobante-dato cifra">Emitida el {{ factura.fecha_emision|date:"d/m/Y" }}</p>
+      {% if registro_usuario %}
+        <p class="comprobante-dato">
+          Registrada por {{ registro_usuario.usuario_nombre|default:"un usuario" }}
+          el {{ registro_usuario.actualizado|date:"d/m/Y H:i" }}
+        </p>
+      {% endif %}
+    </div>
+  </header>
+
+  <section class="comprobante-datos">
+    <div>
+      <p class="comprobante-etiqueta">Receptor</p>
+      <p class="comprobante-nombre">{{ factura.receptor.razon_social }}</p>
+      <p class="comprobante-dato cifra">{{ factura.receptor.identificacion }}</p>
+      <p class="comprobante-dato">{{ factura.receptor.direccion }}</p>
+    </div>
+    <div>
+      <p class="comprobante-etiqueta">Forma de pago</p>
+      <p class="comprobante-dato">{{ factura.get_forma_pago_display }}</p>
+      {% if factura.plazo %}
+        <p class="comprobante-dato">Plazo: {{ factura.plazo|floatformat:0 }} {{ factura.unidad_tiempo }}</p>
+      {% endif %}
+      {% if factura.guia_remision %}
+        <p class="comprobante-dato">Guía de remisión: <span class="cifra">{{ factura.guia_remision }}</span></p>
+      {% endif %}
+    </div>
+  </section>
+
+  {% if registro %}
+    <section class="comprobante-clave-caja">
+      <p class="comprobante-etiqueta">Clave de acceso</p>
+      <p class="comprobante-clave cifra">{{ registro.clave_acceso }}</p>
+      {% if factura.autorizado %}
+        <p class="comprobante-etiqueta segundo">Autorización</p>
+        <p class="comprobante-clave cifra">
+          {{ registro.fecha_autorizacion|date:"d/m/Y H:i" }} · {{ registro.numero_autorizacion }}
+        </p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  <div class="desliza comprobante-detalles">
+    <table class="table small libro libro-detalles">
+      <thead>
+        <tr>
+          <th class="col-codigo">Código</th>
+          <th class="col-descripcion">Descripción</th>
+          <th class="col-cantidad">Cant.</th>
+          <th class="col-precio">P. unitario</th>
+          <th class="col-descuento">Desc.</th>
+          <th class="col-importe">Importe</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for linea in detalles %}
+          <tr>
+            <td class="cifra">{{ linea.codigo_principal|default:"—" }}</td>
+            <td class="col-descripcion">
+              <span class="detalle-descripcion">{{ linea.descripcion }}</span>
+              {% if linea.datos_adicionales %}<span class="detalle-adicional">{{ linea.datos_adicionales }}</span>{% endif %}
+            </td>
+            <td class="col-cantidad cifra">{{ linea.cantidad|floatformat:"-6" }}</td>
+            <td class="col-precio cifra">{{ linea.precio_unitario|floatformat:6 }}</td>
+            <td class="col-descuento cifra">{{ linea.descuento|floatformat:2 }}</td>
+            <td class="col-importe cifra">{{ linea.precio_total_sin_impuesto|floatformat:2 }}</td>
+          </tr>
+        {% empty %}
+          <tr><td class="tenue" colspan="6">Esta factura no tiene líneas.</td></tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        {% if totales.total_descuento %}
+          <tr><th colspan="5">Suma de líneas</th><td class="cifra">{{ totales.total_bruto|floatformat:2 }}</td></tr>
+          <tr><th colspan="5">Descuento</th><td class="cifra">−{{ totales.total_descuento|floatformat:2 }}</td></tr>
+        {% endif %}
+        <tr><th colspan="5">Subtotal</th><td class="cifra">{{ totales.total_sin_impuestos|floatformat:2 }}</td></tr>
+        {% for grupo in iva_por_tarifa %}
+          <tr><th colspan="5">IVA {{ grupo.tarifa|floatformat:"-2" }} %</th><td class="cifra">{{ grupo.valor|floatformat:2 }}</td></tr>
+        {% empty %}
+          <tr><th colspan="5">IVA</th><td class="cifra">{{ totales.total_impuestos|floatformat:2 }}</td></tr>
+        {% endfor %}
+        <tr class="total-final"><th colspan="5">Total</th><td class="cifra">{{ totales.importe_total|floatformat:2 }}</td></tr>
+      </tfoot>
+    </table>
+  </div>
+
+  {% if factura.observaciones or factura.informacion_adicional %}
+    <section class="comprobante-notas">
+      {% if factura.observaciones %}
+        <p class="comprobante-etiqueta">Observaciones</p>
+        <p>{{ factura.observaciones|linebreaksbr }}</p>
+      {% endif %}
+      {% if factura.informacion_adicional %}
+        <p class="comprobante-etiqueta">Información adicional</p>
+        <p>{{ factura.informacion_adicional|linebreaksbr }}</p>
+      {% endif %}
+    </section>
+  {% endif %}
+
+  {% if clave_por_partes %}
+    {# Al pie del documento: el desglose para leer la clave sin contar dígitos a ojo. No va al papel. #}
+    <section class="comprobante-clave-partes sin-imprimir">
+      <details class="desplegable">
+        <summary class="desplegable-titulo">Cómo se lee la clave de acceso</summary>
+        <table class="table small libro libro-partes">
+          <tbody>
+            {% for nombre, trozo in clave_por_partes %}
+              <tr><th>{{ nombre }}</th><td class="cifra">{{ trozo }}</td></tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </details>
+    </section>
+  {% endif %}
+
+    </article>
+  </div><!-- /columna-principal -->
+
+  <aside class="columna-lateral sin-imprimir">
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">Documentos</h2>
+      {% if documentos %}
+        <ul class="documentos">
+          {% for documento in documentos %}
+            <li class="documento{% if documento.principal %} documento-fuerte{% endif %}">
+              <span class="documento-icono mif-{{ documento.icono }}" aria-hidden="true"></span>
+              <div class="documento-cuerpo">
+                <span class="documento-nombre">{{ documento.titulo }}</span>
+                <span class="documento-datos cifra">{{ documento.archivo }} · {{ documento.tamano }}</span>
+                <span class="documento-ayuda">{{ documento.ayuda }}</span>
+              </div>
+              <div class="documento-botones">
+                <a class="documento-boton" target="_blank" rel="noopener"
+                   title="Ver «{{ documento.titulo }}»"
+                   href="{% url 'facturacion:xml_cual' factura.pk documento.clave %}">
+                  <span class="mif-eye" aria-hidden="true"></span><span class="oculto-visual">Ver</span>
+                </a>
+                <a class="documento-boton" title="Descargar «{{ documento.titulo }}»"
+                   href="{% url 'facturacion:xml_cual' factura.pk documento.clave %}?descargar=1">
+                  <span class="mif-download" aria-hidden="true"></span><span class="oculto-visual">Descargar</span>
+                </a>
+              </div>
+            </li>
+          {% endfor %}
+        </ul>
+      {% else %}
+        <p class="ayuda">La factura todavía no se ha emitido: no hay documentos que guardar.</p>
+      {% endif %}
+    </section>
+
+    {% if registro %}
+      <section class="bloque">
+        <h2 class="bloque-titulo">Estado ante el SRI</h2>
+        <div class="progreso-dato">
+          {% include "fragmentos/progreso.html" with valor=registro.estado|avance clase=registro.estado|clase_avance etiqueta="Avance del comprobante" %}
+          <span class="progreso-valor">{{ registro.estado|avance }} %</span>
+        </div>
+        <ol class="ciclo-etapas" aria-hidden="true">
+          <li>Emitida</li><li>Firmada</li><li>Recibida</li><li>Autorizada</li>
+        </ol>
+        <dl class="datos-lista">
+          <div><dt>Estado</dt><dd>{{ estado }}</dd></div>
+          {% if registro.fecha_autorizacion %}
+            <div><dt>Autorizada</dt><dd class="cifra">{{ registro.fecha_autorizacion|date:"d/m/Y H:i" }}</dd></div>
+          {% endif %}
+          <div><dt>Intentos de envío</dt><dd class="cifra">{{ registro.intentos }}</dd></div>
+        </dl>
+        {% include "fragmentos/mensajes_sri.html" with mensajes=mensajes_sri %}
+      </section>
+    {% endif %}
+
+    {% if registro and not factura.autorizado %}
+      <section class="bloque">
+        <h2 class="bloque-titulo">Si el SRI no la acepta</h2>
+        <p class="ayuda">
+          Si el SRI devolvió el comprobante, reintentar lo rehace con un número nuevo
+          (el devuelto ya quedó registrado en el SRI y no se puede repetir). Refechar solo
+          se puede mientras el SRI no lo haya recibido, porque cambia la clave de acceso.
+        </p>
+      </section>
+    {% endif %}
+
+  </aside>
+</div><!-- /columnas -->
+
+{% endblock %}
+

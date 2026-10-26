@@ -1,0 +1,59 @@
+# Servicio de systemd para FLOWER (el panel de Celery de facturero).
+#
+#   sudo cp facturero-flower.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now facturero-flower
+
+# O sin copiarlo: se queda aquí y systemd lo usa desde esta carpeta
+#   sudo systemctl enable --now __PROYECTO__/deploy/systemd/facturero-flower.service
+#   (crea el enlace en /etc/systemd/system y el del arranque automático; la
+#    carpeta debe estar en el disco raíz, no en /home ni /var de otra partición)
+#   Lo hace por usted:  sudo python manage.py servicios_celery --enlazar
+#
+# Ajuste los mismos cuatro marcadores que en el worker
+# (__USUARIO__ __GRUPO__ __PROYECTO__ __VENV__).
+#
+# El panel queda en http://127.0.0.1:5555 (solo escucha en la propia máquina).
+# Para verlo desde su ordenador:   ssh -L 5555:127.0.0.1:5555 usuario@servidor
+# y abra http://127.0.0.1:5555
+#
+# Si necesita exponerlo fuera, cambie la línea ExecStart por:
+#   ExecStart=… flower --address=0.0.0.0 --port=5555 --basic_auth=usuario:clave
+# y quite la línea FLOWER_UNAUTHENTICATED_API (el panel deja revocar tareas).
+
+[Unit]
+Description=Flower (panel de Celery) de facturero
+Documentation=https://github.com/jurdin32/factec
+After=network-online.target
+Wants=network-online.target
+#After=redis-server.service
+#Wants=redis-server.service
+
+[Service]
+Type=simple
+User=__USUARIO__
+Group=__GRUPO__
+WorkingDirectory=__PROYECTO__
+
+Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
+Environment="PYTHONUNBUFFERED=1"
+Environment="FORKED_BY_MULTIPROCESSING=1"
+EnvironmentFile=-__PROYECTO__/.env
+# Permite consultar la API (/api/tasks) sin credenciales. Solo tiene sentido
+# porque el panel escucha en 127.0.0.1; si lo expone, quite esta línea.
+Environment="FLOWER_UNAUTHENTICATED_API=1"
+
+StateDirectory=facturero
+# Para conservar el histórico de tareas entre reinicios, añada al ExecStart:
+#   --persistent=True --db=/var/lib/facturero/flower
+ExecStart=__VENV__/bin/celery -A facturero flower --address=127.0.0.1 --port=5555
+
+Restart=always
+RestartSec=5
+KillSignal=SIGTERM
+TimeoutStopSec=30
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target

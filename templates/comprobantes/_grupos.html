@@ -1,0 +1,65 @@
+{% comment %}
+Las cabeceras repetibles: los varios destinatarios de una guía y los varios documentos
+del proveedor de una retención.
+
+En la hoja se ve una tabla —una fila por cabecera, con lo suyo en corto— y cada fila
+abre su ventana, que es donde se escribe: sus campos y las tablas que lleva dentro. Lo
+que se escribe vive en el bloque escondido de cada cabecera (``_detalle_grupo.html``) y
+el navegador lo lleva a la ventana y lo devuelve al cerrarla, de modo que los campos
+nunca salen del formulario.
+{% endcomment %}
+<div class="oculto">{{ conjuntos.formset.management_form }}</div>
+
+<div class="desliza">
+  <table class="table libro libro-grupos" data-grupos
+         data-titulo="{{ documento.hijo_titulo }}" data-plantilla="plantilla-grupo">
+    <thead>
+      <tr>
+        {% for etiqueta, nombre in conjuntos.columnas %}
+          <th data-campo="{{ nombre }}">{{ etiqueta }}</th>
+        {% endfor %}
+        {% for nombre, titulo, corto in conjuntos.titulos %}
+          <th class="col-cuenta" data-cuenta="{{ nombre }}" title="{{ titulo }}">{{ corto }}</th>
+        {% endfor %}
+        <th class="col-acciones">Opción</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for grupo in conjuntos.grupos %}{% include "comprobantes/_fila_grupo.html" %}{% endfor %}
+    </tbody>
+    {% comment %}
+      Añadir se pide desde la propia tabla: es donde aparece lo que se añade. El
+      `colspan` tiene que ser el número exacto de columnas: si sobra, el navegador
+      reparte la tabla en más columnas y los títulos se pisan.
+    {% endcomment %}
+    <tfoot>
+      <tr class="grupo-anadir">
+        {% with datos=conjuntos.columnas|length cuentas=conjuntos.titulos|length %}
+          <td colspan="{{ datos|add:cuentas|add:1 }}">
+            <button type="button" class="button small square outline primary" data-anadir-grupo
+                    data-plantilla="plantilla-grupo"
+                    title="Añadir {{ documento.hijo_titulo|lower }}"
+                    aria-label="Añadir {{ documento.hijo_titulo|lower }}">
+              <span class="mif-plus" aria-hidden="true"></span>
+            </button>
+          </td>
+        {% endwith %}
+      </tr>
+    </tfoot>
+  </table>
+</div>
+
+<p class="ayuda grupos-vacio"{% if conjuntos.grupos %} hidden{% endif %}>
+  Todavía no hay ninguno: añada el primero con el botón de la tabla y escriba lo suyo
+  en la ventana.
+</p>
+
+{% comment %}Lo que se escribe de cada cabecera, escondido hasta que se abre su ventana.{% endcomment %}
+<div class="grupos-detalles">
+  {% for grupo in conjuntos.grupos %}{% include "comprobantes/_detalle_grupo.html" %}{% endfor %}
+</div>
+
+{% comment %}La cabecera en blanco, con sus tablas: el navegador la clona al añadir otra.{% endcomment %}
+<template id="plantilla-grupo">
+  {% include "comprobantes/_detalle_grupo.html" with grupo=conjuntos.en_blanco %}
+</template>

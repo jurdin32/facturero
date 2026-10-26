@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nuevo %}Nuevo rol{% else %}{{ rol.nombre }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nuevo %}Nuevo rol{% else %}{{ rol.nombre }}{% endif %}</h1>
+    <p class="subtitulo">
+      Tres pasos: el rol, sus permisos y el repaso ·
+      <a class="enlace" href="{% url 'seguridad:roles' %}">volver a los roles</a>
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    {% if paso == 1 %}
+      <button type="submit" form="formulario-rol" class="button success"><span class="mif-arrow-right"></span> Guardar y seguir</button>
+      <a class="button outline dark" href="{% url 'seguridad:roles' %}">Cancelar</a>
+    {% elif paso == 2 %}
+      <button type="submit" form="formulario-rol" class="button success"><span class="mif-checkmark"></span> Guardar los permisos</button>
+      <a class="button outline dark" href="{% url 'seguridad:rol' rol.pk %}?paso=1">Volver al rol</a>
+    {% else %}
+      <a class="button success" href="{% url 'seguridad:roles' %}"><span class="mif-checkmark"></span> Terminar</a>
+      <a class="button outline primary" href="{% url 'seguridad:rol' rol.pk %}?paso=2">Cambiar los permisos</a>
+      <a class="button outline dark" href="{% url 'seguridad:rol' rol.pk %}?paso=1">Cambiar los datos</a>
+    {% endif %}
+  </div>
+</div>
+
+<ol class="pasos">
+  {% for ficha in pasos %}
+    <li class="paso{% if ficha.activo %} paso-activo{% endif %}{% if ficha.hecho %} paso-hecho{% endif %}">
+      {% if ficha.enlace %}<a href="{{ ficha.enlace }}"{% if ficha.activo %} aria-current="step"{% endif %}>{% else %}<span class="paso-bloqueado">{% endif %}
+        <span class="paso-numero">
+          {% if ficha.hecho and not ficha.activo %}<span class="mif-checkmark" aria-hidden="true"></span>{% else %}{{ ficha.numero }}{% endif %}
+        </span>
+        <span class="paso-texto">
+          <span class="paso-titulo">{{ ficha.titulo }}</span>
+          <span class="paso-que">{{ ficha.que }}</span>
+        </span>
+      {% if ficha.enlace %}</a>{% else %}</span>{% endif %}
+    </li>
+  {% endfor %}
+</ol>
+
+<form method="post" id="formulario-rol" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      {% if paso == 1 %}
+        {% include "seguridad/pasos/1_datos.html" %}
+      {% elif paso == 2 %}
+        {% include "seguridad/pasos/2_permisos.html" %}
+      {% else %}
+        {% include "seguridad/pasos/3_resumen.html" %}
+      {% endif %}
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">
+          {% if paso == 3 %}Repaso{% else %}Paso {{ paso }} de 3{% endif %}
+        </h2>
+
+        {% if paso == 1 %}
+          <p class="ayuda">
+            Con el nombre ya se puede seguir: los permisos se marcan en el paso
+            siguiente, y hasta el final no se reparte a nadie.
+          </p>
+        {% elif paso == 2 %}
+          <p class="ayuda">
+            Son {{ opciones_totales }} opciones. «Leer» deja entrar a mirar;
+            «Escribir» deja además guardar, anular y emitir.
+          </p>
+          <div class="marcar-todo">
+            <span class="etiqueta">De una vez, en todas</span>
+            <div class="acciones-fila">
+              <button type="button" class="button small outline primary" data-todo="leer">
+                <span class="mif-eye"></span> Leer
+              </button>
+              <button type="button" class="button small outline success" data-todo="escribir">
+                <span class="mif-pencil"></span> Escribir
+              </button>
+              <button type="button" class="button small outline dark" data-todo="nada">
+                <span class="mif-cancel"></span> Nada
+              </button>
+            </div>
+          </div>
+        {% else %}
+          <p class="ayuda">
+            El rol queda así. Se le puede dar a la gente desde «Usuarios y sus roles»,
+            y apagarlo o borrarlo desde la lista de roles.
+          </p>
+        {% endif %}
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  /* El asistente de permisos: marcar un apartado entero de una vez y que «escribir»
+     marque también «leer», que es lo que pasa de verdad (no se modifica lo que no se
+     ve). Sin JavaScript se marcan las casillas una a una y el servidor hace lo
+     mismo: escribir ya guarda lectura. */
+  document.querySelectorAll("[data-todo]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var que = boton.dataset.todo;
+      document.querySelectorAll("tr[data-opcion]").forEach(function (fila) {
+        marcar(fila, que);
+      });
+    });
+  });
+
+  document.querySelectorAll("[data-grupo]").forEach(function (boton) {
+    boton.addEventListener("click", function () {
+      var que = boton.dataset.grupo.endsWith(":nada") ? "nada" : boton.dataset.grupo.split(":")[1];
+      filasDelGrupo(boton.dataset.grupo.split(":")[0]).forEach(function (fila) {
+        marcar(fila, que);
+      });
+    });
+  });
+
+  document.querySelectorAll("tr[data-opcion]").forEach(function (fila) {
+    ["leer", "escribir"].forEach(function (cual) {
+      casilla(fila, cual).addEventListener("change", function (evento) {
+        if (cual === "escribir" && evento.target.checked) {
+          casilla(fila, "leer").checked = true;
+        }
+        if (cual === "leer" && !evento.target.checked) {
+          casilla(fila, "escribir").checked = false;
+        }
+        pintar(fila);
+      });
+    });
+    pintar(fila);
+  });
+
+  function casilla(fila, cual) {
+    return fila.querySelector('input[name^="' + cual + '_"]');
+  }
+
+  function marcar(fila, que) {
+    casilla(fila, "leer").checked = que !== "nada";
+    casilla(fila, "escribir").checked = que === "escribir";
+    pintar(fila);
+  }
+
+  function pintar(fila) {
+    var estado = fila.querySelector("[data-estado]");
+    if (!estado) return;
+    var lee = casilla(fila, "leer").checked;
+    var escribe = casilla(fila, "escribir").checked;
+    estado.className = "chip " + (escribe ? "success" : lee ? "primary" : "");
+    estado.firstElementChild.textContent = escribe ? "Lee y escribe" : lee ? "Lee" : "Sin acceso";
+  }
+
+  function filasDelGrupo(grupo) {
+    var titulo = document.querySelector('tr[data-grupo="' + grupo + '"]');
+    var filas = [];
+    var nodo = titulo ? titulo.nextElementSibling : null;
+    while (nodo && nodo.hasAttribute("data-opcion")) {
+      filas.push(nodo);
+      nodo = nodo.nextElementSibling;
+    }
+    return filas;
+  }
+</script>
+{% endblock %}

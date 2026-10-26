@@ -1,0 +1,3 @@
+{% load chips %}
+<span class="chip {{ estado|chip }}"><span class="label">{{ texto|default:estado|nombre_estado }}</span></span>
+{% if estado|en_marcha %}{% include "fragmentos/actividad.html" with tipo="bars" tamano=14 clase="activity-en-linea" etiqueta="en trámite en el SRI" %}{% endif %}

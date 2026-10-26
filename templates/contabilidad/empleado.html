@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% load contabilidad %}
+{% block titulo %}{% if es_nuevo %}Nuevo empleado{% else %}{{ empleado.nombre_completo }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<form method="post" novalidate>{% csrf_token %}
+  <div class="titulo-fila">
+    <div>
+      <h1 class="titulo">{% if es_nuevo %}Nuevo empleado (RDEP){% else %}{{ empleado.nombre_completo }}{% endif %}</h1>
+      <p class="subtitulo">
+        Ficha anual con los campos del esquema RDEP del SRI.
+        · <a class="enlace" href="{% url 'contabilidad:empleados' %}">volver a empleados</a>
+      </p>
+    </div>
+    <div class="titulo-acciones">
+      <button type="submit" class="button success"><span class="mif-check"></span> Guardar</button>
+    </div>
+  </div>
+
+  {% if formulario.non_field_errors %}
+    <p class="aviso aviso-error">{{ formulario.non_field_errors.0 }}</p>
+  {% endif %}
+
+  {% for titulo, campos in grupos %}
+    <section class="bloque">
+      <h2 class="bloque-titulo">{{ titulo }}</h2>
+      <div class="row">
+        {% for nombre in campos %}
+          {% with c=formulario|campo:nombre %}
+            <div class="cell-12 cell-md-6 cell-lg-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ c.id_for_label }}">{{ c.label }}</label>
+                {{ c }}
+                {% if c.errors %}<p class="error">{{ c.errors.0 }}</p>{% endif %}
+                {% if c.help_text %}<p class="ayuda">{{ c.help_text }}</p>{% endif %}
+              </div>
+            </div>
+          {% endwith %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endfor %}
+
+  <section class="bloque">
+    <div class="campo-caja">
+      <label class="switch">
+        {{ formulario.activo }}
+        <span class="caption-append">Empleado activo</span>
+      </label>
+    </div>
+  </section>
+</form>
+
+{% endblock %}

@@ -1,0 +1,13 @@
+{% comment %}
+Lo que contestó el SRI, tal cual: el código, el mensaje y el detalle. Un rechazo se
+lee aquí y no hay que abrir el XML para saber qué pasó —el detalle es el que dice
+qué campo está mal—.
+{% endcomment %}
+{% for aviso in mensajes %}
+  <p class="aviso {% if aviso.tipo == 'ERROR' %}aviso-error{% else %}aviso-aviso{% endif %}">
+    {% if aviso.identificador %}<span class="cifra">[{{ aviso.identificador }}]</span> {% endif %}{{ aviso.mensaje }}
+  </p>
+  {% if aviso.informacion_adicional %}
+    <p class="ayuda sri-detalle">{{ aviso.informacion_adicional }}</p>
+  {% endif %}
+{% endfor %}

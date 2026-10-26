@@ -1,0 +1,74 @@
+{% load static marca %}<!DOCTYPE html>
+<html lang="es-ec">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Entrar</title>
+  <link rel="stylesheet" href="{% static 'css/metro/metro.css' %}">
+  <link rel="stylesheet" href="{% static 'icons/core/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/interfaz.css' %}?v={{ sello_estatico }}">
+  {% imagen_marca "icono" "logo" as favicon %}
+  {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+</head>
+<body class="cuerpo-entrar">
+
+{% imagen_marca "fondo-entrar" "fondo" as fondo %}
+<div class="entrar-fondo{% if fondo %} entrar-fondo-propio{% endif %}" aria-hidden="true"
+     {% if fondo %}style="background-image: linear-gradient(var(--velo-fondo), var(--velo-fondo)), url('{{ fondo }}')"{% endif %}></div>
+
+<main class="entrar">
+  {% imagen_marca "entrar" "logo-blanco" "logo" "marca" as imagen %}
+  <div class="entrar-avatar" aria-hidden="true">
+    {% if imagen %}
+      <img class="entrar-marca" src="{{ imagen }}" alt="">
+    {% else %}
+      <span class="mif-person"></span>
+    {% endif %}
+  </div>
+
+  {% if form.errors %}
+    <p class="entrar-error" role="alert">El usuario o la clave no son correctos.</p>
+  {% endif %}
+
+  <form method="post" class="entrar-form" id="formulario-entrada">{% csrf_token %}
+    <div class="entrar-campo">
+      <label class="oculto-visual" for="id_username">Usuario</label>
+      <input type="text" name="username" id="id_username" placeholder="Usuario…"
+             autofocus autocapitalize="off" autocomplete="username" required
+             {% if form.username.value %}value="{{ form.username.value }}"{% endif %}>
+    </div>
+
+    <div class="entrar-campo entrar-campo-clave">
+      <label class="oculto-visual" for="id_password">Clave</label>
+      <input type="password" name="password" id="id_password" placeholder="Clave…"
+             autocomplete="current-password" required>
+      <button type="submit" class="entrar-flecha" aria-label="Entrar">
+        <span class="mif-arrow-right" aria-hidden="true"></span>
+      </button>
+    </div>
+
+    {% if next %}<input type="hidden" name="next" value="{{ next }}">{% endif %}
+  </form>
+
+  <button type="button" class="entrar-opciones" id="opciones-entrada" aria-expanded="false" aria-controls="panel-entrada">
+    Opciones de inicio de sesión
+  </button>
+
+  <div class="entrar-panel" id="panel-entrada" hidden>
+    <button type="button" class="entrar-opcion" id="ver-clave">
+      <span class="mif-eye" aria-hidden="true"></span> Ver la clave
+    </button>
+    <button type="button" class="entrar-opcion" id="limpiar-campos">
+      <span class="mif-close" aria-hidden="true"></span> Empezar de nuevo
+    </button>
+  </div>
+</main>
+
+<p class="entrar-pie">
+  <span>Facturación electrónica del SRI</span>
+  <span>Emitido con factec</span>
+</p>
+
+<script src="{% static 'js/entrar.js' %}?v={{ sello_estatico }}"></script>
+</body>
+</html>

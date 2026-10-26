@@ -1,0 +1,70 @@
+{% extends "base.html" %}
+{% block titulo %}Vehículos{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Vehículos</h1>
+    <p class="subtitulo">
+      {{ cuantos_activos }} de {{ cuantos }} se ofrecen al hacer la guía ·
+      <a class="enlace" href="{% url 'comprobantes:lista' 'guias-remision' %}">ver las guías</a>
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+</div>
+
+{% if vehiculos %}
+  <div class="desliza"><table id="tabla-vehiculos" class="table small libro listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Placa</th>
+        <th class="col-detalles">Descripción</th>
+        <th class="col-dato">Guías</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for v in vehiculos %}
+        <tr>
+          <td class="col-marca">
+            <span class="marca {% if not v.activo %}tenue{% endif %}">
+              <span class="mif-truck"></span>
+            </span>
+          </td>
+          <td class="col-principal">
+            <span class="listado-titulo cifra {% if not v.activo %}tenue{% endif %}">{{ v.placa }}</span>
+          </td>
+          <td class="col-detalles">
+            <span class="listado-meta">{{ v.descripcion|default:"—" }}</span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-dato" title="Guías de remisión con esta placa">
+              <span class="mif-truck"></span>
+              <span class="cifra">{{ v.cuantas_guias }}</span>
+            </span>
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline primary" href="{% url 'catalogos:vehiculo' v.pk %}"
+               title="Editar {{ v.placa }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">La placa es la que va al SRI en la guía de remisión.</p>
+{% else %}
+  <div class="vacio">
+    {% if filtros.q %}
+      <p>Ningún vehículo coincide con «{{ filtros.q }}».</p>
+      <p><a class="enlace" href="{% url 'catalogos:vehiculos' %}">Ver todos</a></p>
+    {% else %}
+      <p>Todavía no hay vehículos.</p>
+      <p class="tenue">De aquí sale la placa que pide el SRI en la guía de remisión.</p>
+      <p><a class="button primary" href="{% url 'catalogos:vehiculo_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

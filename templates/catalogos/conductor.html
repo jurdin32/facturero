@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nuevo %}Nuevo conductor{% else %}{{ conductor.razon_social }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nuevo %}Nuevo conductor{% else %}{{ conductor.razon_social }}{% endif %}</h1>
+    <p class="subtitulo">
+      {% if es_nuevo %}El transportista que el SRI pide en la guía de remisión.{% else %}
+        <span class="cifra">{{ conductor.identificacion }}</span> ·
+        <a class="enlace" href="{% url 'catalogos:conductores' %}">volver a la lista</a>
+      {% endif %}
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-conductor" class="button success"><span class="mif-checkmark"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'catalogos:conductores' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-conductor" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">Quién transporta</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.razon_social.id_for_label }}">Nombre o razón social</label>
+              {{ formulario.razon_social }}
+              {% if formulario.razon_social.errors %}<p class="error">{{ formulario.razon_social.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Como consta en su RUC o su cédula.</p>
+            </div>
+          </div>
+          <div class="cell-6 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.tipo_identificacion.id_for_label }}">Tipo</label>
+              {{ formulario.tipo_identificacion }}
+            </div>
+          </div>
+          <div class="cell-6 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.identificacion.id_for_label }}">RUC o cédula</label>
+              {{ formulario.identificacion }}
+              {% if formulario.identificacion.errors %}<p class="error">{{ formulario.identificacion.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.telefono.id_for_label }}">Teléfono</label>
+              {{ formulario.telefono }}
+              <p class="ayuda">Para avisarle cuando salga el transporte.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Estado</h2>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.activo.id_for_label }}">{{ formulario.activo }} {{ formulario.activo.label }}</label>
+        </div>
+        <p class="ayuda">
+          Si transporta usted mismo, dése de alta aquí con su propio RUC y elija este
+          conductor en la guía.
+        </p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}

@@ -1,0 +1,19 @@
+{% load static marca %}<!DOCTYPE html>
+<html lang="es-ec">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Aplicación bloqueada</title>
+  <link rel="stylesheet" href="{% static 'css/metro/metro.css' %}">
+  <link rel="stylesheet" href="{% static 'icons/core/style.css' %}">
+  <link rel="stylesheet" href="{% static 'css/interfaz.css' %}?v={{ sello_estatico }}">
+  {% imagen_marca "icono" "logo" as favicon %}
+  {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+</head>
+{% imagen_marca "fondo-bloqueo" "fondo-entrar" "fondo" as fondo %}
+<body class="cuerpo-bloqueo{% if fondo %} bloqueo-con-fondo{% endif %}"
+      {% if fondo %}style="background-image: linear-gradient(var(--velo-fondo), var(--velo-fondo)), url('{{ fondo }}')"{% endif %}>
+  {% include "fragmentos/bloqueo.html" %}
+  <script src="{% static 'js/bloqueo.js' %}?v={{ sello_estatico }}"></script>
+</body>
+</html>

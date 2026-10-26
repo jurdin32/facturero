@@ -1,0 +1,59 @@
+{% comment %}
+Paso 3: el certificado de firma (.p12) y su contraseña. Se abre al guardar para
+comprobar que la contraseña es la suya y que está vigente, así los problemas
+salen aquí y no al emitir la primera factura.
+{% endcomment %}
+
+{% if firma %}
+  <section class="bloque">
+    <h2 class="bloque-titulo">El certificado que hay ahora</h2>
+    {% if firma.ok %}
+      <div class="aviso aviso-success">
+        {{ firma_titular|default:"Certificado cargado" }}
+        {% if firma.valido_hasta %} · válido hasta el {{ firma.valido_hasta|date:"d/m/Y" }}{% endif %}
+        {% if firma.dias_restantes is not None %} · le quedan {{ firma.dias_restantes }} días{% endif %}
+      </div>
+    {% else %}
+      <div class="aviso aviso-error">
+        {{ firma.problemas.0|default:"El certificado de firma no se puede usar." }}
+      </div>
+    {% endif %}
+    {% for aviso in firma.avisos %}
+      <div class="aviso aviso-warning">{{ aviso }}</div>
+    {% endfor %}
+  </section>
+{% endif %}
+
+<form method="post" id="formulario-paso" enctype="multipart/form-data" novalidate>{% csrf_token %}
+  <input type="hidden" name="paso" value="3">
+  <input type="hidden" name="c" value="{{ configuracion.pk }}">
+
+  {% for error in formulario.non_field_errors %}
+    <div class="aviso aviso-error">{{ error }}</div>
+  {% endfor %}
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">El archivo y su contraseña</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.certificado.id_for_label }}">{{ formulario.certificado.label }}</label>
+          {{ formulario.certificado }}
+          {% if formulario.certificado.errors %}<p class="error">{{ formulario.certificado.errors.0 }}</p>{% endif %}
+          <p class="ayuda">
+            El que entrega el banco o la casa certificadora: PKCS#12, con la clave
+            privada y el certificado.
+          </p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.clave_certificado.id_for_label }}">{{ formulario.clave_certificado.label }}</label>
+          {{ formulario.clave_certificado }}
+          {% if formulario.clave_certificado.errors %}<p class="error">{{ formulario.clave_certificado.errors.0 }}</p>{% endif %}
+          <p class="ayuda">{{ formulario.clave_certificado.help_text }}</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</form>

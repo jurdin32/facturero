@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titulo %}Facturas{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <h1 class="titulo">Facturas</h1>
+  <a class="button primary" href="{% url 'facturacion:facturar' %}"><span class="mif-plus"></span> Nueva factura</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-flag'></span>">
+          <option value="">Todas</option>
+          <option value="sin_emitir" {% if filtros.estado == 'sin_emitir' %}selected{% endif %}>Sin emitir</option>
+          {% for valor, nombre in estados.items %}
+            <option value="{{ valor }}" {% if filtros.estado == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="cliente">Cliente</label>
+        <select name="cliente" id="cliente" data-role="select" data-prepend="<span class='mif-person'></span>">
+          <option value="">Todos</option>
+          {% for c in clientes %}
+            <option value="{{ c.pk }}" {% if filtros.cliente == c.pk|stringformat:'s' %}selected{% endif %}>{{ c.razon_social }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ filtros.desde }}">
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ filtros.hasta }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-one-fifth">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'facturacion:facturas' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if facturas %}
+  <div class="desliza"><table id="tabla-facturas" class="table small libro libro-facturas listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca">Estado</th>
+        <th class="col-principal">Factura</th>
+        <th class="col-dato">Total</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for f in facturas %}
+        <tr>
+          <td class="col-marca">
+            {% include "fragmentos/estado.html" with estado=f.comprobante.estado|default:"BORRADOR" %}
+          </td>
+          <td class="col-principal">
+            <span class="listado-titulo">{{ f.receptor.razon_social }}</span>
+            <span class="listado-meta cifra">
+              {% if f.comprobante %}{{ f.comprobante.estab }}-{{ f.comprobante.pto_emi }}-{{ f.comprobante.secuencial }}{% else %}sin número{% endif %}
+              · {{ f.fecha_emision|date:"d/m/Y" }} · {{ f.receptor.identificacion }}
+              {% if f.registro_usuario %}· por {{ f.registro_usuario.usuario_nombre }}{% endif %}
+            </span>
+            <span class="listado-meta">
+              {% for linea in f.detalles.all|slice:":2" %}
+                {{ linea.descripcion }}{% if not forloop.last %} ·{% endif %}
+              {% endfor %}
+              {% if f.detalles.all|length > 2 %} y {{ f.detalles.all|length|add:"-2" }} más{% endif %}
+            </span>
+          </td>
+          <td class="col-dato cifra listado-cifra">{{ f.total|floatformat:2 }}</td>
+          <td class="col-acciones">
+            {% if f.autorizado %}
+              <a class="button small square outline dark" href="{% url 'facturacion:factura' f.pk %}"
+                 title="Ver la factura {{ f.comprobante.secuencial }}" aria-label="Ver"><span class="mif-eye"></span></a>
+            {% elif f.comprobante_id %}
+              <a class="button small square outline dark" href="{% url 'facturacion:factura' f.pk %}"
+                 title="Ver la factura" aria-label="Ver"><span class="mif-eye"></span></a>
+              <a class="button small square outline primary" href="{% url 'facturacion:editar_factura' f.pk %}"
+                 title="Corregir la factura" aria-label="Corregir"><span class="mif-pencil"></span></a>
+            {% else %}
+              <a class="button small square outline primary" href="{% url 'facturacion:editar_factura' f.pk %}"
+                 title="Seguir con esta factura" aria-label="Seguir"><span class="mif-pencil"></span></a>
+            {% endif %}
+            <a class="button small square outline dark" href="{% url 'facturacion:ride' f.pk %}"
+               data-imprimir="{% url 'facturacion:ride' f.pk %}" data-titulo="Imprimir la factura"
+               title="Imprimir el RIDE" aria-label="Imprimir"><span class="mif-printer"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+
+{% else %}
+  <div class="vacio">
+    {% if filtros.q or filtros.estado or filtros.cliente or filtros.desde or filtros.hasta %}
+      <p>Con esos filtros no aparece ninguna factura.</p>
+      <p><a class="enlace" href="{% url 'facturacion:facturas' %}">Quitar los filtros</a></p>
+    {% else %}
+      <p>Todavía no hay facturas emitidas.</p>
+      <p class="tenue">Empiece por la primera: el formulario se parece al comprobante que va a salir.</p>
+      <p><a class="button primary" href="{% url 'facturacion:facturar' %}"><span class="mif-plus"></span> Facturar la primera</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

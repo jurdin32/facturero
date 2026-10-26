@@ -1,0 +1,102 @@
+{% extends "base.html" %}
+{% block titulo %}Opciones de la aplicación{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Opciones de la aplicación</h1>
+    <p class="subtitulo">
+      {{ cuantas_activas }} de {{ cuantas }} opciones activas · son las pantallas que se
+      pueden permitir o negar en cada rol ·
+      <a class="enlace" href="{% url 'seguridad:roles' %}">ver los roles</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button outline dark" href="{% url 'seguridad:ordenar_menu' %}">
+      <span class="mif-menu"></span> Ordenar el menú
+    </a>
+    <a class="button primary" href="{% url 'seguridad:opcion_nueva' %}">
+      <span class="mif-plus"></span> Nueva opción
+    </a>
+  </div>
+</div>
+
+<div class="tabla-caja">
+  {% include "fragmentos/tabla-barra.html" with buscador="Nombre, clave o apartado" %}
+
+  <div class="tabla-envoltura">
+    <table class="datos" id="tabla-opciones">
+      {% include "fragmentos/tabla-cabecera.html" %}
+      <tbody>
+        {% for o in tabla.filas %}
+          <tr>
+            <td class="tenue">{{ o.grupo }}</td>
+            <td>
+              <a class="listado-titulo" href="{% url 'seguridad:opcion' o.pk %}">{{ o.nombre }}</a>
+              <span class="listado-meta">
+                {% if o.activo %}Activa{% else %}Apagada{% endif %}
+                {% if o.url %} · {{ o.url }}{% endif %}
+              </span>
+            </td>
+            <td class="cifra">{{ o.clave }}</td>
+            <td>
+              {% if o.url and o.en_menu %}
+                <span class="chip success"><span class="icon mif-checkmark"></span><span class="label">Sale</span></span>
+              {% elif o.url %}
+                <span class="chip"><span class="label">No</span></span>
+              {% else %}
+                <span class="chip warning"><span class="icon mif-warning"></span><span class="label">Sin dirección</span></span>
+              {% endif %}
+            </td>
+            <td class="col-num cifra">{{ o.cuantos_roles|default:0 }}</td>
+            <td class="col-acciones">
+              <a class="button small square outline primary" href="{% url 'seguridad:opcion' o.pk %}"
+                 title="Ver y cambiar «{{ o.nombre }}»" aria-label="Editar"><span class="mif-pencil"></span></a>
+              {% if o.activo %}
+                {% url 'seguridad:accion_opcion' o.pk 'desactivar' as la_accion %}
+              {% else %}
+                {% url 'seguridad:accion_opcion' o.pk 'activar' as la_accion %}
+              {% endif %}
+              <form method="post" action="{{ la_accion }}">
+                {% csrf_token %}
+                <button type="submit" class="button small square outline dark"
+                        title="{% if o.activo %}Apagar «{{ o.nombre }}»{% else %}Encender «{{ o.nombre }}»{% endif %}"
+                        aria-label="{% if o.activo %}Apagar{% else %}Encender{% endif %}"><span class="mif-power"></span></button>
+              </form>
+              <form method="post" action="{% url 'seguridad:accion_opcion' o.pk 'eliminar' %}"
+                    data-confirmar="Se borra la opción «{{ o.nombre }}» y los permisos que la nombraban."
+                    data-titulo="Eliminar la opción" data-aceptar="Eliminarla">
+                {% csrf_token %}
+                <button type="submit" class="button small square outline alert"
+                        title="Eliminar «{{ o.nombre }}»" aria-label="Eliminar"><span class="mif-bin"></span></button>
+              </form>
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td class="tabla-vacio" colspan="{{ tabla.columnas|length }}">
+              {% if tabla.hay_filtros %}
+                Ninguna opción coincide con «{{ tabla.q }}».
+                <a class="enlace" href="{{ tabla.enlace_limpio }}">Ver todas</a>
+              {% else %}
+                Todavía no hay opciones.
+                <a class="enlace" href="{% url 'seguridad:opcion_nueva' %}">Crear la primera</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  {% include "fragmentos/tabla-pie.html" %}
+</div>
+
+<p class="ayuda">
+  Cada opción es una pantalla o un apartado: los roles marcan, sobre estas, qué puede
+  cada quien. Para que una opción nueva salga en el menú, póngale <strong>dirección</strong>
+  (por ejemplo <span class="cifra">/reportes/</span>) y déjela «en el menú».
+</p>
+
+{% endblock %}

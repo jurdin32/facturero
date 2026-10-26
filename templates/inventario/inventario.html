@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block titulo %}Inventario{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Inventario</h1>
+    <p class="subtitulo">
+      {{ cuantos }} referencia{{ cuantos|pluralize:"s" }} · valorado en
+      <span class="cifra">{{ valor_total|floatformat:2 }}</span>
+      {% if bajo_minimo %} · <span class="chip alert soft small"><span class="label">{{ bajo_minimo }} por reponer</span></span>{% endif %}
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir producto</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6">
+      <div class="filtro filtro-interruptor">
+        <label class="switch">
+          <input type="checkbox" name="bajo" id="bajo" value="1" data-enviar-al-cambiar
+                 {% if filtros.bajo %}checked{% endif %}>
+          <span class="caption-append">Solo lo que hay que reponer</span>
+        </label>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6">
+      <div class="filtro filtro-boton">
+        <a class="enlace" href="{% url 'inventario:inventario' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table id="tabla-inventario" class="table small libro libro-inventario listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Producto</th>
+        <th class="col-stock">Existencias</th>
+        <th class="col-dato">Valor</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for fila in filas %}
+        <tr>
+          <td class="col-marca"><span class="marca"><span class="mif-cube"></span></span></td>
+          <td class="col-principal">
+            <span class="listado-titulo">{{ fila.producto.descripcion }}</span>
+            <span class="listado-meta cifra">
+              {{ fila.producto.codigo_principal }}
+              {% if fila.producto.unidad_medida %} · {{ fila.producto.unidad_medida }}{% endif %}
+              · {{ fila.existencia.ubicacion|default:"sin ubicación" }}
+            </span>
+            <span class="listado-meta">
+              {{ fila.producto.precio_unitario|floatformat:2 }} la unidad
+              {% if fila.existencia.minimo %} · mínimo {{ fila.existencia.minimo|floatformat:"-3" }}{% endif %}
+            </span>
+          </td>
+          <td class="col-stock">
+            <span class="stock-celda" title="Mínimo {{ fila.existencia.minimo|floatformat:'-3' }}">
+              <span class="cifra {% if fila.existencia.bajo_minimo %}stock-bajo{% endif %}">{{ fila.existencia.cantidad|floatformat:"-3" }}</span>
+              {% if fila.existencia.minimo %}
+                {% include "fragmentos/progreso.html" with valor=fila.existencia.cobertura clase=fila.existencia.clase_cobertura etiqueta="Existencias frente al mínimo" %}
+              {% endif %}
+            </span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-cifra cifra">{{ fila.existencia.valor|floatformat:2 }}</span>
+            {% if fila.existencia.bajo_minimo %}<span class="chip warning soft"><span class="label">hay que reponer</span></span>{% endif %}
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline primary" href="{% url 'inventario:kardex' fila.producto.pk %}"
+               title="Mover existencias de {{ fila.producto.descripcion }}" aria-label="Mover"><span class="mif-shuffle"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+
+  {% if ultimos %}
+    <section class="bloque bloque-suave">
+      <h2 class="bloque-titulo">Lo último que se movió</h2>
+      <div class="desliza"><table class="table small libro">
+        <tbody>
+          {% for m in ultimos %}
+            <tr>
+              <td class="cifra col-fecha">{{ m.fecha|date:"d/m/Y" }}</td>
+              <td>{{ m.producto.descripcion }}</td>
+              <td class="col-cantidad mono {% if m.delta < 0 %}sale{% else %}entra{% endif %}">
+                {% if m.delta > 0 %}+{% endif %}{{ m.delta|floatformat:"-3" }}
+              </td>
+              <td>{% include "fragmentos/estado.html" with estado=m.tipo texto=m.get_tipo_display %}</td>
+              <td class="tenue">{{ m.motivo|default:"—" }}{% if m.referencia %} · {{ m.referencia }}{% endif %}</td>
+              <td class="col-acciones">
+                <a class="button small square outline dark" href="{% url 'inventario:kardex' m.producto.pk %}"
+                   title="Libro de {{ m.producto.descripcion }}" aria-label="Libro"><span class="mif-history"></span></a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table></div>
+    </section>
+  {% endif %}
+
+{% else %}
+  <div class="vacio">
+    {% if filtros.q or filtros.bajo %}
+      <p>Con esos filtros no hay nada que mostrar.</p>
+      <p><a class="enlace" href="{% url 'inventario:inventario' %}">Ver todo el inventario</a></p>
+    {% else %}
+      <p>No hay bienes en el catálogo todavía.</p>
+      <p class="tenue">Los servicios no llevan inventario; los bienes sí, y su existencia sale de los movimientos.</p>
+      <p><a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir un producto</a></p>
+    {% endif %}
+  </div>
+{% endif %}
+
+{% endblock %}

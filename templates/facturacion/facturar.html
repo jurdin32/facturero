@@ -1,0 +1,361 @@
+{% extends "base.html" %}
+{% load static %}
+{% block titulo %}{% if factura.pk %}Factura {{ factura.secuencial|default:"" }}{% else %}Nueva factura{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<form method="post" novalidate id="formulario-factura"
+      data-espera="Firmando y enviando al SRI…">{% csrf_token %}{{ detalles.management_form }}{# La cabecera de la hoja: se queda pegada arriba para que guardar y emitir no se vayan con el scroll. Va dentro del formulario porque sus botones son suyos, y pegada al management_form sin espacios: el formulario es flex y un salto de línea en blanco se lleva una línea entera y la despega de la barra. #}<div class="titulo-fila factura-cabecera">
+  <div>
+    <h1 class="titulo">{% if factura.pk %}Factura en preparación{% else %}Nueva factura{% endif %}</h1>
+    <p class="subtitulo">
+      {% if emisor %}
+        Sale con la serie <span class="cifra">{{ emisor.estab }}-{{ emisor.pto_emi }}</span> y el número que el SRI asigne al emitir.
+      {% else %}
+        El número lo asigna el SRI al emitir.
+      {% endif %}
+      {% if factura.pk %}<a class="enlace" href="{% url 'facturacion:facturas' %}">volver a la lista</a>{% endif %}
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    {% if factura.pk %}
+      <a class="button outline dark" href="{% url 'facturacion:ride' factura.pk %}"
+         data-imprimir="{% url 'facturacion:ride' factura.pk %}" data-titulo="Imprimir la factura">
+        <span class="mif-printer" aria-hidden="true"></span> Imprimir
+      </a>
+    {% endif %}
+    <button type="submit" name="accion" value="guardar" class="button outline dark">Guardar borrador</button>
+    <button type="submit" name="accion" value="emitir" class="button success"
+            {% if aviso_emisor %}disabled{% endif %}><span class="mif-send" aria-hidden="true"></span> Emitir al SRI</button>
+  </div>
+
+  {% if aviso_emisor %}
+    <p class="aviso aviso-aviso cabecera-aviso">{{ aviso_emisor }}</p>
+  {% endif %}
+</div>
+
+<div class="columnas">
+
+  <div class="columna-cliente">
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">A quién se factura</h2>
+
+      {# Se escribe la cédula o el RUC: si existe se carga solo; si no, se piden los datos. #}
+      <div class="cliente-caja" hidden id="cliente-caja"
+           data-url-identificar="{% url 'catalogos:identificar_cliente' %}"
+           data-url-consultar="{% url 'catalogos:consultar_identificacion' %}">
+        <div class="campo-caja cliente-tipo-documento">
+          <label class="etiqueta" for="cliente-tipo-documento">Tipo de documento</label>
+          <select id="cliente-tipo-documento" data-role="select"
+                  data-prepend="<span class='mif-person-card'></span>">
+            <option value="auto">Detectar solo (cédula/RUC)</option>
+            {% for valor, nombre in tipos_identificacion.items %}
+              <option value="{{ valor }}">{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="campo-caja cliente-identificacion">
+          <label class="etiqueta" for="cliente-identificacion">Número de documento</label>
+          <input type="text" id="cliente-identificacion" class="cifra"
+                 autocomplete="off" placeholder="Cédula, RUC o pasaporte">
+          <p class="ayuda" id="cliente-aviso">Elija el tipo o escriba 10/13 dígitos para detectarlo.</p>
+        </div>
+        <div class="cliente-ficha">
+          <span class="cliente-nombre" id="cliente-nombre">— sin cliente —</span>
+          <span class="cliente-datos cifra" id="cliente-datos"></span>
+        </div>
+        <button type="button" class="enlace" id="cliente-completar" hidden>
+          Completar los datos a mano
+        </button>
+      </div>
+
+      <div class="row" id="cliente-desplegable">
+        <div class="cell-12 cell-md-6">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.receptor.id_for_label }}">Cliente</label>
+            {{ formulario.receptor }}
+            {% if formulario.receptor.errors %}<p class="error">{{ formulario.receptor.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="cell-6 cell-md-3">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.fecha_emision.id_for_label }}">Fecha</label>
+            {{ formulario.fecha_emision }}
+            {% if formulario.fecha_emision.errors %}<p class="error">{{ formulario.fecha_emision.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+        <div class="cell-6 cell-md-3">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.forma_pago.id_for_label }}">Forma de pago</label>
+            {{ formulario.forma_pago }}
+            {% if formulario.forma_pago.errors %}<p class="error">{{ formulario.forma_pago.errors.0 }}</p>{% endif %}
+          </div>
+        </div>
+      </div>
+
+      {# Aquí van la fecha y la forma de pago cuando el buscador sustituye al desplegable. #}
+      <div class="row" id="fecha-forma-pago" hidden></div>
+
+      <p class="ayuda alta-cliente">
+        Si la cédula o el RUC no está en el catálogo ni en el SRI, se piden los datos
+        una sola vez y el cliente queda guardado.
+      </p>
+    </section>
+
+  </div>
+
+  <div class="columna-principal">
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">Qué se factura</h2>
+
+      {% if detalles.non_form_errors %}
+        <p class="error">{{ detalles.non_form_errors.0 }}</p>
+      {% endif %}
+
+      {# La barra de búsqueda: al hacer clic se abre el buscador con lo escrito dentro. #}
+      <div class="buscador-barra">
+        <label class="oculto-visual" for="buscador-productos">Buscar producto o servicio</label>
+        <input type="search" id="buscador-productos" class="buscador-barra-campo"
+               placeholder="Buscar un producto o servicio por nombre o código…"
+               autocomplete="off" data-role="input" data-clear-button="true"
+               data-prepend="<span class='mif-search'></span>">
+        <button type="button" class="button primary" id="buscador-abrir">
+          <span class="mif-search" aria-hidden="true"></span> Buscar y elegir
+        </button>
+      </div>
+
+      <div class="desliza">
+        <table class="table libro libro-lineas" id="tabla-lineas"
+               data-url-productos="{% url 'facturacion:buscar_productos' %}"
+               data-url-clientes="{% url 'facturacion:buscar_clientes' %}">
+          <colgroup>
+            <col>
+            <col class="col-cantidad">
+            <col class="col-precio">
+            <col class="col-descuento">
+            <col class="col-importe">
+            <col class="col-quitar">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Descripción</th>
+              <th class="col-cantidad">Cantidad</th>
+              <th class="col-precio">P. unitario</th>
+              <th class="col-descuento">Descuento</th>
+              <th class="col-importe">Importe</th>
+              <th class="col-quitar"></th>
+            </tr>
+          </thead>
+          <tbody id="lineas">
+            {% for linea in detalles %}
+              <tr class="linea" data-linea{% if linea.instance.pk %} data-guardada="1"{% endif %}{% if linea.instance.producto_id %} data-stock="{{ linea.instance.producto.existencia.cantidad|default:0 }}" data-servicio="{% if linea.instance.producto.es_servicio %}1{% endif %}"{% endif %}>
+                <td class="celda-descripcion{% if linea.descripcion.errors %} con-error{% endif %}">
+                  {{ linea.descripcion }}
+                  <span class="linea-pie" data-pie></span>
+                  <span class="linea-oculta">{% for oculto in linea.hidden_fields %}{{ oculto }}{% endfor %}{% if linea.instance.pk %}{{ linea.DELETE }}{% endif %}</span>
+                </td>
+                <td class="col-cantidad{% if linea.cantidad.errors %} con-error{% endif %}">{{ linea.cantidad }}</td>
+                <td class="col-precio{% if linea.precio_unitario.errors %} con-error{% endif %}">{{ linea.precio_unitario }}</td>
+                <td class="col-descuento{% if linea.descuento.errors %} con-error{% endif %}">{{ linea.descuento }}</td>
+                <td class="col-importe cifra" data-importe>0,00</td>
+                <td class="col-quitar">
+                  <button type="button" class="quitar" data-quitar tabindex="-1" title="Quitar la línea">×</button>
+                </td>
+              </tr>
+              {% for campo, mensaje in linea.errores_con_nombre %}<tr class="fila-error"><td colspan="6"><p class="error">{{ campo }}: {{ mensaje }}</p></td></tr>{% endfor %}
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="lineas-vacio" id="lineas-vacio">
+        <p>Todavía no hay nada facturado.</p>
+        <p class="ayuda">Busque el producto o servicio y se añade aquí con su precio y su IVA.</p>
+      </div>
+
+      {# Añadir sale del buscador de arriba: el botón azul de aquí lo repetía. #}
+      <div class="acciones-fila">
+        <button type="button" class="button outline dark" id="anadir-suelta">
+          <span class="mif-pencil" aria-hidden="true"></span> Escribir una línea a mano
+        </button>
+      </div>
+
+      <noscript><p class="aviso aviso-warning">Esta hoja necesita JavaScript para añadir las líneas.</p></noscript>
+    </section>
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">Lo que va en el comprobante</h2>
+      <div class="row">
+        <div class="cell-12 cell-md-6">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.observaciones.id_for_label }}">Observaciones</label>
+            {{ formulario.observaciones }}
+            <p class="ayuda">{{ formulario.observaciones.help_text }}</p>
+          </div>
+        </div>
+        <div class="cell-12 cell-md-6">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.informacion_adicional.id_for_label }}">Información adicional</label>
+            {{ formulario.informacion_adicional }}
+            <p class="ayuda">{{ formulario.informacion_adicional.help_text }}</p>
+          </div>
+        </div>
+      </div>
+
+      <details class="desplegable">
+        <summary class="desplegable-titulo">Pago a crédito y otros datos</summary>
+        <div class="row">
+          <div class="cell-6 cell-md-3">
+            <div class="campo-caja campo-angosto">
+              <label class="etiqueta" for="{{ formulario.plazo.id_for_label }}">Plazo</label>
+              {{ formulario.plazo }}
+            </div>
+          </div>
+          <div class="cell-6 cell-md-3">
+            <div class="campo-caja campo-angosto">
+              <label class="etiqueta" for="{{ formulario.unidad_tiempo.id_for_label }}">Unidad</label>
+              {{ formulario.unidad_tiempo }}
+            </div>
+          </div>
+        </div>
+        <p class="ayuda">El plazo solo se pone cuando la forma de pago es a crédito.</p>
+      </details>
+    </section>
+
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen pega">
+      <h2 class="bloque-titulo">Resumen</h2>
+
+      <div class="desliza caja-totales"><table class="totales">
+        <tbody id="totales">
+          <tr><th>Subtotal</th><td class="cifra" data-subtotal>{{ totales.total_sin_impuestos|default:0|floatformat:2 }}</td></tr>
+          <tr><th>IVA</th><td class="cifra" data-iva>{{ totales.total_impuestos|default:0|floatformat:2 }}</td></tr>
+          <tr class="total-final"><th>Total</th><td class="cifra" data-total>{{ totales.importe_total|default:0|floatformat:2 }}</td></tr>
+        </tbody>
+      </table></div>
+
+      <p class="ayuda">
+        Al emitir se firma con el certificado, se envía al SRI y se espera la autorización.
+        {% if es_produccion %}<strong>Está en producción: el comprobante tiene validez legal.</strong>{% endif %}
+      </p>
+    </div>
+  </aside>
+
+</div>
+</form>
+
+<template id="plantilla-cliente-nuevo">
+  <form method="post" action="{% url 'catalogos:cliente_rapido' %}" id="formulario-cliente" data-consulta-ruc>
+    {% csrf_token %}
+    <input type="hidden" name="volver_a" value="{% url 'facturacion:facturar' %}">
+    <div class="row">
+      <div class="cell-12 cell-md-8">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-razon">Razón social</label>
+          <input type="text" id="nuevo-razon" name="razon_social" required
+                 data-role="input" data-prepend="<span class='mif-shop'></span>">
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-identificacion">RUC o cédula</label>
+          <input class="cifra" type="text" id="nuevo-identificacion" name="identificacion" required
+                 data-role="input" data-prepend="<span class='mif-person-card'></span>"
+                 data-consultar-ruc="{% url 'catalogos:consultar_identificacion' %}">
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-tipo">Tipo</label>
+          <select id="nuevo-tipo" name="tipo_identificacion"
+                  data-role="select" data-prepend="<span class='mif-person-card'></span>">
+            {% for valor, nombre in tipos_identificacion.items %}
+              <option value="{{ valor }}" {% if valor == '04' %}selected{% endif %}>{{ nombre }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-8">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-email">Correo</label>
+          <input type="email" id="nuevo-email" name="email"
+                 data-role="input" data-prepend="<span class='mif-email'></span>">
+        </div>
+      </div>
+      <div class="cell-12 cell-md-8">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-direccion">Dirección</label>
+          <input type="text" id="nuevo-direccion" name="direccion"
+                 data-role="input" data-prepend="<span class='mif-location'></span>">
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="nuevo-telefono">Teléfono</label>
+          <input type="text" id="nuevo-telefono" name="telefono"
+                 data-role="input" data-prepend="<span class='mif-phone'></span>">
+        </div>
+      </div>
+    </div>
+    <div class="acciones-fila">
+      <button type="button" class="button small outline primary" data-boton-consultar-ruc>
+        <span class="mif-search" aria-hidden="true"></span> Consultar SRI
+      </button>
+      <p class="ayuda" data-aviso-ruc></p>
+    </div>
+    <p class="ayuda">Al guardarlo queda elegido en esta misma factura.</p>
+  </form>
+</template>
+
+{# Una fila de la hoja: solo lo que se mira. El resto lo trae el catálogo y viaja en el documento. #}
+<template id="plantilla-linea">
+  <tr class="linea" data-linea>
+    <td class="celda-descripcion">
+      {{ detalles.empty_form.descripcion }}
+      <span class="linea-pie" data-pie></span>
+      <span class="linea-oculta">{% for oculto in detalles.empty_form.hidden_fields %}{{ oculto }}{% endfor %}</span>
+    </td>
+    <td class="col-cantidad">{{ detalles.empty_form.cantidad }}</td>
+    <td class="col-precio">{{ detalles.empty_form.precio_unitario }}</td>
+    <td class="col-descuento">{{ detalles.empty_form.descuento }}</td>
+    <td class="col-importe cifra" data-importe>0,00</td>
+    <td class="col-quitar">
+      <button type="button" class="quitar" data-quitar tabindex="-1" title="Quitar la línea">×</button>
+    </td>
+  </tr>
+</template>
+
+{# El buscador de productos: se eligen de varios en varios. #}
+<template id="plantilla-buscador">
+  <div class="buscador">
+    <div class="buscador-campo">
+      <input type="search" class="buscador-texto" placeholder="Escriba para buscar…" autocomplete="off"
+             data-role="input" data-clear-button="true" data-prepend="<span class='mif-search'></span>">
+    </div>
+    <div class="buscador-cuerpo"></div>
+    <p class="buscador-vacio ayuda">Escriba el nombre, el código o el número.</p>
+    <footer class="buscador-pie" hidden>
+      <span class="buscador-cuenta">Ninguna línea elegida</span>
+      <div class="acciones-fila">
+        <button type="button" class="button outline dark" data-cerrar>Terminar</button>
+        <button type="button" class="button primary" data-anadir disabled>Añadir al comprobante</button>
+      </div>
+    </footer>
+  </div>
+</template>
+
+{{ porcentajes_iva|json_script:"porcentajes-iva" }}
+<datalist id="unidades-de-tiempo">
+  <option value="días"></option><option value="meses"></option><option value="años"></option>
+</datalist>
+
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/cliente_modal.js' %}?v={{ sello_estatico }}"></script>
+{% endblock %}

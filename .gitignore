@@ -1,0 +1,14 @@
+# Lo que no va al repositorio: la base, lo subido, los secretos y lo que genera Python.
+db.sqlite3
+*.sqlite3
+media/
+celerybeat-schedule
+__pycache__/
+*.py[cod]
+.venv/
+env/
+.env
+*.p12
+*.pem
+*.key
+staticfiles/

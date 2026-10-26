@@ -1,0 +1,113 @@
+{% extends "base.html" %}
+{% block titulo %}Cierre contable{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Cierre contable</h1>
+    <p class="subtitulo">Abra los meses, ciérrelos cuando estén listos y cierre el ejercicio contra resultados acumulados.</p>
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Periodos</h2>
+      {% if periodos %}
+        <div class="desliza"><table class="table small libro">
+          <thead>
+            <tr>
+              <th>Periodo</th>
+              <th>Desde</th>
+              <th>Hasta</th>
+              <th>Estado</th>
+              <th class="col-acciones"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for p in periodos %}
+              <tr>
+                <td>{{ p.nombre }}</td>
+                <td class="cifra">{{ p.fecha_inicio|date:"d/m/Y" }}</td>
+                <td class="cifra">{{ p.fecha_fin|date:"d/m/Y" }}</td>
+                <td>
+                  <span class="chip {% if p.abierto %}success{% else %}dark{% endif %} soft">
+                    <span class="label">{{ p.get_estado_display }}</span>
+                  </span>
+                </td>
+                <td class="col-acciones">
+                  <form method="post">
+                    {% csrf_token %}
+                    <input type="hidden" name="periodo" value="{{ p.pk }}">
+                    {% if p.abierto %}
+                      <button type="submit" name="accion" value="cerrar" class="button small outline alert"
+                              data-confirmar="El periodo queda cerrado y no admitirá más asientos."
+                              data-titulo="Cerrar el periodo" data-aceptar="Cerrarlo">
+                        <span class="mif-lock"></span> Cerrar
+                      </button>
+                    {% else %}
+                      <button type="submit" name="accion" value="reabrir" class="button small outline dark"
+                              data-confirmar="El periodo vuelve a estar abierto y se podrán registrar asientos en él. Revise que no haya un cierre de ejercicio vigente."
+                              data-titulo="Reabrir el periodo" data-aceptar="Reabrir">
+                        <span class="mif-unlock"></span> Reabrir
+                      </button>
+                    {% endif %}
+                  </form>
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+      {% else %}
+        <p class="tenue">Todavía no hay periodos. Se crean solos al contabilizar el primer asiento del mes, o aquí a mano.</p>
+      {% endif %}
+    </section>
+
+    <section class="bloque">
+      <h2 class="bloque-titulo">Cierre del ejercicio</h2>
+      <p class="ayuda">
+        Lleva los ingresos y gastos del año al resultado del ejercicio y este a resultados
+        acumulados. Después, los periodos del año quedan cerrados.
+      </p>
+      <form method="post" class="acciones-fila">
+        {% csrf_token %}
+        <label class="etiqueta" for="anio">Ejercicio</label>
+        <input class="campo-num" type="number" name="anio" id="anio" value="{{ hoy.year }}" min="2000" max="9999">
+        <button type="submit" name="accion" value="cerrar_ejercicio" class="button success"
+                data-confirmar="Se crea el asiento de cierre del ejercicio. ¿Seguir?"
+                data-titulo="Cerrar el ejercicio" data-aceptar="Cerrar">
+          <span class="mif-check"></span> Cerrar ejercicio
+        </button>
+        <button type="submit" name="accion" value="reabrir_ejercicio" class="button outline alert"
+                data-confirmar="Se anula el asiento de cierre y se reabren los periodos. ¿Seguir?"
+                data-titulo="Reabrir el ejercicio" data-aceptar="Reabrir">
+          <span class="mif-undo"></span> Reabrir ejercicio
+        </button>
+      </form>
+    </section>
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen">
+      <h2 class="bloque-titulo">Abrir un periodo</h2>
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="accion" value="periodo">
+        {% for campo in formulario %}
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            {{ campo }}
+            {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+          </div>
+        {% endfor %}
+        {% if formulario.non_field_errors %}<p class="error">{{ formulario.non_field_errors.0 }}</p>{% endif %}
+        <div class="acciones-fila">
+          <button type="submit" class="button primary"><span class="mif-plus"></span> Crear periodo</button>
+        </div>
+      </form>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

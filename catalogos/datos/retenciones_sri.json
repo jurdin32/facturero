@@ -1,0 +1,1101 @@
+{
+ "meta": {
+  "fuente": "Servicio de Rentas Internas del Ecuador — Retenciones en la fuente",
+  "archivo_oficial": "porcentajes_retencion_renta_sri.xls",
+  "hoja": "Retenciones Marzo 2026",
+  "normativa": "Resolución NAC-DGERCGC26-00000009 y sus reformas: porcentajes de retención en la fuente del impuesto a la renta vigentes desde el 1 de marzo de 2026.",
+  "normativa_otros": "Tabla 20 (IVA) y 21 (ISD) de la ficha técnica de comprobantes electrónicos del SRI. Códigos de IVA e ISD comprobados uno por uno contra el servicio de autorización del SRI (ambiente de pruebas) el 26/10/2026: 9, 10, 1, 11, 2, 3, 7, 8 y 4580.",
+  "vigente_desde": "2026-03-01",
+  "descargado": "2026-10-26"
+ },
+ "codigos": [
+  {
+   "codigo": "303",
+   "concepto": "Honorarios profesionales y demás pagos por servicios relacionados con el título profesional",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 0
+  },
+  {
+   "codigo": "303A",
+   "concepto": "Servicios profesionales prestados por sociedades residentes",
+   "impuesto": "1",
+   "porcentaje": 5.0,
+   "porcentaje_texto": "",
+   "orden": 1
+  },
+  {
+   "codigo": "304",
+   "concepto": "Servicios predomina el intelecto no relacionados con el título profesional",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 2
+  },
+  {
+   "codigo": "304A",
+   "concepto": "Comisiones y demás pagos por servicios predomina intelecto no relacionados con el título profesional",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 3
+  },
+  {
+   "codigo": "304B",
+   "concepto": "Pagos a notarios y registradores de la propiedad y mercantil por sus actividades ejercidas como tales",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 4
+  },
+  {
+   "codigo": "304C",
+   "concepto": "Pagos a deportistas, entrenadores, árbitros, miembros del cuerpo técnico por sus actividades ejercidas como tales",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 5
+  },
+  {
+   "codigo": "304D",
+   "concepto": "Pagos a artistas por sus actividades ejercidas como tales",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 6
+  },
+  {
+   "codigo": "304E",
+   "concepto": "Honorarios y demás pagos por servicios de docencia",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 7
+  },
+  {
+   "codigo": "307",
+   "concepto": "Servicios predomina la mano de obra",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 8
+  },
+  {
+   "codigo": "308",
+   "concepto": "Utilización o aprovechamiento de la imagen o renombre (personas naturales, sociedades,\" influencers\")",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 9
+  },
+  {
+   "codigo": "309",
+   "concepto": "Servicios prestados por medios de comunicación y agencias de publicidad",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 10
+  },
+  {
+   "codigo": "310",
+   "concepto": "Servicio de transporte privado de pasajeros o transporte público o privado de carga",
+   "impuesto": "1",
+   "porcentaje": 1.0,
+   "porcentaje_texto": "",
+   "orden": 11
+  },
+  {
+   "codigo": "311",
+   "concepto": "Pagos a través de liquidación de compra (nivel cultural o rusticidad)",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 12
+  },
+  {
+   "codigo": "312",
+   "concepto": "Transferencia de bienes muebles de naturaleza corporal",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 13
+  },
+  {
+   "codigo": "312A",
+   "concepto": "COMPRAS AL PRODUCTOR: de bienes de origen bioacuático, forestal y los descritos el art.27.1 de LRTI",
+   "impuesto": "1",
+   "porcentaje": 1.0,
+   "porcentaje_texto": "",
+   "orden": 14
+  },
+  {
+   "codigo": "312C",
+   "concepto": "COMPRAS AL COMERCIALIZADOR: de bienes de origen bioacuático, forestal y los descritos el art.27.1 de LRTI",
+   "impuesto": "1",
+   "porcentaje": 1.75,
+   "porcentaje_texto": "",
+   "orden": 15
+  },
+  {
+   "codigo": "314A",
+   "concepto": "Regalías por concepto de franquicias de acuerdo al Código INGENIOS (COESCCI) - pago a personas naturales",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 16
+  },
+  {
+   "codigo": "314B",
+   "concepto": "Cánones, derechos de autor, marcas, patentes y similares de acuerdo al Código INGENIOS (COESCCI) – pago a personas naturales",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 17
+  },
+  {
+   "codigo": "314C",
+   "concepto": "Regalías por concepto de franquicias de acuerdo al Código INGENIOS (COESCCI) - pago a sociades",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 18
+  },
+  {
+   "codigo": "314D",
+   "concepto": "Cánones, derechos de autor, marcas, patentes y similares de acuerdo al Código INGENIOS (COESCCI)",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 19
+  },
+  {
+   "codigo": "319",
+   "concepto": "Cuotas de arrendamiento mercantil (prestado por sociedades), inclusive la de opción de compra",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 20
+  },
+  {
+   "codigo": "320",
+   "concepto": "Arrendamiento bienes inmuebles",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 21
+  },
+  {
+   "codigo": "322",
+   "concepto": "Seguros y reaseguros (primas y cesiones)",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 22
+  },
+  {
+   "codigo": "323",
+   "concepto": "Rendimientos financieros pagados a naturales y sociedades (No a IFIs)",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 23
+  },
+  {
+   "codigo": "323A",
+   "concepto": "Rendimientos financieros depósitos Cta. Corriente",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 24
+  },
+  {
+   "codigo": "323B1",
+   "concepto": "Rendimientos financieros depósitos Cta. Ahorros Sociedades",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 25
+  },
+  {
+   "codigo": "323E",
+   "concepto": "Rendimientos financieros depósito a plazo fijo gravados",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 26
+  },
+  {
+   "codigo": "323E2",
+   "concepto": "Rendimientos financieros depósito a plazo fijo exentos",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 27
+  },
+  {
+   "codigo": "323F",
+   "concepto": "Rendimientos financieros operaciones de reporto - repos",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 28
+  },
+  {
+   "codigo": "323G",
+   "concepto": "Inversiones (captaciones) rendimientos distintos de aquellos pagados a IFIs",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 29
+  },
+  {
+   "codigo": "323H",
+   "concepto": "Rendimientos financieros obligaciones",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 30
+  },
+  {
+   "codigo": "323I",
+   "concepto": "Rendimientos financieros bonos convertible en acciones",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 31
+  },
+  {
+   "codigo": "323M",
+   "concepto": "Rendimientos financieros : Inversiones en títulos valores en renta fija gravados",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 32
+  },
+  {
+   "codigo": "323N",
+   "concepto": "Rendimientos financieros Inversiones en títulos valores en renta fija exentos",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 33
+  },
+  {
+   "codigo": "323O",
+   "concepto": "Intereses y demás rendimientos financieros pagados a bancos y otras entidades sometidas al control de la Superintendencia de Bancos y de la Economía Popular y Solidaria",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 34
+  },
+  {
+   "codigo": "323P",
+   "concepto": "Intereses pagados por entidades del sector público a favor de sujetos pasivos",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 35
+  },
+  {
+   "codigo": "323Q",
+   "concepto": "Otros intereses y rendimientos financieros gravados",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 36
+  },
+  {
+   "codigo": "323R",
+   "concepto": "Otros intereses y rendimientos financieros exentos",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 37
+  },
+  {
+   "codigo": "323S",
+   "concepto": "Pagos y créditos en cuenta efectuados por el BCE y los depósitos centralizados de valores, en calidad de intermediarios, a instituciones del sistema financiero por cuenta de otras personas naturales y sociedades",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 38
+  },
+  {
+   "codigo": "323T",
+   "concepto": "Rendimientos financieros originados en la deuda pública ecuatoriana",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 39
+  },
+  {
+   "codigo": "323U",
+   "concepto": "Rendimientos financieros originados en títulos valores de obligaciones de 360 días o más para el financiamiento de proyectos públicos en asociación público-privada",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 40
+  },
+  {
+   "codigo": "324A",
+   "concepto": "Intereses en operaciones de crédito entre instituciones del sistema financiero y entidades economía popular y solidaria.",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 41
+  },
+  {
+   "codigo": "324B",
+   "concepto": "Inversiones entre instituciones del sistema financiero y entidades economía popular y solidaria",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 42
+  },
+  {
+   "codigo": "324C",
+   "concepto": "Pagos y créditos en cuenta efectuados por el BCE y los depósitos centralizados de valores, en calidad de intermediarios, a instituciones del sistema financiero por cuenta de otras instituciones del sistema financiero",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 43
+  },
+  {
+   "codigo": "325",
+   "concepto": "Anticipo dividendos",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 44
+  },
+  {
+   "codigo": "325A",
+   "concepto": "Préstamos accionistas, beneficiarios o partícipes residentes o establecidos en el Ecuador",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 45
+  },
+  {
+   "codigo": "3250",
+   "concepto": "Dividendos exentos (por no llegar a franja exenta o beneficio de otras leyes)",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 46
+  },
+  {
+   "codigo": "326",
+   "concepto": "Dividendos distribuidos que correspondan al impuesto a la renta único establecido en el art. 27 de la LRTI",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "12 o 14",
+   "orden": 47
+  },
+  {
+   "codigo": "327",
+   "concepto": "Dividendos distribuidos a personas naturales residentes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "12 o 14",
+   "orden": 48
+  },
+  {
+   "codigo": "328",
+   "concepto": "Dividendos distribuidos a sociedades residentes",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 49
+  },
+  {
+   "codigo": "329",
+   "concepto": "Dividendos distribuidos a fideicomisos residentes",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 50
+  },
+  {
+   "codigo": "331",
+   "concepto": "Dividendos en acciones (capitalización de utilidades)",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 51
+  },
+  {
+   "codigo": "332",
+   "concepto": "Otras compras de bienes y servicios no sujetas a retención (incluye régimen RIMPE - Negocios Populares, para este caso aplica con cualquier forma de pago inclusive los pagos que deban realizar las tarjetas de crédito/débito)",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 52
+  },
+  {
+   "codigo": "332B",
+   "concepto": "Compra de bienes inmuebles",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 53
+  },
+  {
+   "codigo": "332C",
+   "concepto": "Transporte público de pasajeros",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 54
+  },
+  {
+   "codigo": "332D",
+   "concepto": "Pagos en el país por transporte de pasajeros o transporte internacional de carga, a compañías nacionales o extranjeras de aviación o marítimas",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 55
+  },
+  {
+   "codigo": "332E",
+   "concepto": "Valores entregados por las cooperativas de transporte a sus socios",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 56
+  },
+  {
+   "codigo": "332F",
+   "concepto": "Compraventa de divisas distintas al dólar de los Estados Unidos de América",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 57
+  },
+  {
+   "codigo": "332G",
+   "concepto": "Pagos con tarjeta de crédito",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 58
+  },
+  {
+   "codigo": "332H",
+   "concepto": "Pago al exterior tarjeta de crédito reportada por la Emisora de tarjeta de crédito, solo recap",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 59
+  },
+  {
+   "codigo": "332I",
+   "concepto": "Pago a través de convenio de debito (Clientes IFI`s)",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 60
+  },
+  {
+   "codigo": "333",
+   "concepto": "Ganancia en la enajenación de derechos representativos de capital u otros derechos que permitan la exploración, explotación, concesión o similares de sociedades, que se coticen en bolsa de valores del Ecuador",
+   "impuesto": "1",
+   "porcentaje": 10.0,
+   "porcentaje_texto": "",
+   "orden": 61
+  },
+  {
+   "codigo": "334",
+   "concepto": "Contraprestación producida por la enajenación de derechos representativos de capital u otros derechos que permitan la exploración, explotación, concesión o similares de sociedades, no cotizados en bolsa de valores del Ecuador",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 62
+  },
+  {
+   "codigo": "335",
+   "concepto": "Loterías, rifas, pronósticos deportivos, apuestas y similares",
+   "impuesto": "1",
+   "porcentaje": 15.0,
+   "porcentaje_texto": "",
+   "orden": 63
+  },
+  {
+   "codigo": "336",
+   "concepto": "Venta de combustibles a comercializadoras",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "2/mil",
+   "orden": 64
+  },
+  {
+   "codigo": "337",
+   "concepto": "Venta de combustibles a distribuidores",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3/mil",
+   "orden": 65
+  },
+  {
+   "codigo": "338",
+   "concepto": "Producción y venta local de banano producido o no por el mismo sujeto pasivo",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "1 a 2",
+   "orden": 66
+  },
+  {
+   "codigo": "340",
+   "concepto": "Impuesto único a la exportación de banano",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 67
+  },
+  {
+   "codigo": "343",
+   "concepto": "Otras retenciones aplicables el 1% (incluye régimen RIMPE - Emprendedores, para este caso aplica con cualquier forma de pago inclusive los pagos que deban realizar las tarjetas de crédito/débito)",
+   "impuesto": "1",
+   "porcentaje": 1.0,
+   "porcentaje_texto": "",
+   "orden": 68
+  },
+  {
+   "codigo": "343A",
+   "concepto": "Energía eléctrica",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 69
+  },
+  {
+   "codigo": "343B",
+   "concepto": "Actividades de construcción de obra material inmueble, urbanización, lotización o actividades similares",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 70
+  },
+  {
+   "codigo": "343C",
+   "concepto": "Recepción de botellas plásticas no retornables de PET",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 71
+  },
+  {
+   "codigo": "3440",
+   "concepto": "Otras retenciones aplicables el 3%",
+   "impuesto": "1",
+   "porcentaje": 3.0,
+   "porcentaje_texto": "",
+   "orden": 72
+  },
+  {
+   "codigo": "344A",
+   "concepto": "Pago local tarjeta de crédito /débito reportada por la Emisora de tarjeta de crédito / entidades del sistema financiero/sistemas auxiliares de pago",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 73
+  },
+  {
+   "codigo": "344B",
+   "concepto": "Adquisición de sustancias minerales dentro del territorio nacional",
+   "impuesto": "1",
+   "porcentaje": 2.0,
+   "porcentaje_texto": "",
+   "orden": 74
+  },
+  {
+   "codigo": "346",
+   "concepto": "Otras retenciones aplicables a otros porcentajes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "varios porcentajes",
+   "orden": 75
+  },
+  {
+   "codigo": "346A",
+   "concepto": "Otras ganancias de capital distintas de enajenación de derechos representativos de capital",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "varios porcentajes",
+   "orden": 76
+  },
+  {
+   "codigo": "346B",
+   "concepto": "Donaciones en dinero -Impuesto a las donaciones",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "Conforme Art 36 LRTI literal d)",
+   "orden": 77
+  },
+  {
+   "codigo": "346C",
+   "concepto": "Retención a cargo del propio sujeto pasivo por la producción y/o comercialización de minerales y otros bienes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0 a 10 (NAC-DGERCGC16-00000217 y sus reformas)",
+   "orden": 78
+  },
+  {
+   "codigo": "346D",
+   "concepto": "Retención a cargo del propio sujeto pasivo por la comercialización de productos forestales",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0 o 10",
+   "orden": 79
+  },
+  {
+   "codigo": "350",
+   "concepto": "Otras autorretenciones (inciso 1 y 2 Art.92.1 RLRTI)",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "1,50 o 1,75",
+   "orden": 80
+  },
+  {
+   "codigo": "3480",
+   "concepto": "Impuesto a la renta único sobre los ingresos percibidos por los operadores de pronósticos deportivos",
+   "impuesto": "1",
+   "porcentaje": 15.0,
+   "porcentaje_texto": "",
+   "orden": 81
+  },
+  {
+   "codigo": "3481",
+   "concepto": "Autorretenciones Sociedades Grandes Contribuyentes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "varios porcentajes (Conforme RESOLUCIÓN No. NAC-DGERCGC24-00000024 y sus reformas)",
+   "orden": 82
+  },
+  {
+   "codigo": "3482",
+   "concepto": "Comisiones a sociedades, nacionales o extranjeras residentes y establecimientos permanentes domiciliados en el país",
+   "impuesto": "1",
+   "porcentaje": 5.0,
+   "porcentaje_texto": "",
+   "orden": 83
+  },
+  {
+   "codigo": "500",
+   "concepto": "Pago a no residentes - Rentas Inmobiliarias",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "25 o 37",
+   "orden": 84
+  },
+  {
+   "codigo": "501",
+   "concepto": "Pago a no residentes - Beneficios/Servicios Empresariales",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "25 o 37",
+   "orden": 85
+  },
+  {
+   "codigo": "501A",
+   "concepto": "Pago a no residentes - Servicios técnicos, administrativos o de consultoría y regalías",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10, 15, 25, 37 (Las tarifas 3 y 8 solo en pagos de Regalías bajo el CDI con China)",
+   "orden": 86
+  },
+  {
+   "codigo": "503",
+   "concepto": "Pago a no residentes- Navegación Marítima y/o aérea",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0 o 25 o 37",
+   "orden": 87
+  },
+  {
+   "codigo": "504",
+   "concepto": "Pago a no residentes- Dividendos distribuidos a personas naturales (domiciliados o no en paraíso fiscal) o a sociedades sin beneficiario efectivo persona natural residente en Ecuador",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10 (5 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 88
+  },
+  {
+   "codigo": "504A",
+   "concepto": "Dividendos a sociedades con beneficiario efectivo persona natural residente en el Ecuador",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10, 12 (5 y 10 es por la tarifa de CDI. Las tarifas 3 y 8 aplica únicamente bajo el CDI con China",
+   "orden": 89
+  },
+  {
+   "codigo": "504B",
+   "concepto": "Dividendos a no residentes incumpliendo el deber de informar la composición societaria",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10, 14 (5 y 10 es por la tarifa de CDI. Las tarifas 3 y 8 aplica únicamente bajo el CDI con China",
+   "orden": 90
+  },
+  {
+   "codigo": "504C",
+   "concepto": "Dividendos a residentes o establecidos en paraísos fiscales o regímenes de menor imposición (con beneficiario Persona Natural residente en Ecuador)",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10, 14 (5 y 10 es por la tarifa de CDI. Las tarifas 3 y 8 aplica únicamente bajo el CDI con China",
+   "orden": 91
+  },
+  {
+   "codigo": "504D",
+   "concepto": "Dividendos a fideicomisos o establecidos en paraísos fiscales o regímenes de menor imposición (con beneficiario Persona Natural residente en Ecuador)",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3, 5, 8, 10, 14 (5 y 10 es por la tarifa de CDI. Las tarifas 3 y 8 aplica únicamente bajo el CDI con China",
+   "orden": 92
+  },
+  {
+   "codigo": "504E",
+   "concepto": "Pago a no residentes - Anticipo dividendos (no domiciliada en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 93
+  },
+  {
+   "codigo": "504F",
+   "concepto": "Pago a no residentes - Anticipo dividendos (domiciliadas en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 94
+  },
+  {
+   "codigo": "504G",
+   "concepto": "Pago a no residentes - Préstamos accionistas, beneficiarios o partícipes (no domiciliadas en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 95
+  },
+  {
+   "codigo": "504H",
+   "concepto": "Pago a no residentes - Préstamos accionistas, beneficiarios o partícipes (domiciliadas en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 96
+  },
+  {
+   "codigo": "504I",
+   "concepto": "Pago a no residentes - Préstamos no comerciales a partes relacionadas (no domiciliadas en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 97
+  },
+  {
+   "codigo": "504J",
+   "concepto": "Pago a no residentes - Préstamos no comerciales a partes relacionadas (domiciliadas en paraísos fiscales o regímenes de menor imposición)",
+   "impuesto": "1",
+   "porcentaje": 25.0,
+   "porcentaje_texto": "",
+   "orden": 98
+  },
+  {
+   "codigo": "505",
+   "concepto": "Pago a no residentes - Rendimientos financieros",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 99
+  },
+  {
+   "codigo": "505A",
+   "concepto": "Pago a no residentes – Intereses de créditos de Instituciones Financieras del exterior",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China; 0 o 25 art.13 LRTI)",
+   "orden": 100
+  },
+  {
+   "codigo": "505B",
+   "concepto": "Pago a no residentes – Intereses de créditos de gobierno a gobierno",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China; 0 o 25 art.13 LRTI)",
+   "orden": 101
+  },
+  {
+   "codigo": "505C",
+   "concepto": "Pago a no residentes – Intereses de créditos de organismos multilaterales",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China; 0 o 25 art.13 LRTI)",
+   "orden": 102
+  },
+  {
+   "codigo": "505D",
+   "concepto": "Pago a no residentes - Intereses por financiamiento de proveedores externos",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 103
+  },
+  {
+   "codigo": "505E",
+   "concepto": "Pago a no residentes - Intereses de otros créditos externos",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 104
+  },
+  {
+   "codigo": "505F",
+   "concepto": "Pago a no residentes - Otros Intereses y Rendimientos Financieros",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 105
+  },
+  {
+   "codigo": "509",
+   "concepto": "Pago a no residentes- Cánones, derechos de autor, marcas, patentes y similares",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25,37 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 106
+  },
+  {
+   "codigo": "509A",
+   "concepto": "Pago a no residentes - Regalías por concepto de franquicias",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "3,5,8,10,15,25,37 (5, 10 y 15 es por la tarifa de CDI Las tarifas 3 y 8 aplica únicamente bajo el CDI con China)",
+   "orden": 107
+  },
+  {
+   "codigo": "510",
+   "concepto": "Pago a no residentes - Otras ganancias de capital distintas de enajenación de derechos representativos de capital",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 108
+  },
+  {
+   "codigo": "511",
+   "concepto": "Pago a no residentes - Servicios profesionales independientes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 109
+  },
+  {
+   "codigo": "512",
+   "concepto": "Pago a no residentes - Servicios profesionales dependientes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 110
+  },
+  {
+   "codigo": "513A",
+   "concepto": "Pago a no residentes - Deportistas",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 111
+  },
+  {
+   "codigo": "514",
+   "concepto": "Pago a no residentes - Participación de consejeros",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "25 o 37",
+   "orden": 112
+  },
+  {
+   "codigo": "515",
+   "concepto": "Pago a no residentes- Artistas y relacionados a organización, producción y espectáculos artísticos y culturales en Ecuador",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "15, 25, 37; según Art. 39.3 LRTI y la Resolución NAC-DGERCGC24-00000008",
+   "orden": 113
+  },
+  {
+   "codigo": "516",
+   "concepto": "Pago a no residentes - Pensiones",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37 (0 por casuística de CDI)",
+   "orden": 114
+  },
+  {
+   "codigo": "517",
+   "concepto": "Pago a no residentes- Reembolso de Gastos",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0 al 37",
+   "orden": 115
+  },
+  {
+   "codigo": "518",
+   "concepto": "Pago a no residentes- Funciones Públicas",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37 (0 por casuística de CDI)",
+   "orden": 116
+  },
+  {
+   "codigo": "519",
+   "concepto": "Pago a no residentes - Estudiantes",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "25 o 37",
+   "orden": 117
+  },
+  {
+   "codigo": "520A",
+   "concepto": "Pago a no residentes - Pago a proveedores de servicios hoteleros y turísticos en el exterior",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "25 o 37",
+   "orden": 118
+  },
+  {
+   "codigo": "520B",
+   "concepto": "Pago a no residentes - Arrendamientos mercantil internacional",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 119
+  },
+  {
+   "codigo": "520D",
+   "concepto": "Pago a no residentes - Comisiones por exportaciones y por promoción de turismo receptivo",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 120
+  },
+  {
+   "codigo": "520E",
+   "concepto": "Pago a no residentes - Por las empresas de transporte marítimo o aéreo y por empresas pesqueras de alta mar, por su actividad.",
+   "impuesto": "1",
+   "porcentaje": 0.0,
+   "porcentaje_texto": "",
+   "orden": 121
+  },
+  {
+   "codigo": "520F",
+   "concepto": "Pago a no residentes - Por las agencias internacionales de prensa",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 122
+  },
+  {
+   "codigo": "520G",
+   "concepto": "Pago a no residentes - Contratos de fletamento de naves para empresas de transporte aéreo o marítimo internacional",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 25, 37",
+   "orden": 123
+  },
+  {
+   "codigo": "521",
+   "concepto": "Pago a no residentes - Enajenación de derechos representativos de capital u otros derechos que permitan la exploración, explotación, concesión o similares de sociedades",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0, 10 (0 por casuística de CDI)",
+   "orden": 124
+  },
+  {
+   "codigo": "523A",
+   "concepto": "Pago a no residentes - Seguros y reaseguros (primas y cesiones)",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "0 ,25 ,37",
+   "orden": 125
+  },
+  {
+   "codigo": "525",
+   "concepto": "Pago a no residentes- Donaciones en dinero -Impuesto a las donaciones",
+   "impuesto": "1",
+   "porcentaje": null,
+   "porcentaje_texto": "Según art 36 LRTI literal d)",
+   "orden": 126
+  },
+  {
+   "codigo": "9",
+   "concepto": "Retención de IVA del 10 % en la adquisición de bienes",
+   "impuesto": "2",
+   "porcentaje": 10,
+   "porcentaje_texto": "",
+   "orden": 0
+  },
+  {
+   "codigo": "10",
+   "concepto": "Retención de IVA del 20 % en la adquisición de servicios",
+   "impuesto": "2",
+   "porcentaje": 20,
+   "porcentaje_texto": "",
+   "orden": 1
+  },
+  {
+   "codigo": "1",
+   "concepto": "Retención de IVA del 30 % en la adquisición de bienes",
+   "impuesto": "2",
+   "porcentaje": 30,
+   "porcentaje_texto": "",
+   "orden": 2
+  },
+  {
+   "codigo": "11",
+   "concepto": "Retención de IVA del 50 % en la adquisición de servicios",
+   "impuesto": "2",
+   "porcentaje": 50,
+   "porcentaje_texto": "",
+   "orden": 3
+  },
+  {
+   "codigo": "2",
+   "concepto": "Retención de IVA del 70 % en la adquisición de servicios",
+   "impuesto": "2",
+   "porcentaje": 70,
+   "porcentaje_texto": "",
+   "orden": 4
+  },
+  {
+   "codigo": "3",
+   "concepto": "Retención de IVA del 100 % en la adquisición de servicios",
+   "impuesto": "2",
+   "porcentaje": 100,
+   "porcentaje_texto": "",
+   "orden": 5
+  },
+  {
+   "codigo": "7",
+   "concepto": "Retención de IVA en cero",
+   "impuesto": "2",
+   "porcentaje": 0,
+   "porcentaje_texto": "",
+   "orden": 6
+  },
+  {
+   "codigo": "8",
+   "concepto": "No procede retención de IVA",
+   "impuesto": "2",
+   "porcentaje": 0,
+   "porcentaje_texto": "",
+   "orden": 7
+  },
+  {
+   "codigo": "4580",
+   "concepto": "Retención del impuesto a la salida de divisas (ISD)",
+   "impuesto": "6",
+   "porcentaje": 5,
+   "porcentaje_texto": "",
+   "orden": 0
+  }
+ ]
+}

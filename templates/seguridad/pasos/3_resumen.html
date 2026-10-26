@@ -1,0 +1,67 @@
+<section class="bloque">
+  <h2 class="bloque-titulo">El rol, como queda</h2>
+  <div class="row">
+    <div class="cell-12 cell-md-6">
+      <div class="campo-caja">
+        <span class="etiqueta">Nombre</span>
+        <span class="listado-titulo">{{ rol.nombre }}</span>
+        <span class="listado-meta">{{ rol.descripcion|default:"Sin descripción" }}</span>
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3">
+      <div class="campo-caja">
+        <span class="etiqueta">Estado</span>
+        <span class="chip {% if rol.activo %}success{% else %}dark{% endif %}">
+          <span class="icon {% if rol.activo %}mif-checkmark{% else %}mif-power{% endif %}"></span>
+          <span class="label">{% if rol.activo %}Activo{% else %}Apagado{% endif %}</span>
+        </span>
+      </div>
+    </div>
+    <div class="cell-6 cell-md-3">
+      <div class="campo-caja">
+        <span class="etiqueta">Usuarios</span>
+        <span class="listado-titulo cifra">{{ cuantos_usuarios }}</span>
+        <span class="listado-meta">lo llevan</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bloque">
+  <h2 class="bloque-titulo">Qué puede hacer</h2>
+  <p class="subtitulo">
+    <span class="cifra">{{ cuantas_opciones }}</span> de {{ opciones_totales }} opciones,
+    <span class="cifra">{{ con_escritura }}</span> para modificar.
+  </p>
+
+  <div class="tabla-envoltura">
+    <table class="datos">
+      <thead>
+        <tr>
+          <th>Apartado</th>
+          <th>Opción de la aplicación</th>
+          <th class="col-estado">Nivel</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for grupo, opciones in niveles %}
+          {% for opcion, nivel in opciones %}
+            <tr>
+              <td class="tenue">{% if forloop.first %}{{ grupo }}{% endif %}</td>
+              <td>{{ opcion.nombre }}</td>
+              <td class="col-estado">
+                {% if nivel == "escritura" %}
+                  <span class="chip success"><span class="icon mif-pencil"></span><span class="label">Lee y escribe</span></span>
+                {% elif nivel == "lectura" %}
+                  <span class="chip primary"><span class="icon mif-eye"></span><span class="label">Lee</span></span>
+                {% else %}
+                  <span class="chip"><span class="label">Sin acceso</span></span>
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>

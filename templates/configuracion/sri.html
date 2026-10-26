@@ -1,0 +1,172 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración del SRI{% endblock %}
+
+{% comment %}
+El asistente de configuración del SRI, en cuatro pasos. La barra de arriba dice
+por dónde va y deja saltar a cualquier paso; debajo, el paso que se esté viendo.
+
+Los formularios de cada paso están en templates/configuracion/pasos/: aquí solo
+se elige cuál toca, para no tener un fichero de mil líneas.
+{% endcomment %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Configuración del SRI</h1>
+    <p class="subtitulo">
+      {% if configuracion %}
+        {{ configuracion.razon_social }} · RUC <span class="mono">{{ configuracion.ruc }}</span> ·
+        serie <span class="mono">{{ configuracion.estab }}-{{ configuracion.pto_emi }}</span>
+      {% else %}
+        Cuatro pasos para dejar lista la emisión electrónica.
+      {% endif %}
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    {% if configuracion %}
+      <span class="ambiente {% if configuracion.ambiente == 2 %}ambiente-produccion{% endif %}">{{ configuracion.get_ambiente_display }}</span>
+    {% endif %}
+    {# Los botones de cada paso viven aquí, en la barra que no se mueve. #}
+    {% if paso == 1 %}
+      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>
+      <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=2{% if configuracion %}&c={{ configuracion.pk }}{% endif %}">Ahora no</a>
+    {% elif paso == 2 %}
+      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y seguir</button>
+      <button type="submit" form="formulario-secuenciales" class="button outline dark"><span class="mif-checkmark"></span> Guardar los secuenciales</button>
+      <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=3&c={{ configuracion.pk }}">Ahora no</a>
+    {% elif paso == 3 %}
+      <button type="submit" form="formulario-paso" class="button success"><span class="mif-checkmark"></span> Guardar y comprobar</button>
+      <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=4&c={{ configuracion.pk }}">Ahora no</a>
+    {% endif %}
+    <a class="button outline dark" href="{% url 'facturacion:tablero' %}">Volver al tablero</a>
+  </div>
+</div>
+
+{% if configuraciones|length > 1 or configuracion %}
+  <div class="fichas-configuracion">
+    {% for ficha in configuraciones %}
+      <a class="chip {% if configuracion and ficha.pk == configuracion.pk %}primary{% else %}soft{% endif %}"
+         href="{% url 'configuracion:sri' %}?paso=1&c={{ ficha.pk }}">
+        <span class="mif-cog icon" aria-hidden="true"></span>
+        <span class="label">{{ ficha.nombre }} · {% if ficha.ambiente == 2 %}producción{% else %}pruebas{% endif %}</span>
+      </a>
+    {% endfor %}
+    <form method="post" action="{% url 'configuracion:otra' %}">{% csrf_token %}
+      <button type="submit" class="boton-plano">
+        <span class="mif-plus" aria-hidden="true"></span> Añadir otra configuración
+      </button>
+    </form>
+  </div>
+{% endif %}
+
+<div class="bloque asistente">
+  <div class="asistente-barra">
+    {% include "fragmentos/progreso.html" with valor=porcentaje etiqueta="Progreso de la configuración" %}
+    <span class="asistente-cuenta">{{ porcentaje }}%</span>
+  </div>
+  <ol class="pasos">
+    {% for ficha in pasos %}
+      <li class="paso{% if ficha.numero == paso %} paso-activo{% endif %}{% if ficha.hecho %} paso-hecho{% endif %}">
+        <a href="{% url 'configuracion:sri' %}?paso={{ ficha.numero }}{% if configuracion %}&c={{ configuracion.pk }}{% endif %}"
+           {% if ficha.numero == paso %}aria-current="step"{% endif %}>
+          <span class="paso-numero">
+            {% if ficha.hecho and ficha.numero != paso %}<span class="mif-checkmark" aria-hidden="true"></span>{% else %}{{ ficha.numero }}{% endif %}
+          </span>
+          <span class="paso-texto">
+            <span class="paso-titulo">{{ ficha.titulo }}</span>
+            <span class="paso-que">{{ ficha.que }}</span>
+          </span>
+        </a>
+      </li>
+    {% endfor %}
+  </ol>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    {% if paso == 1 %}
+      {% include "configuracion/pasos/1_emisor.html" %}
+    {% elif paso == 2 %}
+      {% include "configuracion/pasos/2_sri.html" %}
+    {% elif paso == 3 %}
+      {% include "configuracion/pasos/3_certificado.html" %}
+    {% else %}
+      {% include "configuracion/pasos/4_comprobar.html" %}
+    {% endif %}
+  </div>
+
+  <aside class="columna-lateral">
+    {% if configuracion %}
+      {% comment %}
+        El logo no es un dato fiscal, así que tiene su propio envío: se cambia
+        cuando se quiera sin tocar los datos del emisor.
+      {% endcomment %}
+      <section class="bloque">
+        <h2 class="bloque-titulo">Logo en el RIDE</h2>
+
+        {% if logo %}
+          <div class="logo-vista">
+            <img src="{{ logo.url }}" alt="Logo de {{ configuracion.razon_social }}">
+          </div>
+          <form method="post" action="{% url 'configuracion:logo' %}" class="acciones-fila">
+            {% csrf_token %}
+            <input type="hidden" name="c" value="{{ configuracion.pk }}">
+            <input type="hidden" name="quitar" value="1">
+            <button type="submit" class="button small outline alert">Quitar el logo</button>
+          </form>
+        {% else %}
+          <p class="ayuda">Todavía no hay logo: el RIDE sale solo con los datos del emisor.</p>
+        {% endif %}
+
+        <form method="post" action="{% url 'configuracion:logo' %}"
+              enctype="multipart/form-data" class="logo-form">
+          {% csrf_token %}
+          <input type="hidden" name="c" value="{{ configuracion.pk }}">
+          <div class="campo-caja">
+            <label class="etiqueta" for="logo-imagen">
+              {% if logo %}Cambiar el logo{% else %}Subir el logo{% endif %}
+            </label>
+            <input type="file" id="logo-imagen" name="imagen" required
+                   accept=".png,.jpg,.jpeg,.svg,.webp">
+            <p class="ayuda">PNG, JPG, SVG o WEBP, hasta 2 MB. Mejor con fondo transparente.</p>
+          </div>
+          <div class="acciones-fila">
+            <button type="submit" class="button success small">Guardar el logo</button>
+          </div>
+        </form>
+      </section>
+    {% endif %}
+
+    <div class="resumen">
+      <h2 class="bloque-titulo">Qué falta</h2>
+      {% if paso == 4 and not comprobaciones.hay_errores and not comprobaciones.firma.problemas %}
+        <div class="aviso aviso-success">Todo listo para emitir.</div>
+      {% endif %}
+      <ul class="lista-falta">
+        {% for ficha in pasos %}
+          <li>
+            <a class="enlace" href="{% url 'configuracion:sri' %}?paso={{ ficha.numero }}{% if configuracion %}&c={{ configuracion.pk }}{% endif %}">
+              {{ ficha.numero }}. {{ ficha.titulo }}
+            </a>
+            {% if ficha.hecho %}
+              <span class="chip success soft small">listo</span>
+            {% elif ficha.falta %}
+              <span class="ayuda">{{ ficha.falta }}</span>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      {% if configuracion %}
+        <div class="acciones">
+          <a class="button outline dark" href="{% url 'configuracion:sri' %}?paso=4&c={{ configuracion.pk }}">
+            <span class="mif-checkmark" aria-hidden="true"></span> Comprobar
+          </a>
+        </div>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

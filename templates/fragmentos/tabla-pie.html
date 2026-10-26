@@ -1,0 +1,34 @@
+{% comment %}
+El pie de una tabla: cuántas filas se están viendo y los botones de página.
+{% endcomment %}
+<div class="tabla-pie">
+  <p class="tabla-cuenta">
+    {% if tabla.total %}
+      Mostrando <strong>{{ tabla.desde }}</strong> a <strong>{{ tabla.hasta }}</strong> de
+      <strong>{{ tabla.total }}</strong>
+    {% else %}
+      Sin resultados
+    {% endif %}
+  </p>
+
+  {% if tabla.paginas %}
+    <nav class="paginacion" aria-label="Páginas de la tabla">
+      <a class="pagina-boton{% if not tabla.enlace_anterior %} apagada{% endif %}"
+         href="{{ tabla.enlace_anterior|default:'#' }}"{% if not tabla.enlace_anterior %} aria-disabled="true" tabindex="-1"{% endif %}>
+        <span class="mif-chevron-left" aria-hidden="true"></span> Anterior
+      </a>
+      {% for pagina in tabla.paginas %}
+        {% if pagina %}
+          <a class="pagina-boton{% if pagina.activa %} activa{% endif %}" href="{{ pagina.enlace }}"
+             {% if pagina.activa %}aria-current="page"{% endif %}>{{ pagina.numero }}</a>
+        {% else %}
+          <span class="pagina-puntos">…</span>
+        {% endif %}
+      {% endfor %}
+      <a class="pagina-boton{% if not tabla.enlace_siguiente %} apagada{% endif %}"
+         href="{{ tabla.enlace_siguiente|default:'#' }}"{% if not tabla.enlace_siguiente %} aria-disabled="true" tabindex="-1"{% endif %}>
+        Siguiente <span class="mif-chevron-right" aria-hidden="true"></span>
+      </a>
+    </nav>
+  {% endif %}
+</div>

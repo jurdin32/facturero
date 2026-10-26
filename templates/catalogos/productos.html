@@ -1,0 +1,138 @@
+{% extends "base.html" %}
+{% block titulo %}Productos y servicios{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Productos y servicios</h1>
+    <p class="subtitulo">
+      {{ cuantos_bienes }} bien{{ cuantos_bienes|pluralize:"es" }} ·
+      {{ cuantos_servicios }} servicio{{ cuantos_servicios|pluralize:"s" }} ·
+      <a class="enlace" href="{% url 'inventario:inventario' %}">ver el inventario</a>
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="tipo">Tipo</label>
+        <select name="tipo" id="tipo" data-role="select" data-prepend="<span class='mif-cube'></span>">
+          <option value="">Todo</option>
+          {% for valor, nombre in tipos %}
+            <option value="{{ valor }}" {% if filtros.tipo == valor %}selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-flag'></span>">
+          <option value="">Todos</option>
+          <option value="activos" {% if filtros.estado == 'activos' %}selected{% endif %}>Se facturan</option>
+          <option value="inactivos" {% if filtros.estado == 'inactivos' %}selected{% endif %}>Retirados</option>
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'catalogos:productos' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if productos %}
+  <div class="desliza"><table id="tabla-productos" class="table small libro libro-productos listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Producto o servicio</th>
+        <th class="col-detalles">Detalles</th>
+        <th class="col-stock">Existencias</th>
+        <th class="col-tipo">Tipo</th>
+        <th class="col-dato">Precio</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in productos %}
+        <tr>
+          <td class="col-marca">
+            <span class="marca {% if not p.activo %}tenue{% endif %}">
+              <span class="mif-{% if p.es_servicio %}cog{% else %}cube{% endif %}"></span>
+            </span>
+          </td>
+          <td class="col-principal">
+            <span class="listado-titulo {% if not p.activo %}tenue{% endif %}">{{ p.descripcion }}</span>
+            {% if p.datos_adicionales %}<span class="listado-meta">{{ p.datos_adicionales }}</span>{% endif %}     
+          </td>
+          <td class="col-detalles">
+              <span class="listado-meta cifra">
+              {{ p.codigo_principal }}{% if p.unidad_medida %} · {{ p.unidad_medida }}{% endif %} · {{ p.get_codigo_porcentaje_iva_display }}
+            </span>
+            <span class="listado-meta">
+              {% if not p.cuantas_veces %}sin facturar
+              {% elif p.cuantas_veces == 1 %}1 vez facturado
+              {% else %}{{ p.cuantas_veces }} veces facturado{% endif %}
+            </span>
+          </td>
+          <td class="col-stock">
+            {% if p.es_producto %}
+              {% with existencia=p.existencia %}
+                {% if existencia.minimo %}
+                  <span class="stock-celda" title="Mínimo {{ existencia.minimo|floatformat:"-3" }}">
+                    <span class="cifra {% if existencia.bajo_minimo %}stock-bajo{% endif %}">{{ existencia.cantidad|default:0|floatformat:"-3" }}</span>
+                    {% include "fragmentos/progreso.html" with valor=existencia.cobertura clase=existencia.clase_cobertura etiqueta="Existencias frente al mínimo" %}
+                  </span>
+                {% else %}
+                  <span class="cifra tenue">{{ existencia.cantidad|default:0|floatformat:"-3" }}</span>
+                {% endif %}
+              {% endwith %}
+            {% else %}
+              <span class="listado-meta tenue">Indefinido</span>
+              
+            {% endif %}
+          </td>
+          <td class="col-tipo">
+            <span class="listado-chips">
+              {% if p.es_servicio %}
+                <span class="chip info soft"><span class="label">Servicio</span></span>
+              {% else %}
+                <span class="chip primary soft"><span class="label">Bien</span></span>
+              {% endif %}
+              {% if not p.activo %}<span class="chip"><span class="label">retirado</span></span>{% endif %}
+            </span>
+          </td>
+          <td class="col-dato">
+            <span class="listado-cifra cifra" title="Lo que paga el cliente">{{ p.precio_con_iva|floatformat:2 }}</span>
+            <span class="listado-meta cifra">{{ p.precio_unitario|floatformat:2 }} + {{ p.get_codigo_porcentaje_iva_display }}</span>
+            
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline primary" href="{% url 'catalogos:producto' p.pk %}"
+               title="Editar {{ p.descripcion }}" aria-label="Editar"><span class="mif-pencil"></span></a>
+            {% if p.es_producto %}
+              <a class="button small square outline dark" href="{% url 'inventario:kardex' p.pk %}"
+                 title="Libro de movimientos" aria-label="Libro de movimientos"><span class="mif-history"></span></a>
+            {% endif %}
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">{{ cuantos }} en la lista. Los retirados no se ofrecen al facturar, pero siguen en el histórico.</p>
+{% else %}
+  <div class="vacio">
+    <p>El catálogo está vacío.</p>
+    <p class="tenue">Un producto o servicio es lo que después se elige en la línea de la factura.</p>
+    <p><a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir el primero</a></p>
+  </div>
+{% endif %}
+
+{% endblock %}

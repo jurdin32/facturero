@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}Manual del sistema{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+El manual de uso. Va por secciones —una por tema del menú— y cada una lleva lo que
+hace la pantalla, los pasos y su captura. Las capturas se buscan en
+``static/img/manual/``: si falta alguna, la sección sigue explicando el paso.
+{% endcomment %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Manual del sistema</h1>
+    <p class="subtitulo">
+      Qué hace cada pantalla, en qué orden se usa y qué se espera de cada paso. Los
+      permisos deciden qué partes se ven: si alguna no aparece en su menú, no es un
+      error del manual, es que su rol no la tiene.
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <button class="button small" type="button" onclick="window.print()">
+      <span class="mif-printer"></span> Imprimir el manual
+    </button>
+  </div>
+</div>
+
+<nav class="manual-indice" aria-label="Índice del manual">
+  <p class="manual-indice-titulo">Contenido</p>
+  <ol>
+    {% for clave, titulo in indice %}
+      <li><a href="#{{ clave }}">{{ titulo }}</a></li>
+    {% endfor %}
+  </ol>
+</nav>
+
+{% for seccion in secciones %}
+  <section class="bloque manual-seccion" id="{{ seccion.clave }}">
+    <h2 class="bloque-titulo">
+      <span class="manual-numero">{{ forloop.counter }}</span>
+      {{ seccion.titulo }}
+    </h2>
+    <p class="manual-resumen">{{ seccion.resumen }}</p>
+
+    {% if seccion.imagenes %}
+      {% for imagen in seccion.imagenes %}
+        <figure class="manual-figura">
+          <img class="manual-captura" src="{{ imagen }}" alt="Captura de la pantalla: {{ seccion.titulo }}" loading="lazy">
+          {% if forloop.first %}
+            <figcaption class="ayuda">La pantalla tal como se ve al entrar.</figcaption>
+          {% endif %}
+        </figure>
+      {% endfor %}
+    {% endif %}
+
+    <ol class="manual-pasos">
+      {% for paso in seccion.pasos %}
+        <li>{{ paso }}</li>
+      {% endfor %}
+    </ol>
+
+    <p class="manual-volver"><a href="#top">Volver al contenido</a></p>
+  </section>
+{% endfor %}
+
+<section class="bloque bloque-suave manual-seccion">
+  <h2 class="bloque-titulo">Si algo no sale</h2>
+  <ul class="lista-ayuda">
+    <li>
+      <strong>El SRI devuelve el comprobante.</strong> La ficha del comprobante muestra el
+      identificador y el texto del error tal como lo devolvió el SRI; en «Corregir» se
+      arregla lo que falte y se vuelve a emitir.
+    </li>
+    <li>
+      <strong>No aparece una opción del menú.</strong> Es un permiso: el administrador lo
+      da en «Roles y permisos» y luego lo asigna al usuario.
+    </li>
+    <li>
+      <strong>Un reporte sale vacío.</strong> Revise el período y que los comprobantes
+      estén autorizados: los borradores y los devueltos no cuentan como venta.
+    </li>
+    <li>
+      <strong>El PDF no lleva el logo.</strong> Si el emisor no tiene logo cargado, el
+      reporte sale con el de Factiz; se cambia en «Configuración del SRI», paso 1.
+    </li>
+  </ul>
+</section>
+
+{% endblock %}

@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+{% block titulo %}{{ producto.descripcion }} · inventario{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{{ producto.descripcion }}</h1>
+    <p class="subtitulo">
+      <span class="cifra">{{ producto.codigo_principal }}</span> ·
+      <a class="enlace" href="{% url 'catalogos:producto' producto.pk %}">editar el producto</a> ·
+      <a class="enlace" href="{% url 'inventario:inventario' %}">volver al inventario</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <span class="dato-fuerte">
+      Existencia: <span class="mono {% if existencia.bajo_minimo %}stock-bajo{% endif %}">{{ existencia.cantidad|floatformat:"-3" }}</span>
+      {% if producto.unidad_medida %}<span class="tenue">{{ producto.unidad_medida }}</span>{% endif %}
+    </span>
+    <button type="submit" form="formulario-movimiento" class="button success">
+      <span class="mif-checkmark" aria-hidden="true"></span> Registrar el movimiento
+    </button>
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    <section class="bloque">
+      <h2 class="bloque-titulo">El libro</h2>
+      {% if filas %}
+        <div class="desliza"><table id="tabla-kardex" class="table small libro libro-kardex" data-tabla>
+          <thead>
+            <tr>
+              <th class="col-fecha sortable-column" data-orden="fecha">Fecha</th>
+              <th class="col-tipo sortable-column" data-orden="texto">Movimiento</th>
+              <th class="col-cantidad sortable-column" data-orden="numero">Cantidad</th>
+              <th class="col-cantidad sortable-column" data-orden="numero">Saldo</th>
+              <th class="sortable-column" data-orden="texto">Motivo</th>
+              <th class="sortable-column" data-orden="texto">Quién</th>
+              <th class="col-acciones"></th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for fila in filas %}
+              <tr>
+                <td class="col-fecha cifra">{{ fila.movimiento.fecha|date:"d/m/Y" }}</td>
+                <td class="col-tipo">{% include "fragmentos/estado.html" with estado=fila.movimiento.tipo texto=fila.movimiento.get_tipo_display %}</td>
+                <td class="col-cantidad mono {% if fila.movimiento.delta < 0 %}sale{% else %}entra{% endif %}">
+                  {% if fila.movimiento.delta > 0 %}+{% endif %}{{ fila.movimiento.delta|floatformat:"-3" }}
+                </td>
+                <td class="col-cantidad cifra">{{ fila.saldo|floatformat:"-3" }}</td>
+                <td>
+                  {{ fila.movimiento.motivo|default:"—" }}
+                  {% if fila.movimiento.referencia %}
+                    <span class="tenue cifra">
+                      ·
+                      {% if fila.movimiento.comprobante.content_type.model == 'factura' %}
+                        <a class="enlace cifra" href="{% url 'facturacion:factura' fila.movimiento.comprobante.object_id %}">{{ fila.movimiento.referencia }}</a>
+                      {% else %}{{ fila.movimiento.referencia }}{% endif %}
+                    </span>
+                  {% endif %}
+                </td>
+                <td class="tenue">{{ fila.movimiento.usuario.get_username|default:"—" }}</td>
+                <td class="col-acciones">
+                  {% if fila.movimiento.tipo != 'factura' %}
+                    <form method="post" action="{% url 'inventario:movimiento_anular' fila.movimiento.pk %}"
+                          data-confirmar="Se anula el movimiento y la cantidad vuelve a su sitio."
+                          data-titulo="Anular el movimiento"
+                          data-aceptar="Anularlo">
+                      {% csrf_token %}
+                      <button type="submit" class="button small square outline alert" title="Anular el movimiento"
+                              aria-label="Anular el movimiento"><span class="mif-undo"></span></button>
+                    </form>
+                  {% else %}
+                    <span class="tenue">de la factura</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table></div>
+        <p class="ayuda">El saldo es lo que quedaba después de cada movimiento, de lo más nuevo a lo más viejo.</p>
+      {% else %}
+        <div class="vacio">
+          <p>Sin movimientos todavía.</p>
+          <p class="tenue">La existencia de este producto es cero hasta que registre una entrada.</p>
+        </div>
+      {% endif %}
+    </section>
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen">
+      <h2 class="bloque-titulo">Mover el inventario</h2>
+      <form method="post" id="formulario-movimiento" action="{% url 'inventario:movimiento_nuevo' producto.pk %}">{% csrf_token %}
+        {% for campo in formulario %}
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+            {{ campo }}
+            {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+          </div>
+        {% endfor %}
+      </form>
+      <p class="ayuda">
+        Una entrada suma, una salida resta. Un ajuste es lo que haya contado: escriba
+        <span class="cifra">3</span> si hay tres de más y <span class="cifra">-2</span> si faltan dos.
+      </p>
+    </div>
+  </aside>
+</div>
+
+{% endblock %}

@@ -1,0 +1,25 @@
+{% comment %}
+Una cabecera repetible en su fila de la tabla: lo suyo en corto —lo que dice el
+``resumen`` del comprobante—, el botón que abre su ventana y el de quitarla. Lo que se
+escribe va aparte, en su bloque escondido (``_detalle_grupo.html``).
+
+Si lo que se envió tiene algo mal, la fila se marca: el fallo está dentro de su
+ventana y, si no se dijera aquí, no se vería.
+{% endcomment %}
+<tr class="grupo{% if grupo.con_fallos %} con-fallo{% endif %}" data-grupo="{{ grupo.prefijo }}">
+  {% for nombre, valor in grupo.resumen_datos %}
+    <td class="grupo-dato" data-campo="{{ nombre }}">{{ valor }}</td>
+  {% endfor %}
+  {% for nombre, titulo, cuantas, conjunto in grupo.hijos %}
+    <td class="col-cuenta cifra" data-cuenta="{{ nombre }}" title="{{ titulo }}">{{ cuantas }}</td>
+  {% endfor %}
+  <td class="col-acciones">
+    <button type="button" class="button small square outline primary" data-abrir-grupo
+            title="Editar {{ documento.hijo_titulo|lower }}"
+            aria-label="Editar {{ documento.hijo_titulo|lower }}">
+      <span class="mif-pencil" aria-hidden="true"></span>
+    </button>
+    <button type="button" class="quitar" data-quitar-grupo
+            title="Quitar {{ documento.hijo_titulo|lower }}" aria-label="Quitar">&times;</button>
+  </td>
+</tr>

@@ -1,0 +1,100 @@
+{% comment %}
+Paso 2: el ambiente, la serie y los secuenciales.
+
+Van en dos formularios distintos a propósito: el ambiente y la serie son de la
+configuración, y los secuenciales son uno por tipo de comprobante. Si se cambia
+el ambiente y se guarda, los secuenciales que se ven pasan a ser los del nuevo
+ambiente (cada ambiente lleva su propia numeración).
+{% endcomment %}
+
+<form method="post" id="formulario-paso" novalidate>{% csrf_token %}
+  <input type="hidden" name="paso" value="2">
+  <input type="hidden" name="c" value="{{ configuracion.pk }}">
+
+  {% for error in formulario.non_field_errors %}
+    <div class="aviso aviso-error">{{ error }}</div>
+  {% endfor %}
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Dónde y con qué serie</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">{{ formulario.nombre.label }}</label>
+          {{ formulario.nombre }}
+          {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Solo para distinguirla de las demás.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.ambiente.id_for_label }}">{{ formulario.ambiente.label }}</label>
+          {{ formulario.ambiente }}
+          {% if formulario.ambiente.errors %}<p class="error">{{ formulario.ambiente.errors.0 }}</p>{% endif %}
+          <p class="ayuda">
+            Pruebas: comprobantes sin validez fiscal. Producción: con validez ante el SRI.
+          </p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.estab.id_for_label }}">{{ formulario.estab.label }}</label>
+          {{ formulario.estab }}
+          {% if formulario.estab.errors %}<p class="error">{{ formulario.estab.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Tres dígitos: 001.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-3">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.pto_emi.id_for_label }}">{{ formulario.pto_emi.label }}</label>
+          {{ formulario.pto_emi }}
+          {% if formulario.pto_emi.errors %}<p class="error">{{ formulario.pto_emi.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Tres dígitos: 001.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja campo-centrado">
+          <label class="switch">
+            {{ formulario.activo }}
+            <span class="caption-append">{{ formulario.activo.label }}</span>
+          </label>
+          <p class="ayuda">Solo se emite con la configuración activa de cada ambiente.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+</form>
+
+<form method="post" id="formulario-secuenciales" novalidate>{% csrf_token %}
+  <input type="hidden" name="paso" value="2">
+  <input type="hidden" name="que" value="secuenciales">
+  <input type="hidden" name="c" value="{{ configuracion.pk }}">
+  {{ formset.management_form }}
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Por dónde va la numeración</h2>
+    <p class="ayuda">
+      El SRI numera cada tipo de comprobante por su cuenta, dentro de la serie
+      {{ configuracion.estab }}-{{ configuracion.pto_emi }} y del ambiente
+      {{ configuracion.get_ambiente_display|lower }}.
+    </p>
+
+    {% if formset.non_form_errors %}
+      <div class="aviso aviso-error">{{ formset.non_form_errors.0 }}</div>
+    {% endif %}
+
+    <div class="row">
+      {% for fila in formset %}
+        {% for oculto in fila.hidden_fields %}{{ oculto }}{% endfor %}
+        <div class="cell-12 cell-md-6">
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ fila.ultimo.id_for_label }}">{{ fila.etiqueta }}</label>
+            {{ fila.ultimo }}
+            {% if fila.ultimo.errors %}<p class="error">{{ fila.ultimo.errors.0 }}</p>{% endif %}
+            <p class="ayuda">El próximo será el <span class="cifra">{{ fila.siguiente }}</span>.</p>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+</form>

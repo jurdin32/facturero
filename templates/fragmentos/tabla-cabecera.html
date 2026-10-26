@@ -1,0 +1,19 @@
+{% comment %}
+El encabezado de una tabla: las columnas y, en las que se pueden ordenar, el enlace
+para ordenar por ellas (y la flecha de por dónde va el orden).
+{% endcomment %}
+<thead>
+  <tr>
+    {% for columna in tabla.columnas %}
+      <th class="{{ columna.clase }}{% if columna.sentido %} orden-{{ columna.sentido }}{% endif %}">
+        {% if columna.enlace %}
+          <a href="{{ columna.enlace }}" title="Ordenar por {{ columna.titulo|lower }}">
+            {{ columna.titulo }}
+            <span class="orden-flecha mif-{% if columna.sentido == 'desc' %}chevron-down{% else %}chevron-up{% endif %}"
+                  {% if not columna.sentido %}hidden{% endif %} aria-hidden="true"></span>
+          </a>
+        {% else %}{{ columna.titulo }}{% endif %}
+      </th>
+    {% endfor %}
+  </tr>
+</thead>

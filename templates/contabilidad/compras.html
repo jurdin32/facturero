@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+{% block titulo %}Compras{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Compras</h1>
+    <p class="subtitulo">
+      {{ filas|length }} compra{{ filas|length|pluralize }} entre {{ desde|date:"d/m/Y" }} y {{ hasta|date:"d/m/Y" }}
+      · total <span class="cifra">{{ total|floatformat:2 }}</span>
+      {% if sin_contabilizar %}· <span class="chip warning soft"><span class="label">{{ sin_contabilizar }} sin asiento</span></span>{% endif %}
+    </p>
+  </div>
+  <a class="button primary" href="{% url 'contabilidad:compra_nueva' %}"><span class="mif-plus"></span> Registrar compra</a>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-6 cell-lg-4">
+      <div class="filtro">
+        <label class="etiqueta" for="q">Buscar</label>
+        <input type="search" name="q" id="q" value="{{ filtros.q }}"
+               data-role="input" data-clear-button="true" data-prepend="<span class='mif-search'></span>"
+               placeholder="Proveedor o número">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input class="campo-fecha" type="date" name="desde" id="desde" value="{{ desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input class="campo-fecha" type="date" name="hasta" id="hasta" value="{{ hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-6 cell-lg-2">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Fecha</th>
+        <th>Proveedor</th>
+        <th>Comprobante</th>
+        <th class="col-dato">Base</th>
+        <th class="col-dato">IVA</th>
+        <th class="col-dato">Total</th>
+        <th>Asiento</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for c in filas %}
+        <tr>
+          <td class="cifra">{{ c.fecha|date:"d/m/Y" }}</td>
+          <td>{{ c.proveedor.razon_social }}<span class="listado-meta cifra">{{ c.proveedor.identificacion }}</span></td>
+          <td class="cifra">{{ c.get_tipo_comprobante_display }}<span class="listado-meta">{{ c.numero_con_guiones }}</span></td>
+          <td class="col-dato cifra">{{ c.subtotal|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ c.valor_iva|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ c.total|floatformat:2 }}</td>
+          <td>
+            {% if c.asiento_id %}
+              <a class="enlace cifra" href="{% url 'contabilidad:asiento_detalle' c.asiento_id %}">{{ c.asiento.numero }}</a>
+            {% else %}
+              <span class="chip warning soft"><span class="label">pendiente</span></span>
+            {% endif %}
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline dark" href="{% url 'contabilidad:compra' c.pk %}"
+               title="Ver la compra" aria-label="Ver"><span class="mif-eye"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}
+  <div class="vacio">
+    <p>No hay compras registradas en ese rango.</p>
+    <p class="tenue">Las retenciones que se emiten al proveedor crean la compra solas; también se pueden registrar a mano.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

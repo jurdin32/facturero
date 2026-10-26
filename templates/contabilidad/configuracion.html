@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block titulo %}Configuración contable{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Configuración contable</h1>
+    <p class="subtitulo">Qué cuenta se usa en cada operación que se contabiliza sola.</p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-configuracion" class="button success"><span class="mif-check"></span> Guardar la configuración</button>
+  </div>
+</div>
+
+{% if faltantes %}
+  <div class="aviso aviso-warning">
+    Faltan cuentas: {% for falta in faltantes %}{{ falta }}{% if not forloop.last %}, {% endif %}{% endfor %}.
+  </div>
+{% endif %}
+
+<form method="post" id="formulario-configuracion" novalidate>{% csrf_token %}
+  <section class="bloque">
+    <h2 class="bloque-titulo">Datos generales</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">{{ formulario.nombre.label }}</label>
+          {{ formulario.nombre }}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.tipo_empleador.id_for_label }}">{{ formulario.tipo_empleador.label }}</label>
+          {{ formulario.tipo_empleador }}
+          <p class="ayuda">Lo pide el RDEP.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.ente_seg_social.id_for_label }}">{{ formulario.ente_seg_social.label }}</label>
+          {{ formulario.ente_seg_social }}
+          <p class="ayuda">Lo pide el RDEP.</p>
+        </div>
+      </div>
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.activa }}
+            <span class="caption-append">Esta es la configuración activa</span>
+          </label>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Cuentas de la contabilización automática</h2>
+    <div class="row">
+      {% for campo in formulario %}
+        {% if campo.name|slice:":6" == "cuenta" %}
+          <div class="cell-12 cell-md-6 cell-lg-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ campo.id_for_label }}">{{ campo.label }}</label>
+              {{ campo }}
+              {% if campo.errors %}<p class="error">{{ campo.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </section>
+</form>
+
+{% endblock %}

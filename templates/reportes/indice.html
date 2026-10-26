@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block titulo %}Reportes y estadísticas{% endblock %}
+
+{% block contenido %}
+
+{% comment %}
+El índice de los reportes. Cada tarjeta lleva al reporte con el período que se
+haya elegido arriba, y los botones de PDF y Excel abren la misma dirección con
+otro formato: así el período no se pierde al cambiar de salida.
+{% endcomment %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Reportes y estadísticas</h1>
+    <p class="subtitulo">
+      {{ cuantos }} reporte{{ cuantos|pluralize }} de las ventas, los comprobantes
+      electrónicos, las compras, la contabilidad y el inventario. Todos se ven en
+      pantalla y se descargan en PDF y en Excel.
+    </p>
+  </div>
+</div>
+
+<form class="filtros" method="get" action="{% url 'reportes:indice' %}">
+  <div class="row">
+    <div class="cell-12 cell-md-4 cell-lg-3">
+      <div class="filtro">
+        <label class="etiqueta" for="periodo">Período</label>
+        <select class="select" name="periodo" id="periodo">
+          {% for clave, nombre in periodos %}
+            <option value="{{ clave }}"{% if clave == filtro.clave %} selected{% endif %}>{{ nombre }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="desde">Desde</label>
+        <input type="date" class="campo" name="desde" id="desde" value="{{ filtro.desde|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="hasta">Hasta</label>
+        <input type="date" class="campo" name="hasta" id="hasta" value="{{ filtro.hasta|date:'Y-m-d' }}">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-2 cell-lg-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Aplicar</button>
+      </div>
+    </div>
+  </div>
+  <p class="ayuda">
+    Las fechas de «Desde» y «Hasta» se usan cuando el período es «Rango de fechas».
+    El período elegido se conserva al abrir cualquier reporte.
+  </p>
+</form>
+
+{% for grupo, reportes in grupos %}
+  <section class="bloque reportes-grupo">
+    <h2 class="bloque-titulo">{{ grupo }}</h2>
+    <div class="row">
+      {% for reporte in reportes %}
+        <div class="cell-12 cell-md-6 cell-lg-4">
+          <article class="reporte-tarjeta">
+            <h3 class="reporte-tarjeta-titulo">
+              <span class="mif-{{ reporte.icono|default:'charts' }}" aria-hidden="true"></span>
+              {{ reporte.nombre }}
+            </h3>
+            <p class="reporte-tarjeta-texto">{{ reporte.descripcion }}</p>
+            {% if reporte.base %}
+              <p class="reporte-tarjeta-base">{{ reporte.base }}</p>
+            {% endif %}
+            <div class="reporte-tarjeta-acciones">
+              <a class="button primary small" href="{% url 'reportes:reporte' reporte.clave %}?{{ filtro.consulta }}">
+                <span class="mif-charts"></span> Ver
+              </a>
+              <a class="button small" href="{% url 'reportes:reporte' reporte.clave %}?{{ filtro.consulta }}&amp;formato=pdf" target="_blank" rel="noopener">
+                <span class="mif-description"></span> PDF
+              </a>
+              <a class="button small" href="{% url 'reportes:reporte' reporte.clave %}?{{ filtro.consulta }}&amp;formato=xlsx">
+                <span class="mif-download"></span> Excel
+              </a>
+            </div>
+          </article>
+        </div>
+      {% endfor %}
+    </div>
+  </section>
+{% empty %}
+  <div class="bloque">
+    <p class="ayuda">No tiene permiso para ningún reporte. Pídaselos al administrador.</p>
+  </div>
+{% endfor %}
+
+<div class="bloque bloque-suave">
+  <h2 class="bloque-titulo">Cómo se leen estos reportes</h2>
+  <ul class="lista-ayuda">
+    <li>
+      Los reportes de ventas y compras toman solo los <strong>comprobantes autorizados</strong>
+      por el SRI: un borrador o uno devuelto no es venta ni ingreso.
+    </li>
+    <li>
+      Las <strong>notas de crédito restan</strong> y las de débito suman, para que el neto
+      del período sea el que corresponde.
+    </li>
+    <li>
+      Las cifras van con punto de miles y coma decimal (1.234,56) y sin símbolo de moneda
+      salvo en los resúmenes; el sistema no declara moneda distinta del dólar de los
+      Estados Unidos, que es la de curso legal en el Ecuador.
+    </li>
+    <li>
+      Todos los reportes llevan el <strong>logo del emisor</strong> o, si todavía no se ha
+      cargado, el de <strong>Factiz</strong>.
+    </li>
+  </ul>
+</div>
+
+{% endblock %}

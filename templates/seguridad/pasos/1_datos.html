@@ -1,0 +1,37 @@
+<section class="bloque">
+  <h2 class="bloque-titulo">El rol</h2>
+  <p class="subtitulo">
+    Un rol es un permiso con nombre —«Facturador», «Bodega», «Contabilidad»—: se marca
+    lo que puede y se le da a la gente que lo necesite.
+  </p>
+  <div class="row">
+    <div class="cell-12 cell-md-8">
+      <div class="campo-caja">
+        <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">{{ formulario.nombre.label }}</label>
+        {{ formulario.nombre }}
+        {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="campo-caja">
+        <label class="etiqueta" for="{{ formulario.activo.id_for_label }}">
+          {{ formulario.activo }} {{ formulario.activo.label }}
+        </label>
+        <p class="ayuda">Un rol apagado no da nada, pero se queda puesto.</p>
+      </div>
+    </div>
+    <div class="cell-12">
+      <div class="campo-caja">
+        <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
+        {{ formulario.descripcion }}
+      </div>
+    </div>
+    <div class="cell-12">
+      <div class="campo-caja">
+        <label class="etiqueta" for="{{ formulario.usuarios.id_for_label }}">{{ formulario.usuarios.label }}</label>
+        {{ formulario.usuarios }}
+        <p class="ayuda">{{ formulario.usuarios.help_text }}</p>
+      </div>
+    </div>
+  </div>
+</section>

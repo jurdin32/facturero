@@ -1,0 +1,29 @@
+{% load l10n %}
+{% comment %}
+Uno de los indicadores de espera de Metro, con el tipo que se le pida: simple,
+ring, metro, square, cycle, atom o bars. Es el HTML que produce su componente,
+para poder usarlo también dentro de las tablas.
+{% endcomment %}
+<div class="activity-{{ tipo|default:'ring' }}{% if clase %} {{ clase }}{% endif %}"
+     style="--activity-size: {{ tamano|default:20|unlocalize }}px;"
+     role="status"{% if etiqueta %} aria-label="{{ etiqueta }}"{% endif %}>
+  {% if tipo == 'simple' %}
+    <svg class="circular"><circle class="path" cx="12" cy="12" r="8" fill="none" stroke-width="2" stroke-miterlimit="10"></circle></svg>
+  {% elif tipo == 'metro' %}
+    <div class="circle"></div><div class="circle"></div><div class="circle"></div><div class="circle"></div><div class="circle"></div>
+  {% elif tipo == 'square' %}
+    <div class="square"></div><div class="square"></div><div class="square"></div><div class="square"></div>
+  {% elif tipo == 'cycle' %}
+    <div class="cycle"></div>
+  {% elif tipo == 'atom' %}
+    <span class="electron"></span><span class="electron"></span><span class="electron"></span>
+  {% elif tipo == 'bars' %}
+    <span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span><span class="bar"></span>
+  {% else %}
+    <div class="wrap"><div class="circle"></div></div>
+    <div class="wrap"><div class="circle"></div></div>
+    <div class="wrap"><div class="circle"></div></div>
+    <div class="wrap"><div class="circle"></div></div>
+    <div class="wrap"><div class="circle"></div></div>
+  {% endif %}
+</div>

@@ -1,0 +1,11 @@
+{% load l10n %}
+{% comment %}
+La barra de progreso de Metro, con lo lleno a `valor` por ciento. Se pinta el
+HTML que produce su componente (`progress` + `bar`) para que sobreviva a las
+tablas que se repintan al paginar.
+{% endcomment %}
+<div class="progress-component{% if clase %} {{ clase }}{% endif %}"
+     role="progressbar" aria-valuenow="{{ valor }}" aria-valuemin="0" aria-valuemax="100"
+     {% if etiqueta %}aria-label="{{ etiqueta }}"{% endif %}>
+  <div class="progress"><div class="bar" style="width: {{ valor|unlocalize }}%"></div></div>
+</div>

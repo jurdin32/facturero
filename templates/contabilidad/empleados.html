@@ -1,0 +1,73 @@
+{% extends "base.html" %}
+{% block titulo %}Empleados (RDEP){% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Empleados para el RDEP</h1>
+    <p class="subtitulo">
+      {{ filas|length }} ficha{{ filas|length|pluralize }} del año {{ anio }} ·
+      sueldos <span class="cifra">{{ total_sueldos|floatformat:2 }}</span> ·
+      retenido <span class="cifra">{{ total_retenido|floatformat:2 }}</span>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <a class="button outline dark" href="{% url 'contabilidad:descargar' 'rdep' %}?anio={{ anio }}"><span class="mif-download"></span> Descargar RDEP</a>
+    <a class="button primary" href="{% url 'contabilidad:empleado_nuevo' %}"><span class="mif-plus"></span> Nuevo empleado</a>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-3 cell-lg-2">
+      <div class="filtro">
+        <label class="etiqueta" for="anio">Año</label>
+        <input class="campo-num" type="number" name="anio" id="anio" value="{{ anio }}" min="2000" max="9999">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-3">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Ver</button>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if filas %}
+  <div class="desliza"><table class="table small libro">
+    <thead>
+      <tr>
+        <th>Empleado</th>
+        <th>Identificación</th>
+        <th class="col-dato">Sueldos</th>
+        <th class="col-dato">Aporte IESS</th>
+        <th class="col-dato">Retención</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for e in filas %}
+        <tr>
+          <td>{{ e.apellidos }} {{ e.nombres }}<span class="listado-meta">Estab. {{ e.establecimiento }}</span></td>
+          <td class="cifra">{{ e.get_tipo_identificacion_display }} {{ e.identificacion }}</td>
+          <td class="col-dato cifra">{{ e.suel_sal|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ e.apo_per_iess|floatformat:2 }}</td>
+          <td class="col-dato cifra">{{ e.val_ret|floatformat:2 }}</td>
+          <td class="col-acciones">
+            <a class="button small square outline dark" href="{% url 'contabilidad:empleado' e.pk %}"
+               title="Editar la ficha" aria-label="Editar"><span class="mif-pencil"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+  <p class="ayuda">El RDEP es anual. Cada ficha guarda los rubros del año que pide el SRI; no es una nómina.</p>
+{% else %}
+  <div class="vacio">
+    <p>No hay empleados registrados para {{ anio }}.</p>
+    <p class="tenue">El RDEP se presenta en enero y febrero, según el noveno dígito del RUC.</p>
+  </div>
+{% endif %}
+
+{% endblock %}

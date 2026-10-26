@@ -1,0 +1,128 @@
+{% comment %}
+Paso 1: el contribuyente. Los datos que el SRI publica de un RUC se pueden traer
+solos; lo que no consta en el catastro (el nombre comercial, las direcciones) hay
+que escribirlo.
+{% endcomment %}
+
+<form method="post" id="formulario-paso" novalidate>{% csrf_token %}
+  <input type="hidden" name="paso" value="1">
+  {% if configuracion %}<input type="hidden" name="c" value="{{ configuracion.pk }}">{% endif %}
+
+  {% for error in formulario.non_field_errors %}
+    <div class="aviso aviso-error">{{ error }}</div>
+  {% endfor %}
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">El contribuyente</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.ruc.id_for_label }}">{{ formulario.ruc.label }}</label>
+          {{ formulario.ruc }}
+          {% if formulario.ruc.errors %}<p class="error">{{ formulario.ruc.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-8">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.razon_social.id_for_label }}">{{ formulario.razon_social.label }}</label>
+          {{ formulario.razon_social }}
+          {% if formulario.razon_social.errors %}<p class="error">{{ formulario.razon_social.errors.0 }}</p>{% endif %}
+          <p class="ayuda">{{ formulario.razon_social.help_text }}</p>
+        </div>
+      </div>
+
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.nombre_comercial.id_for_label }}">{{ formulario.nombre_comercial.label }}</label>
+          {{ formulario.nombre_comercial }}
+          {% if formulario.nombre_comercial.errors %}<p class="error">{{ formulario.nombre_comercial.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.dir_matriz.id_for_label }}">{{ formulario.dir_matriz.label }}</label>
+          {{ formulario.dir_matriz }}
+          {% if formulario.dir_matriz.errors %}<p class="error">{{ formulario.dir_matriz.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.dir_establecimiento.id_for_label }}">{{ formulario.dir_establecimiento.label }}</label>
+          {{ formulario.dir_establecimiento }}
+          {% if formulario.dir_establecimiento.errors %}<p class="error">{{ formulario.dir_establecimiento.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Si se deja vacía se usa la de la matriz.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.obligado_contabilidad }}
+            <span class="caption-append">Lleva contabilidad</span>
+          </label>
+          {% if formulario.obligado_contabilidad.errors %}<p class="error">{{ formulario.obligado_contabilidad.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Lo publica el SRI; se puede corregir aquí.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="campo-caja campo-traer-sri">
+      <label class="switch">
+        {{ formulario.consultar_sri }}
+        <span class="caption-append">{{ formulario.consultar_sri.label }}</span>
+      </label>
+      <p class="ayuda">{{ formulario.consultar_sri.help_text }}</p>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Lo que declaró en el SRI</h2>
+    <div class="row">
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.regimen.id_for_label }}">{{ formulario.regimen.label }}</label>
+          {{ formulario.regimen }}
+          {% if formulario.regimen.errors %}<p class="error">{{ formulario.regimen.errors.0 }}</p>{% endif %}
+          <p class="ayuda">RIMPE, general… Vacío si es régimen general.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.categoria.id_for_label }}">{{ formulario.categoria.label }}</label>
+          {{ formulario.categoria }}
+          {% if formulario.categoria.errors %}<p class="error">{{ formulario.categoria.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Negocio popular, si es RIMPE de esa categoría.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.contribuyente_especial.id_for_label }}">{{ formulario.contribuyente_especial.label }}</label>
+          {{ formulario.contribuyente_especial }}
+          {% if formulario.contribuyente_especial.errors %}<p class="error">{{ formulario.contribuyente_especial.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Vacío si no lo es.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.agente_retencion.id_for_label }}">{{ formulario.agente_retencion.label }}</label>
+          {{ formulario.agente_retencion }}
+          {% if formulario.agente_retencion.errors %}<p class="error">{{ formulario.agente_retencion.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Solo dígitos. Vacío si no lo es.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="bloque">
+    <h2 class="bloque-titulo">Campos que salen en todas las facturas</h2>
+    <div class="campo-caja">
+      <label class="etiqueta" for="{{ formulario.campos_adicionales.id_for_label }}">{{ formulario.campos_adicionales.label }}</label>
+      {{ formulario.campos_adicionales }}
+      {% if formulario.campos_adicionales.errors %}<p class="error">{{ formulario.campos_adicionales.errors.0 }}</p>{% endif %}
+      <p class="ayuda">
+        Hasta 15 campos, en formato NOMBRE=VALOR separados por «;»: VENDEDOR=JOHNNY; SUCURSAL=NORTE.
+        Lo que se escriba en una factura manda sobre esto.
+      </p>
+    </div>
+  </section>
+</form>

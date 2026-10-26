@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nueva %}Nueva opción{% else %}{{ opcion.nombre }}{% endif %}{% endblock %}
+
+{% block contenido %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nueva %}Nueva opción{% else %}{{ opcion.nombre }}{% endif %}</h1>
+    <p class="subtitulo">
+      Una opción es una pantalla o un apartado que los roles pueden permitir o negar ·
+      <a class="enlace" href="{% url 'seguridad:opciones' %}">volver a las opciones</a>
+    </p>
+  </div>
+
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-opcion" class="button success"><span class="mif-checkmark"></span> Guardar</button>
+    <a class="button outline dark" href="{% url 'seguridad:opciones' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-opcion" novalidate>{% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">La opción</h2>
+        <div class="row">
+          <div class="cell-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">Nombre</label>
+              {{ formulario.nombre }}
+              {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Como sale en el menú y en el asistente del rol.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.clave.id_for_label }}">Clave</label>
+              {{ formulario.clave }}
+              {% if formulario.clave.errors %}<p class="error">{{ formulario.clave.errors.0 }}</p>{% endif %}
+              {% if opcion.pk %}
+                <p class="aviso aviso-warning">
+                  La clave es con lo que el código pregunta por esta pantalla. Si la
+                  cambia, los permisos de los roles se mudan con ella, pero habrá que
+                  cambiar también los <span class="cifra">@requiere_lectura</span> y los
+                  <span class="cifra">{% templatetag openblock %} puede_leer {% templatetag closeblock %}</span> que la nombren.
+                </p>
+              {% else %}
+                <p class="ayuda">Sin espacios ni acentos: clientes, guias-remision…</p>
+              {% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.grupo.id_for_label }}">Apartado</label>
+              {{ formulario.grupo }}
+              <datalist id="apartados-conocidos">
+                {% for apartado in formulario.apartados_conocidos %}<option value="{{ apartado }}"></option>{% endfor %}
+              </datalist>
+              <p class="ayuda">Bajo qué apartado sale: Catálogo, Comprobantes, Sistema…</p>
+            </div>
+          </div>
+        </div>
+        <p class="ayuda">
+          La posición en el menú se cambia arrastrando en
+          <a class="enlace" href="{% url 'seguridad:ordenar_menu' %}">Ordenar el menú</a>.
+        </p>
+      </section>
+
+      <section class="bloque">
+        <h2 class="bloque-titulo">El menú</h2>
+        <p class="subtitulo">
+          Opcional: con una dirección, la opción sale en el menú de la aplicación, y solo
+          la ven quienes puedan leerla.
+        </p>
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.url.id_for_label }}">Dirección</label>
+              {{ formulario.url }}
+              {% if formulario.url.errors %}<p class="error">{{ formulario.url.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.icono.id_for_label }}">Icono</label>
+              {{ formulario.icono }}
+              <p class="ayuda">Sin el «mif-»: report, pie-chart, star-full…</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.activo.id_for_label }}">
+                {{ formulario.activo }} {{ formulario.activo.label }}
+              </label>
+              <label class="etiqueta" for="{{ formulario.en_menu.id_for_label }}">
+                {{ formulario.en_menu }} {{ formulario.en_menu.label }}
+              </label>
+              <p class="ayuda">Una opción apagada no sale en el asistente ni en el menú.</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {% if not es_nueva %}
+        <section class="bloque">
+          <h2 class="bloque-titulo">Quién la tiene</h2>
+          {% if roles_que_la_tienen %}
+            <div class="listado-chips">
+              {% for rol in roles_que_la_tienen %}
+                <span class="chip primary">
+                  <span class="icon mif-security"></span>
+                  <span class="label">{{ rol.nombre }}</span>
+                </span>
+              {% endfor %}
+            </div>
+          {% else %}
+            <p class="ayuda">Ningún rol la tiene marcada todavía.</p>
+          {% endif %}
+        </section>
+      {% endif %}
+
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Al guardarla</h2>
+        <p class="ayuda">
+          Al guardarla, la opción aparece en el asistente de los roles para marcarla y,
+          si lleva dirección, en el menú.
+        </p>
+      </div>
+    </aside>
+  </div>
+</form>
+
+{% endblock %}
