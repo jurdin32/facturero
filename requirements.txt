@@ -1,11 +1,17 @@
 # Lo que necesita el proyecto para correr (Python 3.12 o superior).
 #
-# Los dos paquetes de la casa se instalan desde su repositorio y en modo editable,
-# para poder cambiarlos sin reinstalar:
+# Los tres paquetes de la casa se instalan desde GitHub, fijando la etiqueta de
+# la versión que está probada:
 #
 #   pip install -r requirements.txt
+#   pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.1" \
+#               "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.2" \
+#               "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.0"
+#
+# Para trabajar sobre ellos, en modo editable desde su clon:
+#
 #   pip install -e ~/Desktop/Scripts/factec -e ~/Desktop/Scripts/personalize_options \
-            -e ~/Desktop/Scripts/conta_ec
+#               -e ~/Desktop/Scripts/conta_ec
 #
 # Las versiones están fijadas a las que están probadas. Al subir de versión, corra
 # las pruebas: `python manage.py test`.

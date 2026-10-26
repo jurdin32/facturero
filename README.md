@@ -49,9 +49,10 @@ cd facturero
 python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Los dos paquetes de la casa, en modo editable si los va a tocar:
-pip install -e ~/Desktop/Scripts/factec -e ~/Desktop/Scripts/personalize_options \
-            -e ~/Desktop/Scripts/conta_ec
+# Los tres paquetes de la casa, desde sus repositorios:
+pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.1" \
+            "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.2" \
+            "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.0"
 
 python manage.py migrate
 python manage.py cargar_codigos_retencion     # el catálogo de retenciones del SRI
