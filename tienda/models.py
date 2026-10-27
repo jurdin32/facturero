@@ -394,6 +394,15 @@ class ProductoTienda(Producto):
         return self.precio_oferta < self.precio_base_sin_iva
 
     @property
+    def oferta_programada(self) -> bool:
+        """Hay oferta cargada, con fecha de inicio futura: todavía no se aplica."""
+        if self.precio_oferta is None or self.oferta_vigente:
+            return False
+        if self.precio_oferta >= self.precio_base_sin_iva:
+            return False
+        return self.oferta_desde is not None and self.oferta_desde > timezone.localdate()
+
+    @property
     def precio_sin_iva(self) -> Decimal:
         """Lo que se cobra, sin impuestos: la oferta si está vigente; si no, el normal."""
         if self.oferta_vigente:

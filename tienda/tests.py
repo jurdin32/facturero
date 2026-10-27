@@ -242,6 +242,25 @@ class PruebasDelPrecio(TestCase):
         with self.assertRaises(ValidationError):
             producto.full_clean()
 
+    def test_una_oferta_que_empieza_mas_adelante_se_anuncia(self):
+        manana = timezone.localdate() + timedelta(days=1)
+        producto = crear_en_tienda(
+            precio_web=Decimal("20.00"),
+            precio_oferta=Decimal("15.00"),
+            oferta_desde=manana,
+        )
+        self.assertFalse(producto.oferta_vigente)
+        self.assertTrue(producto.oferta_programada)
+
+    def test_una_oferta_vencida_no_se_anuncia(self):
+        ayer = timezone.localdate() - timedelta(days=1)
+        producto = crear_en_tienda(
+            precio_web=Decimal("20.00"),
+            precio_oferta=Decimal("15.00"),
+            oferta_hasta=ayer,
+        )
+        self.assertFalse(producto.oferta_programada)
+
 
 class PruebasDelCatalogo(TestCase):
     """Lo que las consultas de la tienda dejan ver."""
@@ -475,6 +494,179 @@ class PruebasDelCarrito(TestCase):
         carrito = Carrito(peticion())
         carrito.agregar(self.producto, Decimal("1"))
         self.assertEqual(carrito.lineas(), [])
+
+
+class PruebasDeLaLineaEnVivo(TestCase):
+    """El carrito cambia la cantidad sin recargar y devuelve los importes."""
+
+    def setUp(self):
+        self.producto = crear_en_tienda(publicado=True, precio_web=Decimal("10.00"))
+
+    def _fijar(self, cantidad, producto=None):
+        return self.client.post(
+            reverse("tienda:linea_carrito"),
+            {"producto": (producto or self.producto).pk, "cantidad": cantidad},
+        )
+
+    def test_la_cantidad_se_guarda_y_vuelven_los_importes(self):
+        respuesta = self._fijar("3")
+
+        self.assertEqual(respuesta.status_code, 200)
+        datos = respuesta.json()
+        self.assertTrue(datos["ok"])
+        self.assertFalse(datos["quitada"])
+        self.assertEqual(datos["cantidad"], "3")
+        self.assertEqual(datos["linea"], "34,50")
+        self.assertEqual(datos["subtotal"], "30,00")
+        self.assertEqual(datos["iva"], "4,50")
+        self.assertEqual(datos["total"], "34,50")
+        self.assertEqual(datos["unidades"], "3")
+        self.assertFalse(datos["vacia"])
+        self.assertEqual(self.client.session["carrito_tienda"], {str(self.producto.pk): "3"})
+
+    def test_cambiar_la_cantidad_recalcula_el_total(self):
+        self._fijar("2")
+        datos = self._fijar("5").json()
+
+        self.assertEqual(datos["cantidad"], "5")
+        self.assertEqual(datos["linea"], "57,50")
+        self.assertEqual(datos["total"], "57,50")
+        self.assertEqual(self.client.session["carrito_tienda"], {str(self.producto.pk): "5"})
+
+    def test_los_totales_suman_todas_las_lineas(self):
+        otro = crear_en_tienda(
+            codigo="P-002", descripcion="Otra cosa", publicado=True,
+            precio_unitario=Decimal("5.00"),
+        )
+        self._fijar("1", otro)
+        datos = self._fijar("2").json()
+
+        self.assertEqual(datos["subtotal"], "25,00")   # 20 + 5
+        self.assertEqual(datos["total"], "28,75")
+
+    def test_cero_quita_la_linea(self):
+        self._fijar("2")
+        datos = self._fijar("0").json()
+
+        self.assertTrue(datos["quitada"])
+        self.assertTrue(datos["vacia"])
+        self.assertEqual(datos["total"], "0,00")
+        self.assertEqual(self.client.session["carrito_tienda"], {})
+
+    def test_un_producto_que_ya_no_esta_no_se_toca(self):
+        respuesta = self.client.post(
+            reverse("tienda:linea_carrito"), {"producto": 999999, "cantidad": "1"}
+        )
+
+        self.assertEqual(respuesta.status_code, 404)
+        self.assertFalse(respuesta.json()["ok"])
+
+    def test_lo_agotado_no_se_puede_pedir(self):
+        Existencia.objects.create(producto=self.producto, cantidad=Decimal("0"))
+
+        respuesta = self._fijar("2")
+
+        self.assertEqual(respuesta.status_code, 409)
+        self.assertFalse(respuesta.json()["ok"])
+
+    def test_solo_admite_el_envio_del_formulario(self):
+        respuesta = self.client.get(reverse("tienda:linea_carrito"))
+
+        self.assertEqual(respuesta.status_code, 405)
+
+    def test_sin_javascript_queda_el_formulario_de_siempre(self):
+        self.client.post(
+            reverse("tienda:agregar"), {"producto": self.producto.pk, "cantidad": "1"}
+        )
+
+        respuesta = self.client.get(reverse("tienda:carrito"))
+
+        self.assertContains(respuesta, "data-carrito")
+        self.assertContains(respuesta, "Actualizar cantidades")
+
+
+class PruebasDeLaFichaConOferta(TestCase):
+    """La ficha dice cuál es el precio normal y cuál el de oferta."""
+
+    def setUp(self):
+        self.producto = crear_en_tienda(
+            publicado=True,
+            precio_web=Decimal("20.00"),
+            precio_oferta=Decimal("15.00"),
+        )
+
+    def test_la_ficha_ensena_los_dos_precios(self):
+        respuesta = self.client.get(
+            reverse("tienda:producto", args=[self.producto.slug])
+        )
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Precio normal")
+        self.assertContains(respuesta, "Precio de oferta")
+        self.assertContains(respuesta, "23,00")   # el de antes, con IVA
+        self.assertContains(respuesta, "17,25")   # el de la oferta, con IVA
+
+    def test_sin_oferta_solo_hay_un_precio(self):
+        self.producto.precio_oferta = None
+        self.producto.save()
+
+        respuesta = self.client.get(
+            reverse("tienda:producto", args=[self.producto.slug])
+        )
+
+        self.assertNotContains(respuesta, "Precio de oferta")
+
+
+class PruebasDelLogoDeLaEmpresa(TestCase):
+    """La tienda es del negocio: lleva su logo, no el de la aplicación."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.carpeta = tempfile.mkdtemp()
+        cls.override = override_settings(MEDIA_ROOT=cls.carpeta)
+        cls.override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.override.disable()
+        shutil.rmtree(cls.carpeta, ignore_errors=True)
+
+    def setUp(self):
+        from configuracion.models import LogoEmisor
+        from factec.django.models import ConfiguracionEmisor
+
+        self.producto = crear_en_tienda(publicado=True)
+        self.emisor = ConfiguracionEmisor.objects.create(
+            nombre="Principal",
+            activo=True,
+            ambiente=1,
+            ruc="0703886697001",
+            razon_social="URDIN GONZALEZ JOHNNY EDGAR",
+            dir_matriz="PANAMERICANA Y CARCHI",
+            estab="001",
+            pto_emi="001",
+        )
+        self.logo = LogoEmisor.objects.create(
+            emisor=self.emisor,
+            imagen=SimpleUploadedFile("empresa.png", b"\x89PNG\r\n\x1a\n"),
+        )
+
+    def test_la_cabecera_lleva_el_logo_de_la_empresa(self):
+        respuesta = self.client.get(reverse("tienda:portada"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, self.logo.url)
+        self.assertContains(respuesta, "URDIN GONZALEZ JOHNNY EDGAR")
+
+    def test_sin_logo_propio_la_tienda_sigue_saliendo(self):
+        self.logo.delete()
+
+        respuesta = self.client.get(reverse("tienda:portada"))
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertNotContains(respuesta, "/media/logos/")
 
 
 class PruebasDeLaTiendaPublica(TestCase):

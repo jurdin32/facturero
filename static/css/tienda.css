@@ -82,7 +82,9 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
   flex: 0 0 auto;
 }
 
-.marca img { height: 32px; width: auto; }
+/* El logo de la empresa, como venga: se limita el alto y el ancho para que no
+ * descuadre la cabecera. */
+.marca img { height: 44px; width: auto; max-width: 170px; object-fit: contain; }
 
 .buscador {
   display: flex;
@@ -597,6 +599,18 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
 
 .ficha .precio { font-size: 2.1rem; margin: .6rem 0 .1rem; }
 
+/* El desglose del precio: el normal y el de oferta, cada uno con su nombre. */
+.precio-detalle {
+  display: flex;
+  flex-wrap: wrap;
+  gap: .3rem 1rem;
+  margin: 0 0 .3rem;
+  color: var(--tinta-3);
+  font-size: .82rem;
+}
+
+.precio-detalle strong { color: var(--tinta); font-variant-numeric: tabular-nums; }
+
 .ficha .precio-antes { font-size: 1rem; }
 
 .disponible { color: var(--verde); font-weight: 700; font-size: .9rem; }
@@ -695,6 +709,11 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
 }
 
 .carrito-tabla td { padding: .9rem .4rem; border-bottom: 1px solid var(--linea); vertical-align: middle; }
+
+/* Mientras se guarda la cantidad nueva, la fila se atenúa un poco. */
+.carrito-tabla tr.guardando { opacity: .5; }
+
+.carrito-tabla .precio-antes { display: block; font-size: .74rem; margin-left: 0; }
 
 .carrito-producto { display: flex; gap: .8rem; align-items: center; }
 

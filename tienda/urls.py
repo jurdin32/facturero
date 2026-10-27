@@ -25,6 +25,7 @@ urlpatterns = [
     path("carrito/", views.carrito, name="carrito"),
     path("carrito/agregar/", views.agregar, name="agregar"),
     path("carrito/actualizar/", views.actualizar_carrito, name="actualizar_carrito"),
+    path("carrito/linea/", views.linea_carrito, name="linea_carrito"),
     path("confirmar/", views.confirmar, name="confirmar"),
     path("gracias/<uuid:referencia>/", views.gracias, name="gracias"),
     # Las categorías y los pedidos, desde la aplicación.

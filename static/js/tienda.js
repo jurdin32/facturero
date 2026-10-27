@@ -63,10 +63,131 @@
     });
   }
 
+  /* El carrito, sin botones: al cambiar la cantidad se manda sola y los importes se
+   * repintan con lo que responde el servidor. Sin JavaScript queda el botón de
+   * siempre, que envía el formulario completo.
+   */
+  function carrito() {
+    var caja = document.querySelector("[data-carrito]");
+    if (!caja || !window.fetch || !window.FormData) {
+      return;
+    }
+    var direccion = caja.getAttribute("data-url");
+    var formulario = caja.querySelector("form");
+    var testigo = caja.querySelector("input[name=csrfmiddlewaretoken]");
+    var contador = document.querySelector(".carrito-enlace .contador");
+
+    var sobra = caja.querySelector(".solo-sin-js");
+    if (sobra) {
+      sobra.style.display = "none";
+    }
+
+    function filaDe(elemento) {
+      return elemento.closest("tr");
+    }
+
+    function poner(selector, texto) {
+      var sitio = caja.querySelector(selector);
+      if (sitio) {
+        sitio.textContent = texto;
+      }
+    }
+
+    function pintar(datos, fila) {
+      if (datos.quitada) {
+        if (fila && fila.parentNode) {
+          fila.parentNode.removeChild(fila);
+        }
+      } else if (fila) {
+        var subtotal = fila.querySelector("[data-subtotal]");
+        if (subtotal) {
+          subtotal.textContent = "$ " + datos.linea;
+        }
+      }
+      poner("[data-subtotal-resumen]", "$ " + datos.subtotal);
+      poner("[data-iva]", "$ " + datos.iva);
+      poner("[data-total]", "$ " + datos.total);
+      if (contador) {
+        contador.textContent = datos.unidades;
+      }
+      if (datos.vacia) {
+        window.location.reload();
+      }
+    }
+
+    function enviar(producto, cantidad, fila) {
+      var cuerpo = new FormData();
+      cuerpo.append("producto", producto);
+      cuerpo.append("cantidad", cantidad);
+      if (testigo) {
+        cuerpo.append("csrfmiddlewaretoken", testigo.value);
+      }
+      if (fila) {
+        fila.classList.add("guardando");
+      }
+      function terminar() {
+        if (fila) {
+          fila.classList.remove("guardando");
+        }
+      }
+      fetch(direccion, {
+        method: "POST",
+        body: cuerpo,
+        headers: { "X-Requested-With": "XMLHttpRequest" },
+        credentials: "same-origin"
+      })
+        .then(function (respuesta) { return respuesta.json(); })
+        .then(function (datos) {
+          terminar();
+          if (datos && datos.ok) {
+            pintar(datos, fila);
+          }
+        })
+        .catch(terminar);
+    }
+
+    caja.addEventListener("input", function (evento) {
+      var campo = evento.target.closest("[data-cantidad]");
+      if (!campo || campo.value === "") {
+        return;
+      }
+      window.clearTimeout(campo.espera);
+      campo.espera = window.setTimeout(function () {
+        enviar(campo.getAttribute("data-producto"), campo.value, filaDe(campo));
+      }, 350);
+    });
+
+    caja.addEventListener("change", function (evento) {
+      var campo = evento.target.closest("[data-cantidad]");
+      if (!campo) {
+        return;
+      }
+      window.clearTimeout(campo.espera);
+      enviar(campo.getAttribute("data-producto"), campo.value, filaDe(campo));
+    });
+
+    caja.addEventListener("click", function (evento) {
+      var boton = evento.target.closest("[data-quitar]");
+      if (!boton) {
+        return;
+      }
+      evento.preventDefault();
+      enviar(boton.getAttribute("data-quitar"), "0", filaDe(boton));
+    });
+
+    if (formulario) {
+      // Con el carrito al día no hay nada que enviar: Enter no recarga la página.
+      formulario.addEventListener("submit", function (evento) {
+        evento.preventDefault();
+      });
+    }
+  }
+
   function arrancar() {
     galeria();
     compartir();
     estrellas();
+    carrito();
   }
 
   if (document.readyState === "loading") {

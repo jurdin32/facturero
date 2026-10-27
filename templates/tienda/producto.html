@@ -51,12 +51,24 @@
         {% if producto.resumen %}<p class="meta">{{ producto.resumen }}</p>{% endif %}
 
         <p class="precio">
+          {% if producto.precio_anterior %}
+            <span class="sr-only">Precio de oferta</span>
+          {% endif %}
           $ {{ producto.precio|floatformat:2 }}
           {% if producto.precio_anterior %}
             <span class="precio-antes">$ {{ producto.precio_anterior|floatformat:2 }}</span>
             <span class="descuento">{{ producto.descuento }} % menos</span>
           {% endif %}
         </p>
+        {% if producto.precio_anterior %}
+          <p class="precio-detalle">
+            <span>Precio normal: <strong>$ {{ producto.precio_anterior|floatformat:2 }}</strong></span>
+            <span>Precio de oferta: <strong>$ {{ producto.precio|floatformat:2 }}</strong></span>
+          </p>
+        {% elif producto.oferta_programada %}
+          <p class="precio-detalle">Oferta del {{ producto.oferta_desde|date:"j \d\e F" }}
+            {% if producto.oferta_hasta %}al {{ producto.oferta_hasta|date:"j \d\e F" }}{% endif %}.</p>
+        {% endif %}
         <p class="{% if producto.con_stock %}disponible{% else %}agotado{% endif %}">
           {% if producto.con_stock %}Disponible · entrega a coordinar{% else %}Agotado por ahora{% endif %}
         </p>
@@ -120,7 +132,12 @@
         {% if producto.peso %}
           <tr><th>Peso</th><td>{{ producto.peso|floatformat:"-3" }} kg</td></tr>
         {% endif %}
-        <tr><th>Precio</th><td class="cifra">$ {{ producto.precio|floatformat:2 }} (IVA incluido)</td></tr>
+        {% if producto.precio_anterior %}
+          <tr><th>Precio normal</th><td class="cifra">$ {{ producto.precio_anterior|floatformat:2 }}</td></tr>
+          <tr><th>Precio de oferta</th><td class="cifra">$ {{ producto.precio|floatformat:2 }} (IVA incluido)</td></tr>
+        {% else %}
+          <tr><th>Precio</th><td class="cifra">$ {{ producto.precio|floatformat:2 }} (IVA incluido)</td></tr>
+        {% endif %}
         <tr>
           <th>Disponibilidad</th>
           <td>{% if producto.con_stock %}Disponible{% else %}Agotado por ahora{% endif %}</td>

@@ -11,7 +11,7 @@
   <h1>Tu carrito</h1>
 
   {% if lineas %}
-    <div class="carrito-caja">
+    <div class="carrito-caja" data-carrito data-url="{% url 'tienda:linea_carrito' %}">
       <form method="post" action="{% url 'tienda:actualizar_carrito' %}">
         {% csrf_token %}
         <div class="desliza">
@@ -27,7 +27,7 @@
             </thead>
             <tbody>
               {% for linea in lineas %}
-                <tr>
+                <tr data-linea="{{ linea.producto.pk }}">
                   <td>
                     <div class="carrito-producto">
                       {% with foto=linea.producto.imagen_principal %}
@@ -47,14 +47,20 @@
                   </td>
                   <td data-titulo="Cantidad">
                     <input class="cantidad" type="number" name="cantidad_{{ linea.producto.pk }}"
-                           value="{{ linea.cantidad|floatformat:'-3' }}" min="0.001" step="0.001"
-                           inputmode="decimal" aria-label="Cantidad de {{ linea.producto.nombre }}">
+                           value="{{ linea.cantidad|floatformat:'-3' }}" min="1" step="1"
+                           inputmode="decimal" aria-label="Cantidad de {{ linea.producto.nombre }}"
+                           data-cantidad data-producto="{{ linea.producto.pk }}">
                   </td>
-                  <td data-titulo="Precio" class="cifra">$ {{ linea.producto.precio|floatformat:2 }}</td>
-                  <td data-titulo="Subtotal" class="cifra">$ {{ linea.total|floatformat:2 }}</td>
+                  <td data-titulo="Precio" class="cifra">
+                    $ {{ linea.producto.precio|floatformat:2 }}
+                    {% if linea.producto.precio_anterior %}
+                      <span class="precio-antes">$ {{ linea.producto.precio_anterior|floatformat:2 }}</span>
+                    {% endif %}
+                  </td>
+                  <td data-titulo="Subtotal" class="cifra" data-subtotal>$ {{ linea.total|floatformat:2 }}</td>
                   <td>
                     <button class="boton claro pequeno" type="submit" name="quitar"
-                            value="{{ linea.producto.pk }}">Quitar</button>
+                            value="{{ linea.producto.pk }}" data-quitar="{{ linea.producto.pk }}">Quitar</button>
                   </td>
                 </tr>
               {% endfor %}
@@ -65,13 +71,14 @@
         <div class="carrito-abajo">
           <div style="display:flex;gap:.6rem;flex-wrap:wrap">
             <a class="boton claro" href="{% url 'tienda:portada' %}">Seguir mirando</a>
-            <button class="boton claro" type="submit">Actualizar cantidades</button>
+            {# Solo se ve si el navegador no corre el carrito en vivo. #}
+            <button class="boton claro solo-sin-js" type="submit">Actualizar cantidades</button>
           </div>
           <div class="resumen-compra">
             <dl>
-              <dt>Subtotal</dt><dd>$ {{ subtotal|floatformat:2 }}</dd>
-              <dt>IVA</dt><dd>$ {{ iva|floatformat:2 }}</dd>
-              <dt class="total">Total</dt><dd class="total">$ {{ total|floatformat:2 }}</dd>
+              <dt>Subtotal</dt><dd data-subtotal-resumen>$ {{ subtotal|floatformat:2 }}</dd>
+              <dt>IVA</dt><dd data-iva>$ {{ iva|floatformat:2 }}</dd>
+              <dt class="total">Total</dt><dd class="total" data-total>$ {{ total|floatformat:2 }}</dd>
             </dl>
             <a class="boton" style="width:100%;margin-top:1rem" href="{% url 'tienda:confirmar' %}">
               Continuar con el pedido

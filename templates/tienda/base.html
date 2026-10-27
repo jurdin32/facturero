@@ -6,16 +6,24 @@
   <title>{% block titulo %}Tienda{% endblock %}</title>
   <meta name="description" content="{% block descripcion %}El catálogo de la tienda.{% endblock %}">
   <link rel="stylesheet" href="{% static 'css/tienda.css' %}?v={{ sello_estatico }}">
-  {% imagen_marca "icono" "logo" as favicon %}
-  {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+  {% if logo_empresa %}
+    <link rel="icon" href="{{ logo_empresa }}">
+  {% else %}
+    {% imagen_marca "icono" "logo" as favicon %}
+    {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+  {% endif %}
 </head>
 <body>
 
 <header class="cabecera">
   <div class="lienzo cabecera-fila">
     <a class="marca" href="{% url 'tienda:portada' %}">
-      {% imagen_marca "logo-ancho" "logo" "marca" as logo %}
-      {% if logo %}<img src="{{ logo }}" alt="Tienda">{% else %}Tienda{% endif %}
+      {% if logo_empresa %}
+        <img src="{{ logo_empresa }}" alt="{{ emisor.razon_social|default:'Tienda' }}">
+      {% else %}
+        {% imagen_marca "logo-ancho" "logo" "marca" as logo %}
+        {% if logo %}<img src="{{ logo }}" alt="Tienda">{% else %}Tienda{% endif %}
+      {% endif %}
     </a>
 
     <form class="buscador" method="get" action="{% url 'tienda:buscar' %}" role="search">

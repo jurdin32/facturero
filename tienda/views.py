@@ -15,8 +15,9 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.utils import timezone
+from django.utils.formats import number_format
 from django.db.models import Count, Q, Sum
-from django.http import HttpRequest, HttpResponse
+from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.views.decorators.http import require_POST
 from factec.django import conf
@@ -46,6 +47,7 @@ __all__ = [
     "carrito",
     "agregar",
     "actualizar_carrito",
+    "linea_carrito",
     "buscar",
     "ofertas",
     "confirmar",
@@ -347,7 +349,11 @@ def agregar(request: HttpRequest) -> HttpResponse:
 
 @require_POST
 def actualizar_carrito(request: HttpRequest) -> HttpResponse:
-    """Cambia las cantidades o saca una línea del carrito."""
+    """Cambia las cantidades o saca una línea del carrito.
+
+    Es la versión sin JavaScript: el carrito de verdad cambia la cantidad en el
+    acto, contra :func:`linea_carrito`.
+    """
     el_carrito = Carrito(request)
     quitar = request.POST.get("quitar")
     if quitar:
@@ -363,6 +369,53 @@ def actualizar_carrito(request: HttpRequest) -> HttpResponse:
             el_producto, _cantidad(request.POST.get(f"cantidad_{identificador}"))
         )
     return redirect("tienda:carrito")
+
+
+@require_POST
+def linea_carrito(request: HttpRequest) -> JsonResponse:
+    """Deja una línea en la cantidad pedida y devuelve los totales.
+
+    Lo llama el carrito mientras se escribe, para que el importe cambie sin pulsar
+    nada. Con cantidad cero (o menos) la línea sale del carrito. Los importes van ya
+    formateados, para que el número se vea igual que el que pinta la plantilla.
+    """
+    el_carrito = Carrito(request)
+    try:
+        el_producto = ProductoTienda.objects.publicadas().get(
+            pk=int(request.POST.get("producto") or 0)
+        )
+    except (ProductoTienda.DoesNotExist, TypeError, ValueError):
+        return JsonResponse(
+            {"ok": False, "error": "Ese producto ya no está en la tienda."}, status=404
+        )
+
+    cantidad = _cantidad(request.POST.get("cantidad"))
+    quitada = cantidad <= 0
+    if quitada:
+        el_carrito.quitar(el_producto.pk)
+    else:
+        if not el_producto.con_stock:
+            return JsonResponse(
+                {"ok": False, "error": f"«{el_producto.nombre}» está agotado."}, status=409
+            )
+        el_carrito.fijar(el_producto, cantidad)
+
+    lineas = el_carrito.lineas()
+    contexto = _contexto_del_carrito(el_carrito, lineas)
+    linea = next((una for una in lineas if una.producto.pk == el_producto.pk), None)
+    return JsonResponse(
+        {
+            "ok": True,
+            "quitada": quitada,
+            "cantidad": _numero(el_carrito.cantidad_de(el_producto)),
+            "linea": number_format(linea.total, 2) if linea else None,
+            "subtotal": number_format(contexto["subtotal"], 2),
+            "iva": number_format(contexto["iva"], 2),
+            "total": number_format(contexto["total"], 2),
+            "unidades": _numero(el_carrito.unidades),
+            "vacia": not lineas,
+        }
+    )
 
 
 def confirmar(request: HttpRequest) -> HttpResponse:
@@ -613,12 +666,26 @@ def anular(request: HttpRequest, pk: int) -> HttpResponse:
 
 def _publico() -> Dict[str, Any]:
     """Lo que lleva la cabecera y el pie de la tienda en todas sus pantallas."""
+    emisor = conf.configuracion_activa()
     return {
-        "emisor": conf.configuracion_activa(),
+        "emisor": emisor,
+        "logo_empresa": _logo_de_la_empresa(emisor),
         "categorias_del_menu": Categoria.objects.filter(
             activa=True, padre__isnull=True
         ).prefetch_related("hijas"),
     }
+
+
+def _logo_de_la_empresa(emisor: Any) -> str:
+    """El logo que la empresa subió en su configuración del SRI, si lo hay.
+
+    La tienda es del negocio, no de la aplicación: cuando hay logo propio se pone
+    ese; si no, la plantilla se queda con el de Factiz.
+    """
+    from configuracion.models import LogoEmisor
+
+    logo = LogoEmisor.de(emisor)
+    return logo.url if logo is not None else ""
 
 
 def _contexto_del_carrito(
@@ -635,6 +702,11 @@ def _contexto_del_carrito(
         "total": total,
         "carrito": el_carrito,
     }
+
+
+def _numero(valor: Decimal) -> str:
+    """Una cantidad sin ceros de más, para el carrito: 3 y no 3.000."""
+    return format(valor.normalize(), "f")
 
 
 def _cantidad(valor: Optional[str]) -> Decimal:

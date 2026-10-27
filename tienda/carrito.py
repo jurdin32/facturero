@@ -71,8 +71,10 @@ class Carrito:
         return cantidades
 
     def _guardar(self) -> None:
+        # La cantidad se guarda sin ceros de más: «3» y no «3.000».
         self._sesion[CLAVE_DE_LA_SESION] = {
-            str(producto): str(cantidad) for producto, cantidad in self._cantidades.items()
+            str(producto): format(cantidad.normalize(), "f")
+            for producto, cantidad in self._cantidades.items()
         }
         self._sesion.modified = True
 

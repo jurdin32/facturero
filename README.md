@@ -32,8 +32,11 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
   enlaces—: la tabla se arma en una cuadrícula, o se pega ya hecha desde Excel, sin
   escribir barras ni guiones y se publica ya formateada y limpia. Las categorías se crean desde la
   aplicación y los pedidos se revisan y se pasan a factura desde «Pedidos de la
-  tienda». Se publica desde la pantalla del producto, sin darlo de alta dos veces; lo
-  que no se publica se sigue facturando igual.
+  tienda». El **carrito** cambia las cantidades y los totales en el acto, sin botón de
+  actualizar. La cabecera lleva el **logo de la empresa** —el que se sube en la
+  configuración del SRI—, no el de la aplicación. Se publica desde la pantalla del
+  producto, sin darlo de alta dos veces; lo que no se publica se sigue facturando
+  igual.
 - **Caja del turno**: apertura, ingresos y egresos, cierre con **desglose de billetes y
   monedas** y **acta de cierre en PDF**. Sin caja abierta no se factura.
 - **Supervisión de la caja** (aparte, con su propio permiso): revisión de los cuadres
@@ -141,7 +144,7 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **451 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+Son **465 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
 supervisión de los cuadres y los vales, la contabilidad del paquete `conta_ec`,
 los reportes en sus tres salidas, los períodos, los permisos y el menú, la tienda
 con sus pedidos, preguntas, reseñas y el texto enriquecido.
