@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block titulo %}Preguntas de la tienda{% endblock %}
+
+{% block contenido %}
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Preguntas de la tienda</h1>
+    <p class="subtitulo">
+      {{ cuantas }} pregunta{{ cuantas|pluralize }} ·
+      {{ sin_responder }} sin responder
+    </p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-chat-bubble-outline'></span>">
+          <option value="sin_responder" {% if estado == 'sin_responder' %}selected{% endif %}>Sin responder</option>
+          <option value="respondidas" {% if estado == 'respondidas' %}selected{% endif %}>Respondidas</option>
+          <option value="ocultas" {% if estado == 'ocultas' %}selected{% endif %}>Ocultas</option>
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-filter-list"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'tienda:preguntas' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if preguntas %}
+  {% for pregunta in preguntas %}
+    <section class="bloque">
+      <div class="titulo-fila">
+        <div>
+          <a class="listado-titulo" href="{% url 'tienda:producto' pregunta.producto.slug %}">
+            {{ pregunta.producto.nombre }}
+          </a>
+          <span class="listado-meta">
+            {{ pregunta.nombre }} · {{ pregunta.creada|date:"d/m/Y H:i" }}
+          </span>
+        </div>
+        <span class="listado-chips">
+          {% if not pregunta.publicada %}
+            <span class="chip"><span class="label">oculta</span></span>
+          {% elif pregunta.contestada %}
+            <span class="chip success soft"><span class="label">respondida</span></span>
+          {% else %}
+            <span class="chip warning soft"><span class="label">sin responder</span></span>
+          {% endif %}
+        </span>
+      </div>
+
+      <p>{{ pregunta.texto }}</p>
+
+      <form method="post" action="{% url 'tienda:responder_pregunta' pregunta.pk %}">
+        {% csrf_token %}
+        <div class="filtro">
+          <label class="etiqueta" for="respuesta-{{ pregunta.pk }}">
+            {% if pregunta.contestada %}Cambiar la respuesta{% else %}Respuesta{% endif %}
+          </label>
+          <textarea id="respuesta-{{ pregunta.pk }}" name="respuesta" rows="2" maxlength="2000"
+                    data-role="textarea">{{ pregunta.respuesta }}</textarea>
+        </div>
+        <div class="filtro-boton acciones-bloque">
+          <button type="submit" class="button small primary">
+            <span class="mif-checkmark"></span> Publicar la respuesta
+          </button>
+          <button type="submit" class="button small outline {% if pregunta.publicada %}warning{% else %}success{% endif %}"
+                  formaction="{% url 'tienda:publicar_pregunta' pregunta.pk %}">
+            <span class="mif-{% if pregunta.publicada %}block{% else %}eye{% endif %}"></span>
+            {% if pregunta.publicada %}Ocultar{% else %}Mostrar{% endif %}
+          </button>
+        </div>
+      </form>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="vacio">
+    <p>No hay preguntas{% if estado %} en ese estado{% endif %}.</p>
+    <p class="tenue">Las que dejen en la ficha de un producto aparecen aquí para contestarlas.</p>
+  </div>
+{% endif %}
+{% endblock %}

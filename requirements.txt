@@ -44,6 +44,13 @@ pillow==13.0.0
 celery==5.6.3
 flower==2.2.0
 
+# ------------------------------------------------------------- la tienda
+# La descripción larga del producto se escribe en Markdown y se publica ya
+# formateada: markdown la convierte y bleach deja pasar solo las etiquetas de una
+# lista blanca (tablas y listas incluidas, nada de estilos ni scripts).
+markdown==3.10
+bleach==6.3.0
+
 # ------------------------------------------------------- lo que traen los de arriba
 # Se dejan escritas para que una instalación limpia quede igual que la probada.
 cryptography==50.0.2   # firma del XML (factec)

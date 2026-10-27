@@ -1156,11 +1156,14 @@
 
   function montarCatalogo() {
     var bloque = document.getElementById("bloque-inventario");
+    var envio = document.getElementById("bloque-envio");
     var tipo = document.getElementById("id_tipo");
-    if (!bloque || !tipo) return;
+    if (!tipo) return;
     function mirar() {
-      // Un servicio no se agota: su bloque de inventario sólo estorba.
-      bloque.hidden = tipo.value === "servicio";
+      // Un servicio no se agota —su bloque de inventario sólo estorba— ni se envía.
+      var esServicio = tipo.value === "servicio";
+      if (bloque) bloque.hidden = esServicio;
+      if (envio) envio.hidden = esServicio;
     }
     tipo.addEventListener("change", mirar);
     mirar();

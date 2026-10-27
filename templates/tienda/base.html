@@ -1,0 +1,77 @@
+{% load static marca %}<!DOCTYPE html>
+<html lang="es-ec">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block titulo %}Tienda{% endblock %}</title>
+  <meta name="description" content="{% block descripcion %}El catálogo de la tienda.{% endblock %}">
+  <link rel="stylesheet" href="{% static 'css/tienda.css' %}?v={{ sello_estatico }}">
+  {% imagen_marca "icono" "logo" as favicon %}
+  {% if favicon %}<link rel="icon" href="{{ favicon }}">{% endif %}
+</head>
+<body>
+
+<header class="cabecera">
+  <div class="lienzo cabecera-fila">
+    <a class="marca" href="{% url 'tienda:portada' %}">
+      {% imagen_marca "logo-ancho" "logo" "marca" as logo %}
+      {% if logo %}<img src="{{ logo }}" alt="Tienda">{% else %}Tienda{% endif %}
+    </a>
+
+    <form class="buscador" method="get" action="{% url 'tienda:buscar' %}" role="search">
+      <label class="sr-only" for="buscar">Buscar en la tienda</label>
+      <input id="buscar" type="search" name="q" value="{{ request.GET.q|default:'' }}"
+             placeholder="Buscar productos, marcas y más…" autocomplete="off">
+      <button type="submit" aria-label="Buscar">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" aria-hidden="true">
+          <circle cx="11" cy="11" r="7"></circle>
+          <path d="m20 20-3.5-3.5"></path>
+        </svg>
+      </button>
+    </form>
+
+    <a class="carrito-enlace" href="{% url 'tienda:carrito' %}">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"
+           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <circle cx="9" cy="20" r="1.4"></circle>
+        <circle cx="18" cy="20" r="1.4"></circle>
+        <path d="M2 3h3l2.6 12h11L21 7H6"></path>
+      </svg>
+      Carrito
+      <span class="contador">{{ carrito_unidades|floatformat:"-3" }}</span>
+    </a>
+  </div>
+
+  <nav class="lienzo navegacion" aria-label="Categorías">
+    <a href="{% url 'tienda:portada' %}">Inicio</a>
+    {% for categoria in categorias_del_menu %}
+      <a href="{% url 'tienda:categoria' categoria.slug %}">{{ categoria.nombre }}</a>
+    {% endfor %}
+    <a href="{% url 'tienda:ofertas' %}">Ofertas</a>
+    <a href="{% url 'tienda:seguimiento' %}">Mis pedidos</a>
+  </nav>
+</header>
+
+{% if messages %}
+  <div class="lienzo">
+    {% for message in messages %}
+      <p class="aviso {{ message.tags }}">{{ message }}</p>
+    {% endfor %}
+  </div>
+{% endif %}
+
+<main>
+  {% block contenido %}{% endblock %}
+</main>
+
+<footer class="pie">
+  <div class="lienzo">
+    <span>{% if emisor %}Facturación de {{ emisor.razon_social }}{% else %}Tienda en línea{% endif %}</span>
+    <span>Los precios se muestran con IVA. La factura se emite al confirmar el pedido.</span>
+  </div>
+</footer>
+
+<script src="{% static 'js/tienda.js' %}?v={{ sello_estatico }}"></script>
+</body>
+</html>

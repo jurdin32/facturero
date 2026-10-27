@@ -101,8 +101,72 @@ SECCIONES: tuple[dict[str, Any], ...] = (
             "Las tablas se leen de corrido; para corregir algo, use el lápiz de la fila y el "
             "formulario se abre en una ventana.",
             "En el producto se fija el precio, la tarifa de IVA y el mínimo de existencias.",
+            "Al final de esa misma ficha, «En la tienda» decide si el producto sale a la "
+            "web, con su nombre, su categoría, su precio de venta, su oferta y sus fotos.",
             "En el cliente se guardan la identificación, la dirección y el correo para el "
             "envío del comprobante.",
+        ),
+    },
+    {
+        "clave": "categorias_tienda",
+        "titulo": "Categorías de la tienda",
+        "capturas": (),
+        "resumen": (
+            "El árbol con el que se navega la tienda: una categoría puede colgar de otra "
+            "—«Ropa › Camisetas»— y cada una lleva su orden y su estado."
+        ),
+        "pasos": (
+            "Se crean desde aquí, sin pasar por el admin, y se eligen al publicar cada "
+            "producto.",
+            "El orden decide cómo salen en el menú de la tienda; la categoría apagada no "
+            "se ofrece, pero sus productos siguen publicados.",
+        ),
+    },
+    {
+        "clave": "pedidos",
+        "titulo": "Pedidos de la tienda",
+        "capturas": (),
+        "resumen": (
+            "Lo que dejan quienes compran en la tienda en línea. Cada pedido trae lo que "
+            "se pidió, los datos de quien compra y el total con IVA."
+        ),
+        "pasos": (
+            "El pedido se arma solo cuando el cliente confirma en la tienda; aquí no se "
+            "dan de alta a mano.",
+            "«Facturar» arma la factura con sus líneas y abre la hoja para revisarla y "
+            "emitirla. Hasta que no se emita, el pedido queda «en facturación».",
+            "Un pedido sin factura se puede anular; el pedido no se borra, queda la "
+            "constancia de lo que se pidió.",
+        ),
+    },
+    {
+        "clave": "preguntas_tienda",
+        "titulo": "Preguntas de la tienda",
+        "capturas": (),
+        "resumen": (
+            "Lo que preguntan en la ficha de un producto antes de comprarlo. Nada sale "
+            "en la tienda hasta que el vendedor contesta."
+        ),
+        "pasos": (
+            "Las que faltan por responder salen primero; el filtro deja ver las "
+            "respondidas y las ocultas.",
+            "Al escribir la respuesta queda publicada en la ficha, debajo de la pregunta.",
+            "«Ocultar» la quita de la tienda sin borrarla, por si no tiene que ver con el "
+            "producto.",
+        ),
+    },
+    {
+        "clave": "resenas_tienda",
+        "titulo": "Reseñas de la tienda",
+        "capturas": (),
+        "resumen": (
+            "Las opiniones de quienes compraron, con su calificación de una a cinco "
+            "estrellas. Se aprueban antes de salir en la ficha."
+        ),
+        "pasos": (
+            "Las nuevas llegan «por aprobar»: hasta que no se aprueban, no se ven.",
+            "Al aprobar, la reseña entra en el promedio de la ficha del producto.",
+            "«Retirar» la vuelve a dejar fuera sin borrarla.",
         ),
     },
     {
@@ -306,7 +370,21 @@ QUE_HACE: dict[str, str] = {
     "liquidaciones_compra": "Compra a un proveedor que no está obligado a facturar.",
     "guias_remision": "Transporte de bienes: destinatarios, transportista, vehículo y bienes.",
     "retenciones": "Retiene IVA, renta o ISD al proveedor con los códigos del SRI.",
-    "productos": "Bienes y servicios con su precio, su tarifa de IVA y su mínimo.",
+    "productos": (
+        "Bienes y servicios con su precio, su tarifa de IVA, su mínimo y su ficha de tienda."
+    ),
+    "categorias_tienda": (
+        "El árbol de la tienda: nombre, categoría de arriba, orden y estado."
+    ),
+    "pedidos": (
+        "Los pedidos que dejan en la tienda, para revisarlos y pasarlos a factura."
+    ),
+    "preguntas_tienda": (
+        "Lo que preguntan en la ficha de cada producto, para contestarlo en la tienda."
+    ),
+    "resenas_tienda": (
+        "Las opiniones con estrellas: se aprueban antes de salir publicadas."
+    ),
     "clientes": "Quién compra, con su identificación, dirección y correo.",
     "conductores": "Los transportistas de las guías de remisión.",
     "vehiculos": "Los vehículos que llevan la carga, por placa.",

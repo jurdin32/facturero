@@ -40,6 +40,7 @@ from personalize_options.decoradores import (
     requiere_escritura,
     requiere_lectura,
 )
+from tienda.models import ProductoTienda
 
 from .sri_datos import direccion_matriz
 
@@ -47,7 +48,9 @@ from .forms import (
     FormularioCliente,
     FormularioConductor,
     FormularioProducto,
+    FormularioTienda,
     FormularioVehiculo,
+    FormsetImagenes,
 )
 
 __all__ = [
@@ -80,7 +83,7 @@ def productos(request: HttpRequest) -> HttpResponse:
         .annotate(cuantas=Count("pk"))
         .values("cuantas")
     )
-    lista = Producto.objects.annotate(
+    lista = Producto.objects.select_related("productotienda").annotate(
         cuantas_veces=Coalesce(Subquery(lineas, output_field=IntegerField()), 0)
     ).order_by("descripcion")
 
@@ -105,6 +108,7 @@ def productos(request: HttpRequest) -> HttpResponse:
     productos = list(lista)
     for producto in productos:
         producto.precio_con_iva = precio_con_iva(producto)
+        producto.tienda = getattr(producto, "productotienda", None)
 
     contexto = {
         **marco(request),
@@ -121,52 +125,140 @@ def productos(request: HttpRequest) -> HttpResponse:
 @login_required
 @requiere_lectura("productos")
 def producto(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
-    """Crear o corregir un producto o servicio."""
+    """Crear o corregir un producto o servicio, con su parte de tienda.
+
+    La tienda es la misma ficha del producto, no otra alta: si se deja todo vacío, el
+    producto se queda fuera del catálogo web; en cuanto se marca «publicado» o se
+    escribe algo, se guarda su extensión con los mismos datos fiscales.
+    """
     from inventario.models import Existencia, Movimiento, TipoMovimiento
 
     objeto = get_object_or_404(Producto, pk=pk) if pk else Producto()
     existencia = Existencia.objects.filter(producto=objeto).first() if objeto.pk else None
+    tienda = ProductoTienda.de(objeto)
 
     if request.method == "POST":
         exigir_escritura(request, "productos")
         formulario = FormularioProducto(request.POST, instance=objeto)
+        formulario_tienda = None
+        formset_imagenes = None
         if formulario.is_valid():
-            guardado = formulario.save()
-            minimo = formulario.cleaned_data.get("minimo") or Decimal("0")
-            ubicacion = formulario.cleaned_data.get("ubicacion") or ""
-            if guardado.es_producto:
-                existencia, _ = Existencia.objects.get_or_create(producto=guardado)
-                existencia.minimo = minimo
-                existencia.ubicacion = ubicacion
-                existencia.save()
+            # La tienda se valida antes de guardar nada: si la oferta o las fechas
+            # están mal, el producto no se queda a medias.
+            extension = tienda or ProductoTienda()
+            _copiar_del_formulario(extension, formulario.cleaned_data)
+            formulario_tienda = FormularioTienda(
+                request.POST, request.FILES, instance=extension
+            )
+            if formulario_tienda.is_valid():
+                guardado = formulario.save()
+                minimo = formulario.cleaned_data.get("minimo") or Decimal("0")
+                ubicacion = formulario.cleaned_data.get("ubicacion") or ""
+                if guardado.es_producto:
+                    existencia, _ = Existencia.objects.get_or_create(producto=guardado)
+                    existencia.minimo = minimo
+                    existencia.ubicacion = ubicacion
+                    existencia.save()
 
-                inicial = formulario.cleaned_data.get("stock_inicial")
-                if inicial and not Movimiento.objects.filter(producto=guardado).exists():
-                    Movimiento.objects.create(
-                        producto=guardado,
-                        fecha=guardado.creado.date() if guardado.creado else None,
-                        tipo=TipoMovimiento.ENTRADA.value,
-                        cantidad=inicial,
-                        motivo="Inventario inicial",
-                        usuario=request.user,
-                    )
-            if pk:
-                messages.success(request, "Cambios guardados.")
-            else:
-                messages.success(request, f"«{guardado.descripcion}» está en el catálogo.")
-            return redirect("catalogos:productos")
-        messages.error(request, "Revise lo que está marcado en rojo.")
+                    inicial = formulario.cleaned_data.get("stock_inicial")
+                    if inicial and not Movimiento.objects.filter(producto=guardado).exists():
+                        Movimiento.objects.create(
+                            producto=guardado,
+                            fecha=guardado.creado.date() if guardado.creado else None,
+                            tipo=TipoMovimiento.ENTRADA.value,
+                            cantidad=inicial,
+                            motivo="Inventario inicial",
+                            usuario=request.user,
+                        )
+
+                tienda = _guardar_la_tienda(
+                    guardado, formulario_tienda, hay_fotos=_trae_archivos(request)
+                )
+                formset_imagenes = FormsetImagenes(
+                    request.POST, request.FILES, instance=tienda or ProductoTienda()
+                )
+                # Si la petición no trae el formset (por ejemplo, la API o una
+                # prueba), se guarda sin tocar las fotos.
+                trae_fotos = f"{formset_imagenes.prefix}-TOTAL_FORMS" in request.POST
+                if not trae_fotos or formset_imagenes.is_valid():
+                    if trae_fotos:
+                        formset_imagenes.save()
+                    if pk:
+                        messages.success(request, "Cambios guardados.")
+                    else:
+                        messages.success(
+                            request, f"«{guardado.descripcion}» está en el catálogo."
+                        )
+                    return redirect("catalogos:productos")
+                # Las fotos no se pudieron guardar, pero el producto sí: se vuelve a
+                # su pantalla para corregirlas sin dar de alta el producto otra vez.
+                messages.error(request, "El producto se guardó; revise las fotos de la tienda.")
+                return redirect("catalogos:producto", pk=guardado.pk)
+            messages.error(request, "Revise lo que está marcado en rojo en la tienda.")
+        else:
+            messages.error(request, "Revise lo que está marcado en rojo.")
     else:
         formulario = FormularioProducto(instance=objeto)
+        formulario_tienda = FormularioTienda(instance=tienda or ProductoTienda())
+        _heredar_del_producto(formulario_tienda.instance, objeto)
+        formset_imagenes = FormsetImagenes(instance=tienda or ProductoTienda())
 
     contexto = {
         **marco(request),
         "formulario": formulario,
+        "formulario_tienda": formulario_tienda,
+        "formset_imagenes": formset_imagenes,
         "producto": objeto,
+        "tienda": tienda,
         "existencia": existencia,
         "es_nuevo": pk is None,
     }
     return render(request, "catalogos/producto.html", contexto)
+
+
+def _heredar_del_producto(destino: ProductoTienda, origen: Producto) -> None:
+    """Copia los campos del producto fiscal en la extensión, para validar y guardar.
+
+    ``ProductoTienda`` hereda el producto; cuando todavía no se ha guardado, los
+    campos heredados están vacíos y la validación de la oferta no sabría contra qué
+    precio comparar.
+    """
+    for campo in Producto._meta.concrete_fields:
+        setattr(destino, campo.attname, getattr(origen, campo.attname))
+
+
+def _copiar_del_formulario(destino: ProductoTienda, datos: dict) -> None:
+    """Igual que :func:`_heredar_del_producto`, pero con lo que trae el formulario.
+
+    Se usa antes de guardar: la oferta se valida contra el precio que se acaba de
+    escribir, no contra el que había en la base.
+    """
+    for campo in Producto._meta.concrete_fields:
+        if campo.attname in datos:
+            setattr(destino, campo.attname, datos[campo.attname])
+
+
+def _trae_archivos(request: HttpRequest) -> bool:
+    """¿La petición sube alguna foto? Basta con que venga un archivo del formset."""
+    prefijo = f"{FormsetImagenes.get_default_prefix()}-"
+    return any(clave.startswith(prefijo) for clave in request.FILES)
+
+
+def _guardar_la_tienda(
+    producto_guardado: Producto, formulario: FormularioTienda, hay_fotos: bool = False
+) -> Optional[ProductoTienda]:
+    """Guarda la parte de tienda si se tocó; si no, la deja como estaba.
+
+    Una foto sola ya es motivo para extender el producto: si no, se subiría y se
+    perdería al guardar.
+    """
+    if not formulario.tiene_datos and not hay_fotos:
+        return ProductoTienda.de(producto_guardado)
+    tienda = ProductoTienda.extender(producto_guardado)
+    for nombre, valor in formulario.cleaned_data.items():
+        setattr(tienda, nombre, valor)
+    tienda.save()
+    return tienda
 
 
 # ----------------------------------------------------------------- clientes

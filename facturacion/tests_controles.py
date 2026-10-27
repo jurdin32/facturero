@@ -237,6 +237,8 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
             "/comprobantes/retenciones/", "/comprobantes/retenciones/nuevo/",
             "/comprobantes/guias-remision/nuevo/", "/seguridad/", "/seguridad/roles/nuevo/",
             "/seguridad/usuarios/", "/seguridad/opciones/", "/seguridad/opciones/nueva/",
+            "/tienda/categorias/", "/tienda/pedidos/", "/tienda/preguntas/",
+            "/tienda/resenas/",
         ]
         pedidos: set[str] = set()
 

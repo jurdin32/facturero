@@ -1,4 +1,5 @@
 {% extends "base.html" %}
+{% load static %}
 {% block titulo %}{% if es_nuevo %}Nuevo producto o servicio{% else %}{{ producto.descripcion }}{% endif %}{% endblock %}
 
 {% block contenido %}
@@ -30,7 +31,7 @@
   </div>
 </div>
 
-<form method="post" id="formulario-producto" novalidate>{% csrf_token %}
+<form method="post" enctype="multipart/form-data" id="formulario-producto" novalidate>{% csrf_token %}
   <div class="columnas">
     <div class="columna-principal">
 
@@ -134,7 +135,6 @@
           </p>
         {% endif %}
       </section>
-
     </div>
 
     <aside class="columna-lateral">
@@ -149,6 +149,166 @@
       </div>
     </aside>
   </div>
+
+      <section class="bloque" id="bloque-tienda">
+        <h2 class="bloque-titulo">En la tienda</h2>
+        <p class="ayuda">
+          Es el mismo producto: aquí solo se decide cómo se ve en la web. Si no se
+          publica, se sigue facturando igual y no aparece en la tienda.
+        </p>
+
+        {% if formulario_tienda.non_field_errors %}
+          <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
+        {% endif %}
+
+        <div class="row">
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="switch">
+                {{ formulario_tienda.publicado }}
+                <span class="caption-append">Publicado en la tienda</span>
+              </label>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="switch">
+                {{ formulario_tienda.destacado }}
+                <span class="caption-append">Destacado en la portada</span>
+              </label>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-4">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.orden.id_for_label }}">Orden</label>
+              {{ formulario_tienda.orden }}
+              {% if formulario_tienda.orden.errors %}<p class="error">{{ formulario_tienda.orden.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Dentro de su categoría, los de número menor salen primero.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.categoria.id_for_label }}">Categoría</label>
+              {{ formulario_tienda.categoria }}
+              {% if formulario_tienda.categoria.errors %}<p class="error">{{ formulario_tienda.categoria.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a>.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.titulo.id_for_label }}">Nombre en la web</label>
+              {{ formulario_tienda.titulo }}
+              {% if formulario_tienda.titulo.errors %}<p class="error">{{ formulario_tienda.titulo.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Si se deja vacío se usa la descripción del producto.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.resumen.id_for_label }}">Resumen</label>
+              {{ formulario_tienda.resumen }}
+              {% if formulario_tienda.resumen.errors %}<p class="error">{{ formulario_tienda.resumen.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Una o dos líneas para el listado y el buscador.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.descripcion_larga.id_for_label }}">Descripción larga</label>
+              {{ formulario_tienda.descripcion_larga }}
+              <p class="ayuda">Materiales, medidas, qué incluye…</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.precio_web.id_for_label }}">Precio en la web</label>
+              {{ formulario_tienda.precio_web }}
+              {% if formulario_tienda.precio_web.errors %}<p class="error">{{ formulario_tienda.precio_web.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Sin IVA. Vacío: el del producto.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.precio_oferta.id_for_label }}">Precio de oferta</label>
+              {{ formulario_tienda.precio_oferta }}
+              {% if formulario_tienda.precio_oferta.errors %}<p class="error">{{ formulario_tienda.precio_oferta.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Sin IVA; tiene que ser menor.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
+              {{ formulario_tienda.oferta_desde }}
+              {% if formulario_tienda.oferta_desde.errors %}<p class="error">{{ formulario_tienda.oferta_desde.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
+              {{ formulario_tienda.oferta_hasta }}
+              {% if formulario_tienda.oferta_hasta.errors %}<p class="error">{{ formulario_tienda.oferta_hasta.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3" id="bloque-envio">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.peso.id_for_label }}">Peso (kg)</label>
+              {{ formulario_tienda.peso }}
+              {% if formulario_tienda.peso.errors %}<p class="error">{{ formulario_tienda.peso.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Opcional: para calcular el envío.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="etiqueta">Fotos</h3>
+        <p class="ayuda">La de menor orden es la principal. PNG, JPG, WEBP o AVIF, hasta 5 MB.</p>
+        {{ formset_imagenes.management_form }}
+        {% for foto in formset_imagenes %}
+          <div class="row">
+            <div class="cell-12 cell-md-4">
+              {{ foto.id }}
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ foto.imagen.id_for_label }}">Foto {{ forloop.counter }}</label>
+                {% if foto.instance.pk %}
+                  <div class="foto-vista"><img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}"></div>
+                {% endif %}
+                {{ foto.imagen }}
+                {% if foto.imagen.errors %}<p class="error">{{ foto.imagen.errors.0 }}</p>{% endif %}
+                {% if foto.instance.pk %}
+                  <label class="switch">
+                    {{ foto.DELETE }}
+                    <span class="caption-append">Quitar esta foto</span>
+                  </label>
+                {% endif %}
+              </div>
+            </div>
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ foto.alt.id_for_label }}">Texto alternativo</label>
+                {{ foto.alt }}
+                <p class="ayuda">Lo que se lee cuando la imagen no carga.</p>
+              </div>
+            </div>
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ foto.orden.id_for_label }}">Orden</label>
+                {{ foto.orden }}
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        {% if formset_imagenes.non_form_errors %}
+          <p class="error">{{ formset_imagenes.non_form_errors.0 }}</p>
+        {% endif %}
+      </section>
+
 </form>
 
+{% endblock %}
+
+{% block scripts %}
+  <script src="{% static 'js/editor_markdown.js' %}?v={{ sello_estatico }}"></script>
 {% endblock %}

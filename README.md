@@ -1,9 +1,9 @@
 # Facturero
 
-Facturación electrónica del SRI para el Ecuador, con contabilidad, caja, inventario y
-reportes. Cada comprobante se firma, se envía y se consulta al Servicio de Rentas
-Internas; lo que el SRI devuelve se enseña tal cual, con su motivo, en la ficha del
-comprobante.
+Facturación electrónica del SRI para el Ecuador, con contabilidad, caja, inventario,
+tienda en línea y reportes. Cada comprobante se firma, se envía y se consulta al
+Servicio de Rentas Internas; lo que el SRI devuelve se enseña tal cual, con su motivo,
+en la ficha del comprobante.
 
 Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
 
@@ -22,6 +22,17 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
   catálogo del SRI que se carga en la base).
 - **Catálogo e inventario**: clientes, productos y servicios, conductores, vehículos,
   existencias y kardex.
+- **Tienda en línea**: el catálogo público en `/tienda/` con buscador, ofertas,
+  listados con filtros, lo más vendido y una ficha por producto —galería, precio con
+  IVA, características, opiniones con estrellas y «Comprar ahora»—, carrito en la
+  sesión y pedidos sin crear cuenta, con **seguimiento por número y correo**. Desde la
+  ficha se le **pregunta al vendedor** y se deja la **reseña**; las respuestas y las
+  opiniones se moderan antes de publicarse, en sus apartados del menú. La **descripción
+  larga** se escribe en Markdown, con su editor de botones —títulos, listas, tablas y
+  enlaces—, y se publica ya formateada y limpia. Las categorías se crean desde la
+  aplicación y los pedidos se revisan y se pasan a factura desde «Pedidos de la
+  tienda». Se publica desde la pantalla del producto, sin darlo de alta dos veces; lo
+  que no se publica se sigue facturando igual.
 - **Caja del turno**: apertura, ingresos y egresos, cierre con **desglose de billetes y
   monedas** y **acta de cierre en PDF**. Sin caja abierta no se factura.
 - **Supervisión de la caja** (aparte, con su propio permiso): revisión de los cuadres
@@ -129,9 +140,10 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **327 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+Son **451 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
 supervisión de los cuadres y los vales, la contabilidad del paquete `conta_ec`,
-los reportes en sus tres salidas, los períodos, los permisos y el menú.
+los reportes en sus tres salidas, los períodos, los permisos y el menú, la tienda
+con sus pedidos, preguntas, reseñas y el texto enriquecido.
 
 Todos los **PDF** —los reportes, el acta de cierre y los vales— salen de
 **plantillas HTML** y de la hoja de estilo de imprenta `static/css/papel.css`,
@@ -149,6 +161,10 @@ en pantalla se escribe una sola vez.
 - Los estáticos se sirven con `collectstatic`; en desarrollo los sirve Django.
 
 ## Lo que el sistema no hace
+
+La tienda no cobra en línea: deja el pedido y la forma de pago se acuerda con el
+cliente. Tampoco emite la factura sola: la arma desde el pedido y la emisión se revisa
+y se confirma en la pantalla de facturar.
 
 No inventa datos fiscales: los códigos de retención, las tarifas de IVA y los
 documentos son los que publica el SRI. Si el SRI devuelve un error, el sistema lo

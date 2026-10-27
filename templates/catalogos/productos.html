@@ -12,7 +12,8 @@
     <p class="subtitulo">
       {{ cuantos_bienes }} bien{{ cuantos_bienes|pluralize:"es" }} ·
       {{ cuantos_servicios }} servicio{{ cuantos_servicios|pluralize:"s" }} ·
-      <a class="enlace" href="{% url 'inventario:inventario' %}">ver el inventario</a>
+      <a class="enlace" href="{% url 'inventario:inventario' %}">ver el inventario</a> ·
+      <a class="enlace" href="{% url 'tienda:portada' %}" target="_blank" rel="noopener">ver la tienda en línea</a>
     </p>
   </div>
   {% if puede_añadir %}<a class="button primary" href="{% url 'catalogos:producto_nuevo' %}"><span class="mif-plus"></span> Añadir</a>{% endif %}
@@ -110,6 +111,13 @@
                 <span class="chip primary soft"><span class="label">Bien</span></span>
               {% endif %}
               {% if not p.activo %}<span class="chip"><span class="label">retirado</span></span>{% endif %}
+              {% if p.tienda %}
+                {% if p.tienda.publicado %}
+                  <span class="chip success soft"><span class="label">en la tienda</span></span>
+                {% else %}
+                  <span class="chip soft"><span class="label">borrador de tienda</span></span>
+                {% endif %}
+              {% endif %}
             </span>
           </td>
           <td class="col-dato">

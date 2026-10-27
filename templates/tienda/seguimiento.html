@@ -1,0 +1,74 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}Mis pedidos{% endblock %}
+
+{% block contenido %}
+<div class="lienzo">
+  <p class="migas"><a href="{% url 'tienda:portada' %}">Inicio</a> › Mis pedidos</p>
+
+  <div class="dos-columnas">
+    <div class="panel">
+      <h1>Consulta tu pedido</h1>
+      <p class="tarjeta-meta">
+        Pon el número del pedido y el correo o la cédula con los que lo hiciste.
+      </p>
+
+      <form method="get" novalidate>
+        <div class="campo">
+          <label for="numero">Número del pedido</label>
+          <input id="numero" type="text" name="numero" value="{{ numero }}"
+                 placeholder="P-000123" autocomplete="off" required>
+        </div>
+        <div class="campo">
+          <label for="contacto">Correo o identificación</label>
+          <input id="contacto" type="text" name="contacto" value="{{ contacto }}"
+                 autocomplete="off" required>
+        </div>
+        <button class="boton" type="submit">Ver el pedido</button>
+      </form>
+    </div>
+
+    <div class="panel">
+      {% if buscado %}
+        {% if pedido %}
+          <h2>Pedido {{ pedido.numero }}</h2>
+          <p class="tarjeta-meta">{{ pedido.creado|date:"d/m/Y H:i" }} · {{ pedido.estado }}</p>
+
+          {% for linea in pedido.lineas.all %}
+            <p>
+              <strong>{{ linea.cantidad }} × {{ linea.descripcion }}</strong><br>
+              <span class="tarjeta-meta cifra">$ {{ linea.total|floatformat:2 }}</span>
+            </p>
+          {% endfor %}
+
+          <div class="resumen-compra">
+            <dl>
+              <dt>Subtotal</dt><dd>$ {{ pedido.subtotal|floatformat:2 }}</dd>
+              <dt>IVA</dt><dd>$ {{ pedido.iva|floatformat:2 }}</dd>
+              <dt class="total">Total</dt><dd class="total">$ {{ pedido.total|floatformat:2 }}</dd>
+            </dl>
+          </div>
+
+          <p class="tarjeta-meta" style="margin-top:1rem">
+            {% if pedido.facturado %}
+              La factura ya está autorizada.
+            {% elif pedido.anulado %}
+              Este pedido fue anulado. Si tiene dudas, escríbanos.
+            {% else %}
+              Estamos preparando su factura; el pedido sigue en proceso.
+            {% endif %}
+          </p>
+        {% else %}
+          <p class="aviso">No encontramos un pedido con ese número y ese contacto.</p>
+        {% endif %}
+      {% else %}
+        <h2>¿Cómo va mi pedido?</h2>
+        <p class="tarjeta-meta">
+          Aquí ve el detalle y el estado de lo que pidió. Si tiene una cuenta, también
+          puede escribirnos desde la ficha de cada producto.
+        </p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

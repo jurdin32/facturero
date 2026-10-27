@@ -1,0 +1,112 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}Tienda{% endblock %}
+
+{% block contenido %}
+<section class="banner">
+  <div class="lienzo banner-caja">
+    <div>
+      <p class="banner-etiqueta">Tienda en línea</p>
+      <h1>Lo que busca, al mejor precio</h1>
+      <p>
+        Elija lo que necesita, déjenos su pedido y le emitimos la factura.
+        Sin cuenta y sin vueltas.
+      </p>
+      <a class="boton grande" href="{% url 'tienda:ofertas' %}">Ver las ofertas</a>
+    </div>
+    <div class="banner-foto">
+      {% if banner %}
+        <img src="{{ banner.imagen_principal.imagen.url }}"
+             alt="{{ banner.imagen_principal.alt|default:banner.nombre }}">
+      {% else %}
+        <span class="sin-foto">Catálogo en línea</span>
+      {% endif %}
+    </div>
+  </div>
+</section>
+
+{% if total %}
+  {% if ofertas %}
+    <section class="seccion">
+      <div class="lienzo">
+        <div class="seccion-cabecera">
+          <h2>Ofertas</h2>
+          <a class="enlace" href="{% url 'tienda:ofertas' %}">Ver todas</a>
+        </div>
+        <div class="rejilla">
+          {% for producto in ofertas %}
+            {% include "tienda/fragmentos/tarjeta.html" with producto=producto %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if vistos %}
+    <section class="seccion">
+      <div class="lienzo">
+        <div class="seccion-cabecera">
+          <h2>Vistos hace poco</h2>
+        </div>
+        <div class="rejilla">
+          {% for producto in vistos %}
+            {% include "tienda/fragmentos/tarjeta.html" with producto=producto %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if categorias %}
+    <section class="seccion">
+      <div class="lienzo">
+        <div class="seccion-cabecera"><h2>Categorías</h2></div>
+        <div class="categorias-tarjetas">
+          {% for categoria in categorias %}
+            <a class="categoria-tarjeta" href="{% url 'tienda:categoria' categoria.slug %}">
+              {{ categoria.nombre }}
+              <small>Ver los productos</small>
+            </a>
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  {% if vendidos %}
+    <section class="seccion">
+      <div class="lienzo">
+        <div class="seccion-cabecera">
+          <h2>Lo más vendido</h2>
+        </div>
+        <div class="rejilla">
+          {% for producto in vendidos %}
+            {% include "tienda/fragmentos/tarjeta.html" with producto=producto %}
+          {% endfor %}
+        </div>
+      </div>
+    </section>
+  {% endif %}
+
+  <section class="seccion">
+    <div class="lienzo">
+      <div class="seccion-cabecera">
+        <h2>{% if son_destacados %}Destacados{% else %}Recomendados{% endif %}</h2>
+      </div>
+      <div class="rejilla">
+        {% for producto in destacados %}
+          {% include "tienda/fragmentos/tarjeta.html" with producto=producto %}
+        {% endfor %}
+      </div>
+    </div>
+  </section>
+{% else %}
+  <section class="seccion">
+    <div class="lienzo">
+      <div class="vacio">
+        <p>Todavía no hay nada publicado en la tienda.</p>
+      </div>
+    </div>
+  </section>
+{% endif %}
+{% endblock %}

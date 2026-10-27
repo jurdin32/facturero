@@ -202,12 +202,13 @@ class PruebasDelMenu(TestCase):
         menus = pagina.split('class="sidenav"')[1:]
         self.assertEqual(len(menus), 2)
         for menu in menus:
-            self.assertEqual(menu.count('class="menu-grupo"'), 9)
-            self.assertEqual(menu.count('class="menu-submenu"'), 9)
+            self.assertEqual(menu.count('class="menu-grupo"'), 10)
+            self.assertEqual(menu.count('class="menu-submenu"'), 10)
         for etiqueta in (
             "Nueva factura", "Facturas emitidas", "Notas de crédito", "Notas de débito",
             "Liquidaciones de compra", "Guías de remisión", "Retenciones",
             "Productos y servicios", "Clientes", "Conductores", "Vehículos", "Inventario",
+            "Categorías", "Pedidos de la tienda",
             "Configuración del SRI", "Roles y permisos", "Usuarios y sus roles", "Administración",
             "Caja del turno", "Revisión de caja", "Vales de caja",
             "Plan de cuentas", "Asientos contables",
@@ -222,6 +223,7 @@ class PruebasDelMenu(TestCase):
                 "Facturar": False,
                 "Comprobantes": False,
                 "Catálogo": False,
+                "Tienda": False,
                 "Sistema": False,
                 "Caja": False,
                 "Supervisión": False,
@@ -238,6 +240,8 @@ class PruebasDelMenu(TestCase):
             ("/catalogos/conductores/", "Catálogo"),
             ("/catalogos/vehiculos/", "Catálogo"),
             ("/inventario/", "Catálogo"),
+            ("/tienda/categorias/", "Tienda"),
+            ("/tienda/pedidos/", "Tienda"),
             ("/configuracion/sri/", "Sistema"),
         ):
             with self.subTest(ruta=ruta):
@@ -347,7 +351,7 @@ class PruebasDelMenuConPermisos(TestCase):
     def test_en_modo_abierto_se_enseña_todo(self) -> None:
         menu = self._menu()
 
-        self.assertEqual(menu.count('class="menu-grupo"'), 9)
+        self.assertEqual(menu.count('class="menu-grupo"'), 10)
         self.assertIn("Tablero", menu)
         self.assertIn("Configuración del SRI", menu)
         self.assertIn("Plan de cuentas", menu)

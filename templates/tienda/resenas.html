@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block titulo %}Reseñas de la tienda{% endblock %}
+
+{% block contenido %}
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Reseñas de la tienda</h1>
+    <p class="subtitulo">
+      {{ cuantas }} reseña{{ cuantas|pluralize }} ·
+      {{ pendientes }} por aprobar
+    </p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-star-full'></span>">
+          <option value="pendientes" {% if estado == 'pendientes' %}selected{% endif %}>Por aprobar</option>
+          <option value="aprobadas" {% if estado == 'aprobadas' %}selected{% endif %}>Publicadas</option>
+          <option value="todas" {% if estado == 'todas' %}selected{% endif %}>Todas</option>
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-filter-list"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'tienda:resenas' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if resenas %}
+  {% for resena in resenas %}
+    <section class="bloque">
+      <div class="titulo-fila">
+        <div>
+          <a class="listado-titulo" href="{% url 'tienda:producto' resena.producto.slug %}">
+            {{ resena.producto.nombre }}
+          </a>
+          <span class="listado-meta">
+            {{ resena.nombre }} · {{ resena.creada|date:"d/m/Y H:i" }}
+          </span>
+        </div>
+        <span class="listado-chips">
+          <span class="estrellas">{{ resena.estrellas }}</span>
+          {% if resena.aprobada %}
+            <span class="chip success soft"><span class="label">publicada</span></span>
+          {% else %}
+            <span class="chip warning soft"><span class="label">por aprobar</span></span>
+          {% endif %}
+        </span>
+      </div>
+
+      <p>{{ resena.comentario }}</p>
+
+      <div class="acciones-bloque">
+        <form method="post" action="{% url 'tienda:moderar_resena' resena.pk %}">
+          {% csrf_token %}
+          {% if resena.aprobada %}
+            <button type="submit" name="accion" value="retirar" class="button small outline warning">
+              <span class="mif-block"></span> Retirar
+            </button>
+          {% else %}
+            <button type="submit" name="accion" value="aprobar" class="button small success">
+              <span class="mif-checkmark"></span> Aprobar y publicar
+            </button>
+          {% endif %}
+        </form>
+      </div>
+    </section>
+  {% endfor %}
+{% else %}
+  <div class="vacio">
+    <p>No hay reseñas{% if estado %} en ese estado{% endif %}.</p>
+    <p class="tenue">Las que dejen en la ficha de un producto esperan aquí su aprobación.</p>
+  </div>
+{% endif %}
+{% endblock %}

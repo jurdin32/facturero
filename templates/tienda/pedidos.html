@@ -1,0 +1,101 @@
+{% extends "base.html" %}
+{% block titulo %}Pedidos de la tienda{% endblock %}
+
+{% block contenido %}
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Pedidos de la tienda</h1>
+    <p class="subtitulo">
+      {{ cuantos }} pedido{{ cuantos|pluralize }} ·
+      {{ sin_facturar }} sin facturar
+    </p>
+  </div>
+</div>
+
+<form class="filtros" method="get">
+  <div class="row">
+    <div class="cell-12 cell-md-4">
+      <div class="filtro">
+        <label class="etiqueta" for="estado">Estado</label>
+        <select name="estado" id="estado" data-role="select" data-prepend="<span class='mif-shop'></span>">
+          <option value="">Todos</option>
+          <option value="pendientes" {% if estado == 'pendientes' %}selected{% endif %}>Sin facturar</option>
+          <option value="en_facturacion" {% if estado == 'en_facturacion' %}selected{% endif %}>En facturación</option>
+          <option value="facturados" {% if estado == 'facturados' %}selected{% endif %}>Facturados</option>
+          <option value="anulados" {% if estado == 'anulados' %}selected{% endif %}>Anulados</option>
+        </select>
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="filtro">
+        <label class="etiqueta" for="q">Buscar</label>
+        <input type="search" id="q" name="q" value="{{ q }}" placeholder="Nombre o identificación"
+               data-role="input" data-prepend="<span class='mif-search'></span>">
+      </div>
+    </div>
+    <div class="cell-12 cell-md-4">
+      <div class="filtro filtro-boton">
+        <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
+        <a class="enlace" href="{% url 'tienda:pedidos' %}">Limpiar</a>
+      </div>
+    </div>
+  </div>
+</form>
+
+{% if pedidos %}
+  <div class="desliza"><table id="tabla-pedidos" class="table small libro listado" data-tabla>
+    <thead>
+      <tr>
+        <th class="col-marca"></th>
+        <th class="col-principal">Pedido</th>
+        <th class="col-detalles">Cliente</th>
+        <th class="col-dato">Total</th>
+        <th class="col-tipo">Estado</th>
+        <th class="col-acciones"></th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for p in pedidos %}
+        <tr>
+          <td class="col-marca">
+            <span class="marca"><span class="mif-shop"></span></span>
+          </td>
+          <td class="col-principal">
+            <a class="listado-titulo" href="{% url 'tienda:pedido' p.pk %}">{{ p.numero }}</a>
+            <span class="listado-meta">{{ p.creado|date:"d/m/Y H:i" }}</span>
+          </td>
+          <td class="col-detalles">
+            <span class="listado-meta">{{ p.nombre }}</span>
+            {% if p.identificacion %}<span class="listado-meta cifra">{{ p.identificacion }}</span>{% endif %}
+          </td>
+          <td class="col-dato">
+            <span class="listado-cifra cifra">$ {{ p.total|floatformat:2 }}</span>
+          </td>
+          <td class="col-tipo">
+            <span class="listado-chips">
+              {% if p.anulado %}
+                <span class="chip"><span class="label">anulado</span></span>
+              {% elif p.facturado %}
+                <span class="chip success soft"><span class="label">facturado</span></span>
+              {% elif p.factura_id %}
+                <span class="chip warning soft"><span class="label">en facturación</span></span>
+              {% else %}
+                <span class="chip info soft"><span class="label">sin facturar</span></span>
+              {% endif %}
+            </span>
+          </td>
+          <td class="col-acciones">
+            <a class="button small square outline primary" href="{% url 'tienda:pedido' p.pk %}"
+               title="Ver el pedido" aria-label="Ver el pedido"><span class="mif-eye"></span></a>
+          </td>
+        </tr>
+      {% endfor %}
+    </tbody>
+  </table></div>
+{% else %}
+  <div class="vacio">
+    <p>No hay pedidos{% if estado or q %} con ese filtro{% endif %}.</p>
+    <p class="tenue">Los que se dejen en la tienda aparecen aquí, listos para facturar.</p>
+  </div>
+{% endif %}
+{% endblock %}

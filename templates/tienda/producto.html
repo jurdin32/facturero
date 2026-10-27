@@ -1,0 +1,267 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}{{ producto.nombre }}{% endblock %}
+{% block descripcion %}{{ producto.resumen|default:producto.nombre }}{% endblock %}
+
+{% block contenido %}
+<div class="lienzo">
+  <p class="migas">
+    <a href="{% url 'tienda:portada' %}">Tienda</a>
+    {% if producto.categoria %}
+      › <a href="{% url 'tienda:categoria' producto.categoria.slug %}">{{ producto.categoria.ruta }}</a>
+    {% endif %}
+    › {{ producto.nombre }}
+  </p>
+
+  <div class="ficha-caja">
+    <div class="ficha">
+      <div class="galeria{% if producto.imagenes.all|length < 2 %} sin-miniaturas{% endif %}">
+        {% if producto.imagenes.all|length > 1 %}
+          <div class="miniaturas">
+            {% for foto in producto.imagenes.all %}
+              <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}"
+                   data-foto="{{ foto.imagen.url }}" loading="lazy">
+            {% endfor %}
+          </div>
+        {% endif %}
+        <div class="galeria-principal">
+          {% with principal=producto.imagen_principal %}
+            {% if principal %}
+              <img id="foto-principal" src="{{ principal.imagen.url }}"
+                   alt="{{ principal.alt|default:producto.nombre }}">
+            {% else %}
+              <span class="sin-foto">Sin foto</span>
+            {% endif %}
+          {% endwith %}
+        </div>
+      </div>
+
+      <div class="ficha-datos">
+        <p class="meta">
+          {% if producto.categoria %}{{ producto.categoria.nombre }} · {% endif %}
+          Código {{ producto.codigo_principal }}
+        </p>
+        <h1>{{ producto.nombre }}</h1>
+        {% if promedio %}
+          <p class="estrellas-linea">
+            <span class="estrellas" aria-label="{{ promedio }} de 5">{{ promedio }} ★</span>
+            {{ resenas|length }} opinión{{ resenas|length|pluralize:"es" }}
+          </p>
+        {% endif %}
+        {% if producto.resumen %}<p class="meta">{{ producto.resumen }}</p>{% endif %}
+
+        <p class="precio">
+          $ {{ producto.precio|floatformat:2 }}
+          {% if producto.precio_anterior %}
+            <span class="precio-antes">$ {{ producto.precio_anterior|floatformat:2 }}</span>
+            <span class="descuento">{{ producto.descuento }} % menos</span>
+          {% endif %}
+        </p>
+        <p class="{% if producto.con_stock %}disponible{% else %}agotado{% endif %}">
+          {% if producto.con_stock %}Disponible · entrega a coordinar{% else %}Agotado por ahora{% endif %}
+        </p>
+
+        {% if producto.con_stock %}
+          <form class="compra" method="post" action="{% url 'tienda:agregar' %}">
+            {% csrf_token %}
+            <input type="hidden" name="producto" value="{{ producto.pk }}">
+
+            <div class="compra-fila">
+              <label class="sr-only" for="cantidad">Cantidad</label>
+              <input class="cantidad" id="cantidad" name="cantidad" type="number"
+                     value="1" min="0.001" step="0.001" inputmode="decimal" aria-label="Cantidad">
+              <span class="meta">Cantidad</span>
+            </div>
+
+            <button class="boton compra-ya grande" type="submit" name="comprar" value="1">
+              Comprar ahora
+            </button>
+            <button class="boton claro" type="submit" name="seguir" value="1">
+              Agregar al carrito
+            </button>
+          </form>
+        {% else %}
+          <p class="meta">Vuelva a mirar más adelante: se repone.</p>
+        {% endif %}
+
+        {% if producto.peso %}
+          <p class="meta">Peso: {{ producto.peso|floatformat:"-3" }} kg</p>
+        {% endif %}
+
+        <div class="vendedor">
+          <p class="vendedor-titulo">
+            <span class="vendedor-icono" aria-hidden="true">✓</span>
+            Vendido por <strong>{% if emisor %}{{ emisor.razon_social }}{% else %}la casa{% endif %}</strong>
+          </p>
+          <p class="vendedor-linea">Factura electrónica autorizada por el SRI a su nombre.</p>
+          <p class="vendedor-linea">Garantía directa con el vendedor · Entrega a coordinar.</p>
+          <a class="vendedor-enlace" href="#preguntas">Hacer una pregunta al vendedor</a>
+        </div>
+
+        <p class="compartir">
+          <button class="boton claro pequeno" type="button" data-compartir="{{ request.build_absolute_uri }}">
+            Compartir
+          </button>
+        </p>
+      </div>
+    </div>
+  </div>
+
+  <div class="descripcion">
+    <h2>Características principales</h2>
+    <table class="caracteristicas">
+      <tbody>
+        <tr><th>Código</th><td class="cifra">{{ producto.codigo_principal }}</td></tr>
+        {% if producto.categoria %}
+          <tr><th>Categoría</th><td>{{ producto.categoria.ruta }}</td></tr>
+        {% endif %}
+        <tr><th>Tipo</th><td>{{ producto.get_tipo_display|default:producto.tipo }}</td></tr>
+        <tr><th>Unidad</th><td>{{ producto.get_unidad_medida_display|default:producto.unidad_medida }}</td></tr>
+        {% if producto.peso %}
+          <tr><th>Peso</th><td>{{ producto.peso|floatformat:"-3" }} kg</td></tr>
+        {% endif %}
+        <tr><th>Precio</th><td class="cifra">$ {{ producto.precio|floatformat:2 }} (IVA incluido)</td></tr>
+        <tr>
+          <th>Disponibilidad</th>
+          <td>{% if producto.con_stock %}Disponible{% else %}Agotado por ahora{% endif %}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="descripcion">
+    <h2>Descripción</h2>
+    {% if producto.descripcion_html %}
+      <div class="descripcion-texto">{{ producto.descripcion_html }}</div>
+    {% else %}
+      <div class="descripcion-texto">{{ producto.descripcion }}</div>
+    {% endif %}
+    {% if producto.datos_adicionales %}
+      <p class="detalles-lista" style="margin-top:1rem">{{ producto.datos_adicionales }}</p>
+    {% endif %}
+  </div>
+
+  <div class="descripcion" id="preguntas">
+    <h2>Preguntas y respuestas
+      {% if preguntas %}<span class="contador">{{ preguntas|length }}</span>{% endif %}
+    </h2>
+    {% if preguntas %}
+      <ul class="preguntas">
+        {% for pregunta in preguntas %}
+          <li>
+            <p class="pregunta"><strong>{{ pregunta.nombre }}</strong> preguntó:</p>
+            <p>{{ pregunta.texto }}</p>
+            <p class="respuesta"><span class="etiqueta-vendedor">Respuesta del vendedor</span>
+              {{ pregunta.respuesta }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="meta">Todavía no hay preguntas sobre este producto.</p>
+    {% endif %}
+
+    <details class="formulario-plegable">
+      <summary>Hacer una pregunta</summary>
+      <form method="post" action="{% url 'tienda:preguntar' producto.slug %}">
+        {% csrf_token %}
+        {{ formulario_pregunta.trampa }}
+        <div class="campo">
+          <label for="id_pregunta_nombre">Su nombre</label>
+          <input type="text" id="id_pregunta_nombre" name="nombre" maxlength="120" required>
+        </div>
+        <div class="campo">
+          <label for="id_pregunta_email">Correo (opcional)</label>
+          <input type="email" id="id_pregunta_email" name="email" maxlength="254">
+        </div>
+        <div class="campo">
+          <label for="id_pregunta_texto">Su pregunta</label>
+          <textarea id="id_pregunta_texto" name="texto" rows="3" maxlength="1000" required
+                    placeholder="¿Qué quiere saber del producto?"></textarea>
+        </div>
+        <button class="boton" type="submit">Enviar la pregunta</button>
+      </form>
+    </details>
+  </div>
+
+  <div class="descripcion" id="opiniones">
+    <h2>Opiniones del producto</h2>
+    {% if promedio %}
+      <div class="resumen-opiniones">
+        <div class="nota-grande">
+          <strong>{{ promedio }}</strong>
+          <span class="estrellas">{{ promedio }} ★</span>
+          <small>{{ resenas|length }} opinión{{ resenas|length|pluralize:"es" }}</small>
+        </div>
+        <div class="barras">
+          {% for fila in distribucion %}
+            <div class="barra-fila">
+              <span class="barra-nota">{{ fila.estrellas }} ★</span>
+              <span class="barra-pista"><span class="barra-relleno" style="width: {{ fila.porcentaje }}%"></span></span>
+              <span class="barra-cuenta">{{ fila.cuantas }}</span>
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endif %}
+
+    {% for resena in resenas %}
+      <div class="resena">
+        <p class="estrellas">{{ resena.estrellas }}</p>
+        <p class="resena-meta">{{ resena.nombre }} · {{ resena.creada|date:"d/m/Y" }}</p>
+        <p>{{ resena.comentario }}</p>
+      </div>
+    {% empty %}
+      <p class="meta">Todavía no hay opiniones. Sea el primero en opinar.</p>
+    {% endfor %}
+
+    <details class="formulario-plegable">
+      <summary>Escribir una opinión</summary>
+      <form method="post" action="{% url 'tienda:resenar' producto.slug %}">
+        {% csrf_token %}
+        {{ formulario_resena.trampa }}
+        <div class="campo">
+          <label for="id_resena_nombre">Su nombre</label>
+          <input type="text" id="id_resena_nombre" name="nombre" maxlength="120" required>
+        </div>
+        <div class="campo">
+          <label for="id_resena_email">Correo (opcional, no se publica)</label>
+          <input type="email" id="id_resena_email" name="email" maxlength="254">
+        </div>
+        <div class="campo">
+          <span class="etiqueta-estrellas" id="etiqueta-calificacion">Su calificación</span>
+          <div class="estrellas-elige" role="radiogroup" aria-labelledby="etiqueta-calificacion">
+            {% for nota, palabra in notas %}
+              <input type="radio" name="calificacion" id="calificacion-{{ nota }}"
+                     value="{{ nota }}"{% if nota == 5 %} checked{% endif %}>
+              <label for="calificacion-{{ nota }}" title="{{ palabra }}">
+                <span aria-hidden="true">★</span><span class="sr-only">{{ palabra }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          <p class="estrellas-texto" data-estrellas-texto>Excelente</p>
+        </div>
+        <div class="campo">
+          <label for="id_resena_comentario">Su opinión</label>
+          <textarea id="id_resena_comentario" name="comentario" rows="4" maxlength="2000"
+                    required placeholder="Qué le pareció el producto"></textarea>
+        </div>
+        <button class="boton" type="submit">Enviar la opinión</button>
+      </form>
+    </details>
+  </div>
+
+  {% if relacionados %}
+    <section class="seccion">
+      <div class="seccion-cabecera">
+        <h2>También te puede interesar</h2>
+      </div>
+      <div class="rejilla">
+        {% for otro in relacionados %}
+          {% include "tienda/fragmentos/tarjeta.html" with producto=otro %}
+        {% endfor %}
+      </div>
+    </section>
+  {% endif %}
+</div>
+
+{% endblock %}

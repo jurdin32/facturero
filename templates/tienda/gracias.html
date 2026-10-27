@@ -1,0 +1,35 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}Pedido {{ pedido.numero }}{% endblock %}
+
+{% block contenido %}
+<div class="lienzo">
+  <div class="acuse">
+    <h1>Recibimos su pedido</h1>
+    <p class="tarjeta-meta">Guarde este número: es con el que lo identificamos.</p>
+    <div class="numero">{{ pedido.numero }}</div>
+    <p>
+      {% if pedido.email %}Le escribimos a <strong>{{ pedido.email }}</strong>
+      {% else %}Le llamamos{% endif %}
+      para confirmar la entrega y la forma de pago.
+    </p>
+
+    <div class="detalle">
+      {% for linea in pedido.lineas.all %}
+        <div style="display:flex;justify-content:space-between;gap:1rem;padding:.3rem 0">
+          <span>{{ linea.descripcion }} × {{ linea.cantidad|floatformat:"-3" }}</span>
+          <span class="cifra">$ {{ linea.total|floatformat:2 }}</span>
+        </div>
+      {% endfor %}
+      <div style="display:flex;justify-content:space-between;gap:1rem;padding:.6rem 0 0;border-top:1px solid var(--linea);margin-top:.6rem">
+        <span><strong>Total</strong></span>
+        <span class="cifra"><strong>$ {{ pedido.total|floatformat:2 }}</strong></span>
+      </div>
+    </div>
+
+    <p style="margin-top:1.5rem">
+      <a class="boton" href="{% url 'tienda:portada' %}">Volver a la tienda</a>
+    </p>
+  </div>
+</div>
+{% endblock %}

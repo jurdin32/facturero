@@ -5090,3 +5090,121 @@ td.col-clave {
   text-overflow: ellipsis;
   white-space: nowrap;
 }
+
+/* La foto que ya tiene el producto en la tienda, para reconocerla al editarlo. */
+.foto-vista img {
+  display: block;
+  max-width: 120px;
+  max-height: 120px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--linea);
+}
+
+/* ------------------------------------------- el editor de la descripción larga */
+
+.editor-markdown {
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  background: #fff;
+  overflow: hidden;
+}
+
+.editor-barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--linea);
+}
+
+.editor-boton {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radio-s);
+  background: transparent;
+  color: var(--tinta-3);
+  font-size: .82rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor-boton:hover { background: #eef2f6; color: var(--marca-osc); }
+
+.editor-boton.fuerte { font-weight: 800; }
+
+.editor-boton.cursiva { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+
+.editor-boton.titulo { font-weight: 800; letter-spacing: -.02em; }
+
+.editor-markdown .textarea,
+.editor-markdown > textarea {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.editor-markdown > textarea {
+  display: block;
+  width: 100%;
+  padding: .8rem .9rem;
+  resize: vertical;
+  min-height: 360px;
+  border: 0;
+  outline: none;
+  background: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+.editor-markdown .textarea {
+  min-height: 360px;
+}
+
+.editor-markdown .textarea textarea {
+  min-height: 340px;
+}
+
+/* Metro pone una ✕ para vaciar el campo; aquí estorba al lado del editor. */
+.editor-markdown .textarea > .button { display: none; }
+
+.editor-guia {
+  border-top: 1px solid var(--linea);
+  padding: .5rem .7rem;
+  background: #fdfdfe;
+  font-size: .78rem;
+}
+
+.editor-guia summary {
+  cursor: pointer;
+  color: var(--marca-osc);
+  font-weight: 600;
+}
+
+.editor-guia dl {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) 1fr;
+  gap: .2rem .8rem;
+  margin: .5rem 0 0;
+}
+
+.editor-guia dt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--tinta);
+}
+
+.editor-guia dd { margin: 0; color: var(--tinta-3); }
+
+.editor-guia .editor-nota { margin: .5rem 0 0; color: var(--tinta-3); }
+
+/* Las estrellas de las reseñas de la tienda, en su dorado. */
+.estrellas { color: #e6a100; font-weight: 800; letter-spacing: .05em; }
+
+/* Las acciones de una tarjeta de la tienda, alineadas y sin ocupar todo el ancho. */
+.acciones-bloque { margin-top: .9rem; display: flex; gap: .5rem; flex-wrap: wrap; }
+
+.acciones-bloque .button { width: auto; }

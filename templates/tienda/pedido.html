@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% load personalize_options %}
+{% block titulo %}Pedido {{ pedido.numero }}{% endblock %}
+
+{% block contenido %}
+{% puede_escribir "pedidos" as puede_gestionar %}
+
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">Pedido {{ pedido.numero }}</h1>
+    <p class="subtitulo">
+      {{ pedido.creado|date:"d/m/Y H:i" }} ·
+      <a class="enlace" href="{% url 'tienda:pedidos' %}">volver a los pedidos</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    {% if puede_gestionar and pedido.se_puede_facturar %}
+      <form method="post" action="{% url 'tienda:facturar' pedido.pk %}">
+        {% csrf_token %}
+        <button class="button primary" type="submit"><span class="mif-file-text"></span> Facturar</button>
+      </form>
+      <form method="post" action="{% url 'tienda:anular' pedido.pk %}"
+            onsubmit="return confirm('¿Anular el pedido {{ pedido.numero }}?');">
+        {% csrf_token %}
+        <button class="button outline alert" type="submit"><span class="mif-cancel"></span> Anular</button>
+      </form>
+    {% endif %}
+    {% if pedido.factura_id %}
+      {% if pedido.facturado %}
+        <a class="button success" href="{% url 'facturacion:factura' pedido.factura.pk %}">
+          <span class="mif-checkmark"></span> Ver la factura
+        </a>
+      {% else %}
+        <a class="button warning" href="{% url 'facturacion:editar_factura' pedido.factura.pk %}">
+          <span class="mif-file-text"></span> Seguir la factura
+        </a>
+      {% endif %}
+    {% endif %}
+  </div>
+</div>
+
+<div class="columnas">
+  <div class="columna-principal">
+    <section class="bloque">
+      <h2 class="bloque-titulo">Lo que pidió</h2>
+      <div class="desliza">
+        <table class="table small libro">
+          <thead>
+            <tr>
+              <th>Producto</th>
+              <th>Cantidad</th>
+              <th>Precio sin IVA</th>
+              <th>IVA</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for linea in pedido.lineas.all %}
+              <tr>
+                <td>
+                  <span class="listado-titulo">{{ linea.descripcion }}</span>
+                  {% if linea.codigo %}<span class="listado-meta cifra">{{ linea.codigo }}</span>{% endif %}
+                </td>
+                <td class="cifra">{{ linea.cantidad|floatformat:"-3" }}</td>
+                <td class="cifra">$ {{ linea.precio_unitario|floatformat:2 }}</td>
+                <td class="cifra">$ {{ linea.iva|floatformat:2 }} ({{ linea.tarifa_iva|floatformat:"-2" }} %)</td>
+                <td class="cifra">$ {{ linea.total|floatformat:2 }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="resumen" style="margin-top:1rem">
+        <dl>
+          <dt>Subtotal</dt><dd class="cifra">$ {{ pedido.subtotal|floatformat:2 }}</dd>
+          <dt>IVA</dt><dd class="cifra">$ {{ pedido.iva|floatformat:2 }}</dd>
+          <dt class="total">Total</dt><dd class="total cifra">$ {{ pedido.total|floatformat:2 }}</dd>
+        </dl>
+      </div>
+    </section>
+
+    {% if pedido.nota %}
+      <section class="bloque">
+        <h2 class="bloque-titulo">Nota del cliente</h2>
+        <p>{{ pedido.nota|linebreaksbr }}</p>
+      </section>
+    {% endif %}
+  </div>
+
+  <aside class="columna-lateral">
+    <div class="resumen">
+      <h2 class="bloque-titulo">Estado</h2>
+      <p>
+        {% if pedido.anulado %}
+          <span class="chip"><span class="label">anulado</span></span>
+        {% elif pedido.facturado %}
+          <span class="chip success soft"><span class="label">facturado</span></span>
+        {% elif pedido.factura_id %}
+          <span class="chip warning soft"><span class="label">en facturación</span></span>
+        {% else %}
+          <span class="chip info soft"><span class="label">sin facturar</span></span>
+        {% endif %}
+      </p>
+
+      <h2 class="bloque-titulo" style="margin-top:1.2rem">Quién compró</h2>
+      <p class="dato-fuerte">{{ pedido.nombre }}</p>
+      {% if pedido.identificacion %}<p class="cifra">{{ pedido.identificacion }}</p>{% endif %}
+      {% if pedido.telefono %}<p>{{ pedido.telefono }}</p>{% endif %}
+      {% if pedido.email %}<p>{{ pedido.email }}</p>{% endif %}
+      {% if pedido.direccion %}<p>{{ pedido.direccion }}</p>{% endif %}
+      {% if pedido.cliente %}
+        <p class="ayuda">
+          Cliente del catálogo:
+          <a class="enlace" href="{% url 'catalogos:cliente' pedido.cliente.pk %}">{{ pedido.cliente.razon_social }}</a>
+        </p>
+      {% endif %}
+    </div>
+  </aside>
+</div>
+{% endblock %}

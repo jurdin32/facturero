@@ -1,0 +1,29 @@
+{# Una fila del listado: la foto a la izquierda, como en los mercados en línea. #}
+<article class="fila">
+  <a class="fila-foto" href="{% url 'tienda:producto' producto.slug %}">
+    {% with foto=producto.imagen_principal %}
+      {% if foto %}
+        <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}" loading="lazy">
+      {% else %}
+        <span class="sin-foto">Sin foto</span>
+      {% endif %}
+    {% endwith %}
+  </a>
+
+  <div>
+    <a class="fila-titulo" href="{% url 'tienda:producto' producto.slug %}">{{ producto.nombre }}</a>
+    {% if producto.resumen %}<p class="fila-meta">{{ producto.resumen }}</p>{% endif %}
+    <span class="precio">
+      $ {{ producto.precio|floatformat:2 }}
+      {% if producto.precio_anterior %}<span class="precio-antes">$ {{ producto.precio_anterior|floatformat:2 }}</span>{% endif %}
+      {% if producto.descuento %}<span class="descuento">{{ producto.descuento }} % menos</span>{% endif %}
+    </span>
+    {% if producto.con_stock %}
+      <p class="envio" style="margin:.2rem 0 0">Disponible · entrega a coordinar</p>
+    {% else %}
+      <p class="envio agotado" style="margin:.2rem 0 0">Agotado por ahora</p>
+    {% endif %}
+  </div>
+
+  <a class="boton" href="{% url 'tienda:producto' producto.slug %}">Ver</a>
+</article>

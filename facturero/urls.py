@@ -41,6 +41,9 @@ urlpatterns = [
     path("catalogos/", include("catalogos.urls")),
     path("inventario/", include("inventario.urls")),
 
+    # La tienda en línea: el catálogo público y los pedidos que deja.
+    path("tienda/", include("tienda.urls")),
+
     # Contabilidad: plan de cuentas, asientos, estados financieros y anexos SRI.
     path("contabilidad/", include("conta_ec.django.urls")),
 

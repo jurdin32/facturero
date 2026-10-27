@@ -1,0 +1,25 @@
+{# Una tarjeta del catálogo, como las del mercado: foto, precio y oferta. #}
+<a class="tarjeta" href="{% url 'tienda:producto' producto.slug %}">
+  <div class="tarjeta-foto">
+    {% if producto.descuento %}<span class="etiqueta-oferta">-{{ producto.descuento }} %</span>{% endif %}
+    {% with foto=producto.imagen_principal %}
+      {% if foto %}
+        <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}" loading="lazy">
+      {% else %}
+        <span class="sin-foto">Sin foto</span>
+      {% endif %}
+    {% endwith %}
+  </div>
+  <div class="tarjeta-cuerpo">
+    <span class="tarjeta-nombre">{{ producto.nombre }}</span>
+    <span class="precio">
+      $ {{ producto.precio|floatformat:2 }}
+      {% if producto.precio_anterior %}<span class="precio-antes">$ {{ producto.precio_anterior|floatformat:2 }}</span>{% endif %}
+    </span>
+    {% if producto.con_stock %}
+      <span class="envio">Disponible · entrega a coordinar</span>
+    {% else %}
+      <span class="envio agotado">Agotado por ahora</span>
+    {% endif %}
+  </div>
+</a>

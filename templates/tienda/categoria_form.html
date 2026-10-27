@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block titulo %}{% if es_nueva %}Nueva categoría{% else %}{{ categoria.nombre }}{% endif %}{% endblock %}
+
+{% block contenido %}
+<div class="titulo-fila">
+  <div>
+    <h1 class="titulo">{% if es_nueva %}Nueva categoría{% else %}{{ categoria.nombre }}{% endif %}</h1>
+    <p class="subtitulo">
+      El árbol con el que se navega la tienda.
+      · <a class="enlace" href="{% url 'tienda:categorias' %}">volver a las categorías</a>
+    </p>
+  </div>
+  <div class="titulo-acciones">
+    <button type="submit" form="formulario-categoria" class="button success">
+      <span class="mif-checkmark"></span> Guardar
+    </button>
+    <a class="button outline dark" href="{% url 'tienda:categorias' %}">Cancelar</a>
+  </div>
+</div>
+
+<form method="post" id="formulario-categoria" novalidate>
+  {% csrf_token %}
+  <div class="columnas">
+    <div class="columna-principal">
+      <section class="bloque">
+        <h2 class="bloque-titulo">La categoría</h2>
+        <div class="row">
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.nombre.id_for_label }}">Nombre</label>
+              {{ formulario.nombre }}
+              {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.padre.id_for_label }}">Categoría de arriba</label>
+              {{ formulario.padre }}
+              {% if formulario.padre.errors %}<p class="error">{{ formulario.padre.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Vacío para una categoría de primer nivel.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-12">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">Descripción</label>
+              {{ formulario.descripcion }}
+              {% if formulario.descripcion.errors %}<p class="error">{{ formulario.descripcion.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Opcional: lo que se lee en la cabecera de la categoría.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.slug.id_for_label }}">Dirección</label>
+              {{ formulario.slug }}
+              {% if formulario.slug.errors %}<p class="error">{{ formulario.slug.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Si se deja vacío se arma con el nombre.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-3">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.orden.id_for_label }}">Orden</label>
+              {{ formulario.orden }}
+              {% if formulario.orden.errors %}<p class="error">{{ formulario.orden.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">Estado</h2>
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario.activa }}
+            <span class="caption-append">Ofrecerla en el menú de la tienda</span>
+          </label>
+        </div>
+      </div>
+    </aside>
+  </div>
+</form>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}Confirmar el pedido{% endblock %}
+
+{% block contenido %}
+<div class="lienzo">
+  <p class="migas"><a href="{% url 'tienda:carrito' %}">Carrito</a> › Confirmar el pedido</p>
+</div>
+
+<section class="lienzo">
+  <div class="dos-columnas">
+    <div class="panel">
+      <h1>Sus datos</h1>
+      <p class="tarjeta-meta">
+        Con esto le preparamos la factura. Si no pone la cédula, se factura a consumidor final.
+      </p>
+
+      <form method="post" novalidate>
+        {% csrf_token %}
+        {% if formulario.non_field_errors %}
+          <p class="aviso error">{{ formulario.non_field_errors.0 }}</p>
+        {% endif %}
+
+        <div class="campo">
+          <label for="{{ formulario.nombre.id_for_label }}">{{ formulario.nombre.label }}</label>
+          {{ formulario.nombre }}
+          {% if formulario.nombre.errors %}<p class="error">{{ formulario.nombre.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="campo">
+          <label for="{{ formulario.identificacion.id_for_label }}">{{ formulario.identificacion.label }}</label>
+          {{ formulario.identificacion }}
+          {% if formulario.identificacion.errors %}<p class="error">{{ formulario.identificacion.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Opcional. Con ella la factura sale a su nombre.</p>
+        </div>
+
+        <div class="campo">
+          <label for="{{ formulario.email.id_for_label }}">{{ formulario.email.label }}</label>
+          {{ formulario.email }}
+          {% if formulario.email.errors %}<p class="error">{{ formulario.email.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="campo">
+          <label for="{{ formulario.telefono.id_for_label }}">{{ formulario.telefono.label }}</label>
+          {{ formulario.telefono }}
+          {% if formulario.telefono.errors %}<p class="error">{{ formulario.telefono.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="campo">
+          <label for="{{ formulario.direccion.id_for_label }}">{{ formulario.direccion.label }}</label>
+          {{ formulario.direccion }}
+          {% if formulario.direccion.errors %}<p class="error">{{ formulario.direccion.errors.0 }}</p>{% endif %}
+        </div>
+
+        <div class="campo">
+          <label for="{{ formulario.nota.id_for_label }}">{{ formulario.nota.label }}</label>
+          {{ formulario.nota }}
+          {% if formulario.nota.errors %}<p class="error">{{ formulario.nota.errors.0 }}</p>{% endif %}
+        </div>
+
+        <button class="boton" type="submit">Confirmar el pedido</button>
+      </form>
+    </div>
+
+    <aside class="panel resumen-compra">
+      <h2>Su pedido</h2>
+      {% for linea in lineas %}
+        <div style="display:flex;justify-content:space-between;gap:1rem;padding:.35rem 0">
+          <span>{{ linea.producto.nombre }} × {{ linea.cantidad|floatformat:"-3" }}</span>
+          <span class="cifra">$ {{ linea.total|floatformat:2 }}</span>
+        </div>
+      {% endfor %}
+      <dl style="margin-top:.8rem">
+        <dt>Subtotal</dt><dd>$ {{ subtotal|floatformat:2 }}</dd>
+        <dt>IVA</dt><dd>$ {{ iva|floatformat:2 }}</dd>
+        <dt class="total">Total</dt><dd class="total">$ {{ total|floatformat:2 }}</dd>
+      </dl>
+      <p class="ayuda" style="margin-top:.8rem">
+        No se cobra en línea: le confirmamos el pedido y la forma de pago.
+      </p>
+    </aside>
+  </div>
+</section>
+{% endblock %}

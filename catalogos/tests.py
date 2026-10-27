@@ -7,10 +7,13 @@ desde el producto: si se cambia, aquí se ve.
 
 from __future__ import annotations
 
+import shutil
+import tempfile
 from decimal import Decimal
 
 from django.contrib.auth.models import User
-from django.test import TestCase
+from django.core.files.uploadedfile import SimpleUploadedFile
+from django.test import TestCase, override_settings
 from factec.django.documentos import (
     Cliente,
     Conductor,
@@ -22,8 +25,13 @@ from factec.django.documentos import (
 )
 
 from inventario.models import Existencia
+from tienda.models import ProductoTienda
 
-__all__ = ["PruebasDelCatalogo", "PruebasDelTransporte"]
+__all__ = [
+    "PruebasDelCatalogo",
+    "PruebasDelTransporte",
+    "PruebasDeLaTiendaEnElCatalogo",
+]
 
 
 class PruebasDelCatalogo(TestCase):
@@ -246,3 +254,169 @@ class PruebasDelTransporte(TestCase):
 
         self.assertEqual(conductores.context["cuantos"], 1)
         self.assertEqual(vehiculos.context["cuantos"], 0)
+
+
+class PruebasDeLaTiendaEnElCatalogo(TestCase):
+    """La tienda se gestiona en la misma pantalla del producto, no en otra alta."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.carpeta = tempfile.mkdtemp()
+        cls.override = override_settings(MEDIA_ROOT=cls.carpeta)
+        cls.override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.override.disable()
+        shutil.rmtree(cls.carpeta, ignore_errors=True)
+
+    def setUp(self) -> None:
+        User.objects.create_user("quien-lleva-el-catalogo", password="clave")
+        self.client.force_login(User.objects.get(username="quien-lleva-el-catalogo"))
+
+    def datos(self, **extra):
+        """Lo que se envía en la pantalla del producto (la parte fiscal)."""
+        datos = {
+            "tipo": "producto",
+            "codigo_principal": "CAJA-12",
+            "descripcion": "CAJA DE DOCE",
+            "unidad_medida": "CAJA",
+            "precio_unitario": "10,50",
+            "codigo_porcentaje_iva": "4",
+            "activo": "on",
+            "minimo": "0",
+            "ubicacion": "",
+        }
+        datos.update(extra)
+        return datos
+
+    def datos_de_tienda(self, **extra):
+        """Lo que se envía en la sección «En la tienda»."""
+        datos = {
+            "publicado": "on",
+            "destacado": "",
+            "categoria": "",
+            "orden": "0",
+            "titulo": "Caja de doce",
+            "resumen": "Doce unidades",
+            "descripcion_larga": "",
+            "precio_web": "9,99",
+            "precio_oferta": "",
+            "oferta_desde": "",
+            "oferta_hasta": "",
+            "peso": "",
+        }
+        datos.update(extra)
+        return datos
+
+    def test_la_pantalla_del_producto_trae_la_tienda(self) -> None:
+        producto = Producto.objects.create(
+            tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
+            precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
+        )
+        respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "En la tienda")
+
+    def test_el_producto_se_publica_desde_su_pantalla(self) -> None:
+        foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        datos = self.datos()
+        datos.update(self.datos_de_tienda())
+        datos.update({
+            "imagenes-TOTAL_FORMS": "1",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-MIN_NUM_FORMS": "0",
+            "imagenes-MAX_NUM_FORMS": "1000",
+            "imagenes-0-imagen": foto,
+            "imagenes-0-alt": "Caja de frente",
+            "imagenes-0-orden": "0",
+        })
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(Producto.objects.count(), 1)
+        producto = Producto.objects.get()
+        tienda = ProductoTienda.de(producto)
+        self.assertIsNotNone(tienda)
+        self.assertTrue(tienda.publicado)
+        self.assertEqual(tienda.titulo, "Caja de doce")
+        self.assertEqual(tienda.precio_web, Decimal("9.99"))
+        self.assertEqual(tienda.slug, "caja-de-doce")
+        self.assertEqual(tienda.imagenes.count(), 1)
+        self.assertEqual(producto.descripcion, "CAJA DE DOCE")
+        self.assertEqual(producto.precio_unitario, Decimal("10.50"))
+
+    def test_sin_datos_de_tienda_el_producto_no_se_publica(self) -> None:
+        respuesta = self.client.post("/catalogos/productos/nuevo/", self.datos())
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(Producto.objects.count(), 1)
+        self.assertEqual(ProductoTienda.objects.count(), 0)
+
+    def test_se_puede_despublicar_desde_la_misma_pantalla(self) -> None:
+        producto = Producto.objects.create(
+            tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
+            precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
+        )
+        tienda = ProductoTienda.extender(producto)
+        tienda.publicado = True
+        tienda.titulo = "Caja de doce"
+        tienda.save()
+
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
+        respuesta = self.client.post(f"/catalogos/productos/{producto.pk}/", datos)
+
+        self.assertEqual(respuesta.status_code, 302)
+        tienda = ProductoTienda.de(Producto.objects.get(pk=producto.pk))
+        self.assertFalse(tienda.publicado)
+        self.assertEqual(tienda.titulo, "")
+        self.assertEqual(ProductoTienda.objects.count(), 1)
+
+    def test_la_lista_marca_lo_que_esta_en_la_tienda(self) -> None:
+        producto = Producto.objects.create(
+            tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
+            precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
+        )
+        tienda = ProductoTienda.extender(producto)
+        tienda.publicado = True
+        tienda.save()
+
+        respuesta = self.client.get("/catalogos/productos/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "en la tienda")
+
+    def test_si_la_tienda_no_valida_el_producto_no_se_guarda(self) -> None:
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(precio_web="10,00", precio_oferta="12,00"))
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertEqual(Producto.objects.count(), 0)
+        self.assertEqual(ProductoTienda.objects.count(), 0)
+
+    def test_una_foto_sola_ya_guarda_la_parte_de_tienda(self) -> None:
+        foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
+        datos.update({
+            "imagenes-TOTAL_FORMS": "1",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-MIN_NUM_FORMS": "0",
+            "imagenes-MAX_NUM_FORMS": "1000",
+            "imagenes-0-imagen": foto,
+            "imagenes-0-alt": "Caja de frente",
+            "imagenes-0-orden": "0",
+        })
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 302)
+        tienda = ProductoTienda.de(Producto.objects.get())
+        self.assertIsNotNone(tienda)
+        self.assertFalse(tienda.publicado)
+        self.assertEqual(tienda.imagenes.count(), 1)

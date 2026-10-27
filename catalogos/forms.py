@@ -18,14 +18,18 @@ from factec.django.documentos import (
     Vehiculo,
 )
 
-from facturero.controles import caja, desplegable, numero
+from facturero.controles import caja, de_fecha, desplegable, fecha, numero
 from facturacion.forms import CampoImporte
+from tienda.models import Categoria, ImagenProducto, ProductoTienda
 
 __all__ = [
     "FormularioProducto",
     "FormularioCliente",
     "FormularioConductor",
     "FormularioVehiculo",
+    "FormularioTienda",
+    "FormularioImagen",
+    "FormsetImagenes",
 ]
 
 
@@ -113,6 +117,130 @@ class FormularioProducto(forms.ModelForm):
     @property
     def es_bien(self) -> bool:
         return (self.instance.tipo or TipoProducto.PRODUCTO.value) == TipoProducto.PRODUCTO.value
+
+
+class FormularioTienda(forms.ModelForm):
+    """La parte de tienda del producto: cómo se ve y a cuánto se vende en la web.
+
+    Es la extensión del mismo producto: no crea otro. Los campos de la izquierda
+    (código, descripción fiscal, IVA) siguen siendo los del catálogo.
+    """
+
+    class Meta:
+        model = ProductoTienda
+        fields = [
+            "publicado", "destacado", "categoria", "orden", "titulo", "resumen",
+            "descripcion_larga", "precio_web", "precio_oferta", "oferta_desde",
+            "oferta_hasta", "peso",
+        ]
+        labels = {
+            "publicado": "Publicado",
+            "destacado": "Destacado",
+            "categoria": "Categoría",
+            "orden": "Orden",
+            "titulo": "Nombre en la web",
+            "resumen": "Resumen",
+            "descripcion_larga": "Descripción larga",
+            "precio_web": "Precio en la web",
+            "precio_oferta": "Precio de oferta",
+            "oferta_desde": "Oferta desde",
+            "oferta_hasta": "Oferta hasta",
+            "peso": "Peso (kg)",
+        }
+        widgets = {
+            "categoria": forms.Select(attrs=desplegable(icono="books")),
+            "titulo": forms.TextInput(
+                attrs=caja(placeholder="Cómo se llama en la web")
+            ),
+            "resumen": forms.TextInput(
+                attrs=caja(placeholder="Una o dos líneas para el listado")
+            ),
+            "descripcion_larga": forms.Textarea(
+                attrs={
+                    "rows": 16,
+                    "data-editor-markdown": "si",
+                    "placeholder": "Materiales, medidas, qué incluye… Se puede escribir Markdown: títulos, listas y tablas.",
+                }
+            ),
+            "oferta_desde": forms.DateInput(format="%Y-%m-%d", attrs=fecha()),
+            "oferta_hasta": forms.DateInput(format="%Y-%m-%d", attrs=fecha()),
+        }
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        for nombre, etiqueta, decimales in (
+            ("precio_web", "Precio en la web", 6),
+            ("precio_oferta", "Precio de oferta", 6),
+            ("peso", "Peso (kg)", 3),
+        ):
+            self.fields[nombre] = CampoImporte(
+                required=False, min_value=Decimal("0"), decimal_places=decimales,
+                label=etiqueta,
+            )
+            self.fields[nombre].widget.attrs.update(numero())
+        for nombre in ("oferta_desde", "oferta_hasta"):
+            de_fecha(self.fields[nombre])
+            self.fields[nombre].input_formats = ["%Y-%m-%d", "%d/%m/%Y"]
+        # El orden tiene valor por omisión: no hace falta escribirlo para publicar.
+        self.fields["orden"].required = False
+        categorias = self.fields["categoria"]
+        categorias.queryset = Categoria.objects.all()
+        categorias.label_from_instance = lambda categoria: categoria.ruta
+
+    def clean_orden(self) -> int:
+        return self.cleaned_data.get("orden") or 0
+
+    @property
+    def tiene_datos(self) -> bool:
+        """¿Hay algo que guardar en la tienda?
+
+        Un producto se extiende cuando se publica o se escribe algo de la web; si el
+        formulario llega vacío, se queda fuera del catálogo web. Si la extensión ya
+        existe, se guarda siempre: así se puede despublicar y vaciar.
+        """
+        if not self.is_bound:
+            return False
+        if self.instance.pk is not None:
+            return True
+        datos = self.cleaned_data
+        return any(
+            (
+                datos.get("publicado"),
+                datos.get("destacado"),
+                datos.get("categoria"),
+                (datos.get("titulo") or "").strip(),
+                (datos.get("resumen") or "").strip(),
+                (datos.get("descripcion_larga") or "").strip(),
+                datos.get("precio_web") is not None,
+                datos.get("precio_oferta") is not None,
+                datos.get("oferta_desde"),
+                datos.get("oferta_hasta"),
+                datos.get("peso") is not None,
+                datos.get("orden"),
+            )
+        )
+
+
+class FormularioImagen(forms.ModelForm):
+    """Una foto del producto en la tienda."""
+
+    class Meta:
+        model = ImagenProducto
+        fields = ["imagen", "alt", "orden"]
+        labels = {"imagen": "Foto", "alt": "Texto alternativo", "orden": "Orden"}
+        widgets = {
+            "imagen": forms.ClearableFileInput(
+                attrs={"accept": ".png,.jpg,.jpeg,.webp,.avif"}
+            ),
+            "alt": forms.TextInput(attrs=caja(placeholder="Qué se ve en la foto")),
+            "orden": forms.NumberInput(attrs=numero()),
+        }
+
+
+#: Las fotos se editan junto al producto: se añaden, se reordenan y se borran.
+FormsetImagenes = forms.inlineformset_factory(
+    ProductoTienda, ImagenProducto, form=FormularioImagen, extra=1, can_delete=True
+)
 
 
 class FormularioCliente(forms.ModelForm):

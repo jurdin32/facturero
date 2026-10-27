@@ -52,6 +52,9 @@ INSTALLED_APPS = [
     'comprobantes',
     'catalogos',
     'inventario',
+    # El catálogo de la tienda en línea: la ficha publicada de cada producto, sus
+    # fotos y las categorías con las que se navega. No toca la facturación.
+    'tienda',
     # El plan de cuentas, los asientos, los estados financieros y los anexos del
     # SRI: paquete conta_ec, con sus tablas y sus ajustes.
     'conta_ec.django',
@@ -98,6 +101,8 @@ TEMPLATES = [
                 # La fecha de nuestro CSS y nuestro JavaScript, para que el navegador
                 # no siga sirviendo la versión vieja después de cambiarlos.
                 'facturero.estaticos.sello_estatico',
+                # El carrito de la tienda, para el contador de su cabecera.
+                'tienda.contexto.carrito_en_la_cabecera',
             ],
         },
     },

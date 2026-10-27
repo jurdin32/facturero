@@ -1,0 +1,119 @@
+{% extends "tienda/base.html" %}
+
+{% block titulo %}{{ titulo }}{% endblock %}
+
+{% block contenido %}
+<div class="lienzo">
+  <p class="migas">
+    <a href="{% url 'tienda:portada' %}">Tienda</a>
+    {% if categoria %} › <a href="{% url 'tienda:categoria' categoria.slug %}">{{ categoria.ruta }}</a>{% endif %}
+    {% if filtros.q %} › Búsqueda{% endif %}
+    {% if not categoria and not filtros.q %} › {{ titulo }}{% endif %}
+  </p>
+
+  <div class="listado-caja">
+    <aside class="filtros">
+      <h2>Categorías</h2>
+      <ul>
+        <li><a href="{% url 'tienda:portada' %}" class="{% if not categoria %}activa{% endif %}">Todas</a></li>
+        {% for raiz in categorias_del_menu %}
+          <li>
+            <a href="{% url 'tienda:categoria' raiz.slug %}"
+               class="{% if categoria.pk == raiz.pk %}activa{% endif %}">{{ raiz.nombre }}</a>
+            {% if raiz.hijas.all %}
+              <ul>
+                {% for hija in raiz.hijas.all %}
+                  {% if hija.activa %}
+                    <li>
+                      <a href="{% url 'tienda:categoria' hija.slug %}"
+                         class="{% if categoria.pk == hija.pk %}activa{% endif %}">{{ hija.nombre }}</a>
+                    </li>
+                  {% endif %}
+                {% endfor %}
+              </ul>
+            {% endif %}
+          </li>
+        {% endfor %}
+      </ul>
+
+      <form method="get" action="">
+        {% if filtros.q %}<input type="hidden" name="q" value="{{ filtros.q }}">{% endif %}
+        {% if filtros.orden != "relevantes" %}<input type="hidden" name="orden" value="{{ filtros.orden }}">{% endif %}
+
+        <h2>Precio</h2>
+        <div class="rango">
+          <input type="number" name="min" value="{{ filtros.min }}" min="0" step="0.01"
+                 placeholder="Mín." aria-label="Precio mínimo">
+          <span>a</span>
+          <input type="number" name="max" value="{{ filtros.max }}" min="0" step="0.01"
+                 placeholder="Máx." aria-label="Precio máximo">
+        </div>
+
+        <h2>Filtros</h2>
+        <label class="opcion">
+          <input type="checkbox" name="stock" value="1" {% if filtros.stock %}checked{% endif %}>
+          Solo con stock
+        </label>
+        <label class="opcion">
+          <input type="checkbox" name="oferta" value="1" {% if filtros.oferta %}checked{% endif %}>
+          Solo en oferta
+        </label>
+
+        <button class="boton pequeno" type="submit">Aplicar</button>
+        {% if not sin_filtros %}<a class="enlace" href="{{ request.path }}" style="font-size:.82rem">Limpiar</a>{% endif %}
+      </form>
+    </aside>
+
+    <section class="resultados">
+      <div class="resultados-cabecera">
+        <p>{{ total }} resultado{{ total|pluralize }}</p>
+        <form method="get" action="">
+          {% if filtros.q %}<input type="hidden" name="q" value="{{ filtros.q }}">{% endif %}
+          {% if filtros.min %}<input type="hidden" name="min" value="{{ filtros.min }}">{% endif %}
+          {% if filtros.max %}<input type="hidden" name="max" value="{{ filtros.max }}">{% endif %}
+          {% if filtros.stock %}<input type="hidden" name="stock" value="1">{% endif %}
+          {% if filtros.oferta %}<input type="hidden" name="oferta" value="1">{% endif %}
+          <label for="orden">Ordenar por</label>
+          <select id="orden" name="orden" onchange="this.form.submit()">
+            <option value="relevantes" {% if filtros.orden == 'relevantes' %}selected{% endif %}>Más relevantes</option>
+            <option value="menor" {% if filtros.orden == 'menor' %}selected{% endif %}>Menor precio</option>
+            <option value="mayor" {% if filtros.orden == 'mayor' %}selected{% endif %}>Mayor precio</option>
+            <option value="nombre" {% if filtros.orden == 'nombre' %}selected{% endif %}>Nombre</option>
+          </select>
+        </form>
+      </div>
+
+      {% for producto in productos %}
+        {% include "tienda/fragmentos/fila.html" with producto=producto %}
+      {% empty %}
+        <div class="vacio">
+          <p>No encontramos nada con esos filtros.</p>
+          <p><a class="enlace" href="{% url 'tienda:portada' %}">ver todo el catálogo</a></p>
+        </div>
+      {% endfor %}
+
+      {% if pagina.paginator.num_pages > 1 %}
+        <nav class="paginacion" aria-label="Páginas">
+          {% if pagina.has_previous %}
+            <a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ pagina.previous_page_number }}">Anterior</a>
+          {% else %}
+            <span class="apagado">Anterior</span>
+          {% endif %}
+          {% for numero in pagina.paginator.page_range %}
+            {% if numero == pagina.number %}
+              <span class="actual">{{ numero }}</span>
+            {% elif numero > pagina.number|add:"-3" and numero < pagina.number|add:"3" %}
+              <a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ numero }}">{{ numero }}</a>
+            {% endif %}
+          {% endfor %}
+          {% if pagina.has_next %}
+            <a href="?{{ querystring }}{% if querystring %}&{% endif %}page={{ pagina.next_page_number }}">Siguiente</a>
+          {% else %}
+            <span class="apagado">Siguiente</span>
+          {% endif %}
+        </nav>
+      {% endif %}
+    </section>
+  </div>
+</div>
+{% endblock %}

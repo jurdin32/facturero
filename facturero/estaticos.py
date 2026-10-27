@@ -27,6 +27,7 @@ __all__ = ["PROPIOS", "sello", "sello_estatico"]
 #: se piden con `?v=` tienen que estar aquí: si falta uno, al cambiarlo el navegador
 #: sigue con la copia vieja.
 PROPIOS = (
+    "css/tienda.css",
     "css/metro/metro.css",
     "js/metro/metro.js",
     "icons/core/style.css",
@@ -38,6 +39,8 @@ PROPIOS = (
     "js/cliente_modal.js",
     "js/contabilidad.js",
     "js/caja.js",
+    "js/editor_markdown.js",
+    "js/tienda.js",
     "js/ordenar_menu.js",
     "js/imprimir.js",
     "js/bloqueo.js",

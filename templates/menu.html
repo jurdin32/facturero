@@ -15,6 +15,10 @@ opciones.
 {% url 'catalogos:conductores' as los_conductores %}
 {% url 'catalogos:vehiculos' as los_vehiculos %}
 {% url 'inventario:inventario' as el_inventario %}
+{% url 'tienda:pedidos' as los_pedidos %}
+{% url 'tienda:categorias' as las_categorias_tienda %}
+{% url 'tienda:preguntas' as las_preguntas_tienda %}
+{% url 'tienda:resenas' as las_resenas_tienda %}
 {% url 'configuracion:sri' as la_configuracion %}
 {% url 'seguridad:roles' as las_roles %}
 {% url 'seguridad:usuarios' as las_usuarios %}
@@ -27,7 +31,8 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
 {% opciones_del_menu "Facturar" "facturar facturas" as extras_facturar %}
 {% opciones_del_menu "Comprobantes" "notas_credito notas_debito liquidaciones_compra guias_remision retenciones" as extras_comprobantes %}
 {% opciones_del_menu "Catálogo" "productos clientes conductores vehiculos inventario" as extras_catalogo %}
-{% apartados_nuevos "Resumen Facturar Comprobantes Catálogo Sistema" as apartados_nuevos %}
+{% opciones_del_menu "Tienda" "categorias_tienda pedidos preguntas_tienda resenas_tienda" as extras_tienda %}
+{% apartados_nuevos "Resumen Facturar Comprobantes Catálogo Tienda Sistema" as apartados_nuevos %}
 <ul class="sidenav" data-menu-ordenable>
   {% if "tablero" in visibles %}
     <li class="{% if request.path == el_tablero %}active{% endif %}" style="order: {% orden_opcion 'tablero' %}">
@@ -196,6 +201,60 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
             </li>
           {% endif %}
           {% for extra in extras_catalogo %}
+            <li class="{% if request.path == extra.url %}active{% endif %}" style="order: {{ extra.orden }}">
+              <a href="{{ extra.url }}">
+                <span class="mif-{% if 'fa-' in extra.icono %}chevron-right{% else %}{{ extra.icono|default:'chevron-right' }}{% endif %} icon"></span>
+                <span class="caption">{{ extra.nombre }}</span>
+              </a>
+            </li>
+          {% endfor %}
+        </ul>
+      </details>
+    </li>
+  {% endif %}
+
+  {% if "categorias_tienda" in visibles or "pedidos" in visibles or "preguntas_tienda" in visibles or "resenas_tienda" in visibles or extras_tienda %}
+    <li class="menu-grupo" style="order: {% orden_apartado 'Tienda' %}">
+      <details{% if '/tienda/pedidos' in request.path or '/tienda/categorias' in request.path or '/tienda/preguntas' in request.path or '/tienda/resenas' in request.path %} open{% endif %}>
+        <summary>
+          <span class="mif-shop icon" aria-hidden="true"></span>
+          <span class="caption">Tienda</span>
+          <span class="mif-chevron-down menu-grupo-flecha" aria-hidden="true"></span>
+        </summary>
+        <ul class="menu-submenu" data-menu-ordenable>
+          {% if "categorias_tienda" in visibles %}
+            <li class="{% if '/tienda/categorias' in request.path %}active{% endif %}" style="order: {% orden_opcion 'categorias_tienda' %}">
+              <a href="{{ las_categorias_tienda }}">
+                <span class="mif-folder icon"></span>
+                <span class="caption">Categorías</span>
+              </a>
+            </li>
+          {% endif %}
+          {% if "pedidos" in visibles %}
+            <li class="{% if '/tienda/pedidos' in request.path %}active{% endif %}" style="order: {% orden_opcion 'pedidos' %}">
+              <a href="{{ los_pedidos }}">
+                <span class="mif-shop icon"></span>
+                <span class="caption">Pedidos de la tienda</span>
+              </a>
+            </li>
+          {% endif %}
+          {% if "preguntas_tienda" in visibles %}
+            <li class="{% if '/tienda/preguntas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'preguntas_tienda' %}">
+              <a href="{{ las_preguntas_tienda }}">
+                <span class="mif-chat-bubble-outline icon"></span>
+                <span class="caption">Preguntas</span>
+              </a>
+            </li>
+          {% endif %}
+          {% if "resenas_tienda" in visibles %}
+            <li class="{% if '/tienda/resenas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'resenas_tienda' %}">
+              <a href="{{ las_resenas_tienda }}">
+                <span class="mif-star-full icon"></span>
+                <span class="caption">Reseñas</span>
+              </a>
+            </li>
+          {% endif %}
+          {% for extra in extras_tienda %}
             <li class="{% if request.path == extra.url %}active{% endif %}" style="order: {{ extra.orden }}">
               <a href="{{ extra.url }}">
                 <span class="mif-{% if 'fa-' in extra.icono %}chevron-right{% else %}{{ extra.icono|default:'chevron-right' }}{% endif %} icon"></span>
