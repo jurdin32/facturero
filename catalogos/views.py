@@ -175,7 +175,9 @@ def producto(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
                     guardado, formulario_tienda, hay_fotos=_trae_archivos(request)
                 )
                 formset_imagenes = FormsetImagenes(
-                    request.POST, request.FILES, instance=tienda or ProductoTienda()
+                    _sin_fotos_vacias(request.POST, request.FILES),
+                    request.FILES,
+                    instance=tienda or ProductoTienda(),
                 )
                 # Si la petición no trae el formset (por ejemplo, la API o una
                 # prueba), se guarda sin tocar las fotos.
@@ -190,10 +192,19 @@ def producto(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
                             request, f"«{guardado.descripcion}» está en el catálogo."
                         )
                     return redirect("catalogos:productos")
-                # Las fotos no se pudieron guardar, pero el producto sí: se vuelve a
-                # su pantalla para corregirlas sin dar de alta el producto otra vez.
+                # Las fotos no se pudieron guardar, pero el producto sí: se sigue en
+                # su pantalla, con las fotos marcadas, para corregirlas sin darlo de
+                # alta otra vez. Con una redirección el error se perdía y solo se veía
+                # el aviso, sin decir cuál era la foto.
                 messages.error(request, "El producto se guardó; revise las fotos de la tienda.")
-                return redirect("catalogos:producto", pk=guardado.pk)
+                objeto = guardado
+                pk = guardado.pk
+                tienda = tienda or ProductoTienda.de(guardado)
+                existencia = (
+                    Existencia.objects.filter(producto=guardado).first()
+                    if guardado.es_producto
+                    else None
+                )
             messages.error(request, "Revise lo que está marcado en rojo en la tienda.")
         else:
             messages.error(request, "Revise lo que está marcado en rojo.")
@@ -211,7 +222,7 @@ def producto(request: HttpRequest, pk: Optional[int] = None) -> HttpResponse:
         "producto": objeto,
         "tienda": tienda,
         "existencia": existencia,
-        "es_nuevo": pk is None,
+        "es_nuevo": objeto.pk is None,
     }
     return render(request, "catalogos/producto.html", contexto)
 
@@ -236,6 +247,29 @@ def _copiar_del_formulario(destino: ProductoTienda, datos: dict) -> None:
     for campo in Producto._meta.concrete_fields:
         if campo.attname in datos:
             setattr(destino, campo.attname, datos[campo.attname])
+
+
+def _sin_fotos_vacias(post: Any, archivos: Any) -> Any:
+    """Marca para borrar las filas del formset que no son ninguna foto.
+
+    El navegador puede dejar puestos el orden o el texto alternativo de una fila
+    a la que al final no se le eligió archivo. Sin archivo ni foto guardada no es
+    una foto, pero Django la mira como una foto a la que le falta la imagen y da
+    el formset por malo, aunque el producto se haya guardado bien. Se descarta
+    aquí, que es donde se sabe si vino el archivo.
+    """
+    prefijo = FormsetImagenes.get_default_prefix()
+    try:
+        total = int(post.get(f"{prefijo}-TOTAL_FORMS") or 0)
+    except (TypeError, ValueError):
+        return post
+    limpio = post.copy()
+    for indice in range(total):
+        hay_archivo = bool(archivos.get(f"{prefijo}-{indice}-imagen"))
+        hay_foto = bool((post.get(f"{prefijo}-{indice}-id") or "").strip())
+        if not hay_archivo and not hay_foto:
+            limpio[f"{prefijo}-{indice}-DELETE"] = "on"
+    return limpio
 
 
 def _trae_archivos(request: HttpRequest) -> bool:

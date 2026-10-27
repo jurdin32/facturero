@@ -399,6 +399,46 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         self.assertEqual(Producto.objects.count(), 0)
         self.assertEqual(ProductoTienda.objects.count(), 0)
 
+    def test_una_fila_de_fotos_sin_archivo_no_estropa_el_guardado(self) -> None:
+        """El navegador puede dejar puesto el alt de una foto que no se eligió."""
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
+        datos.update({
+            "imagenes-TOTAL_FORMS": "1",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-MIN_NUM_FORMS": "0",
+            "imagenes-MAX_NUM_FORMS": "1000",
+            "imagenes-0-id": "",
+            "imagenes-0-alt": "CAJA DE DOCE",
+            "imagenes-0-orden": "0",
+        })
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertEqual(Producto.objects.count(), 1)
+
+    def test_una_foto_mal_puesta_se_queda_en_la_pantalla(self) -> None:
+        """Con un error de verdad se ve en la pantalla, no en un aviso que se va."""
+        foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
+        datos.update({
+            "imagenes-TOTAL_FORMS": "1",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-MIN_NUM_FORMS": "0",
+            "imagenes-MAX_NUM_FORMS": "1000",
+            "imagenes-0-imagen": foto,
+            "imagenes-0-alt": "Caja de frente",
+            "imagenes-0-orden": "no es un número",
+        })
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "revise las fotos de la tienda")
+        self.assertEqual(Producto.objects.count(), 1)
+
     def test_una_foto_sola_ya_guarda_la_parte_de_tienda(self) -> None:
         foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
         datos = self.datos()
