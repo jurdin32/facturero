@@ -1085,6 +1085,29 @@ select { padding-right: var(--e6); }
 .row > .cell { flex: 1 1 0; min-width: 0; }
 
 .row > .cell-12 { flex: 0 0 calc(100% - var(--e4)); max-width: calc(100% - var(--e4)); }
+/* Columnas de doce que se aplican en cualquier ancho: las filas de la ficha del
+ * producto se reparten enteras, para que un dato corto no se lleve media fila
+ * ni quede un hueco al final. */
+.row > .cell-2 { flex: 0 0 calc(16.6667% - var(--e4)); max-width: calc(16.6667% - var(--e4)); }
+.row > .cell-3 { flex: 0 0 calc(25% - var(--e4)); max-width: calc(25% - var(--e4)); }
+.row > .cell-4 { flex: 0 0 calc(33.3333% - var(--e4)); max-width: calc(33.3333% - var(--e4)); }
+.row > .cell-8 { flex: 0 0 calc(66.6667% - var(--e4)); max-width: calc(66.6667% - var(--e4)); }
+.row > .cell-9 { flex: 0 0 calc(75% - var(--e4)); max-width: calc(75% - var(--e4)); }
+
+@media (max-width: 640px) {
+  .row > .cell-2,
+  .row > .cell-3,
+  .row > .cell-4,
+  .row > .cell-5,
+  .row > .cell-6,
+  .row > .cell-7,
+  .row > .cell-8,
+  .row > .cell-9 {
+    flex: 0 0 calc(100% - var(--e4));
+    max-width: calc(100% - var(--e4));
+  }
+}
+
 .row > .cell-5 { flex: 0 0 calc(41.6667% - var(--e4)); max-width: calc(41.6667% - var(--e4)); }
 .row > .cell-6 { flex: 0 0 calc(50% - var(--e4)); max-width: calc(50% - var(--e4)); }
 .row > .cell-7 { flex: 0 0 calc(58.3333% - var(--e4)); max-width: calc(58.3333% - var(--e4)); }

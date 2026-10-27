@@ -81,18 +81,25 @@
         <div class="bloque-suave">
           <h3 class="bloque-titulo">Lo que es</h3>
           <div class="row">
-            <div class="cell-12 cell-md-6">
+            <div class="cell-6">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
                 {{ formulario.tipo }}
                 <p class="ayuda">Un bien lleva inventario; un servicio no se agota.</p>
               </div>
             </div>
-            <div class="cell-12 cell-md-6">
+            <div class="cell-3">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.codigo_principal.id_for_label }}">{{ formulario.codigo_principal.label }}</label>
                 {{ formulario.codigo_principal }}
                 {% if formulario.codigo_principal.errors %}<p class="error">{{ formulario.codigo_principal.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <div class="cell-3">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
+                {{ formulario.unidad_medida }}
+                <p class="ayuda">Vacía: UNIDAD o SERVICIO.</p>
               </div>
             </div>
             <div class="cell-12">
@@ -103,14 +110,7 @@
                 <p class="ayuda">Es el texto que sale en la factura: escríbalo como quiere que lo lea el cliente.</p>
               </div>
             </div>
-            <div class="cell-12 cell-md-4">
-              <div class="campo-caja">
-                <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
-                {{ formulario.unidad_medida }}
-                <p class="ayuda">Si la deja vacía se usa UNIDAD o SERVICIO.</p>
-              </div>
-            </div>
-            <div class="cell-12 cell-md-8">
+            <div class="cell-12">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.datos_adicionales.id_for_label }}">Detalles adicionales</label>
                 {{ formulario.datos_adicionales }}
@@ -124,7 +124,7 @@
           <h3 class="bloque-titulo">Inventario</h3>
           <div class="row">
             {% if es_nuevo %}
-              <div class="cell-12 cell-md-4">
+              <div class="cell-4">
                 <div class="campo-caja">
                   <label class="etiqueta" for="{{ formulario.stock_inicial.id_for_label }}">Con cuánto empieza</label>
                   {{ formulario.stock_inicial }}
@@ -132,13 +132,13 @@
                 </div>
               </div>
             {% endif %}
-            <div class="cell-12 cell-md-4">
+            <div class="{% if es_nuevo %}cell-4{% else %}cell-3{% endif %}">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.minimo.id_for_label }}">Mínimo para reponer</label>
                 {{ formulario.minimo }}
               </div>
             </div>
-            <div class="cell-12 {% if es_nuevo %}cell-md-4{% else %}cell-md-8{% endif %}">
+            <div class="{% if es_nuevo %}cell-4{% else %}cell-9{% endif %}">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
                 {{ formulario.ubicacion }}
@@ -206,7 +206,7 @@
     {% endif %}
 
     <div class="row">
-      <div class="cell-12 cell-md-4">
+      <div class="cell-5">
         <div class="campo-caja">
           <label class="switch">
             {{ formulario_tienda.publicado }}
@@ -214,7 +214,7 @@
           </label>
         </div>
       </div>
-      <div class="cell-12 cell-md-4">
+      <div class="cell-5">
         <div class="campo-caja">
           <label class="switch">
             {{ formulario_tienda.destacado }}
@@ -222,16 +222,16 @@
           </label>
         </div>
       </div>
-      <div class="cell-12 cell-md-4">
+      <div class="cell-2">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.orden.id_for_label }}">Orden</label>
           {{ formulario_tienda.orden }}
           {% if formulario_tienda.orden.errors %}<p class="error">{{ formulario_tienda.orden.errors.0 }}</p>{% endif %}
-          <p class="ayuda">Dentro de su categoría, los de número menor salen primero.</p>
+          <p class="ayuda">Menor número, primero.</p>
         </div>
       </div>
 
-      <div class="cell-12 cell-md-6">
+      <div class="cell-6">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.categoria.id_for_label }}">Categoría</label>
           {{ formulario_tienda.categoria }}
@@ -239,7 +239,7 @@
           <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a></p>
         </div>
       </div>
-      <div class="cell-12 cell-md-6">
+      <div class="cell-6">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.titulo.id_for_label }}">Nombre en la web</label>
           {{ formulario_tienda.titulo }}
@@ -256,7 +256,7 @@
         </div>
       </div>
 
-      <div class="cell-12 cell-md-4">
+      <div class="cell-3">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.precio_web.id_for_label }}">Precio en la web</label>
           {{ formulario_tienda.precio_web }}
@@ -264,7 +264,7 @@
           <p class="ayuda">Sin IVA. Vacío: el del producto.</p>
         </div>
       </div>
-      <div class="cell-12 cell-md-4">
+      <div class="cell-3">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.precio_oferta.id_for_label }}">Precio de oferta</label>
           {{ formulario_tienda.precio_oferta }}
@@ -272,7 +272,7 @@
           <p class="ayuda">Sin IVA; tiene que ser menor.</p>
         </div>
       </div>
-      <div class="cell-12 cell-md-4" id="bloque-envio">
+      <div class="cell-2" id="bloque-envio">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.peso.id_for_label }}">Peso (kg)</label>
           {{ formulario_tienda.peso }}
@@ -280,7 +280,7 @@
           <p class="ayuda">Opcional: para calcular el envío.</p>
         </div>
       </div>
-      <div class="cell-12 cell-md-6">
+      <div class="cell-2">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
           {{ formulario_tienda.oferta_desde }}
@@ -288,7 +288,7 @@
           <p class="ayuda">Si se deja vacío, la oferta no caduca.</p>
         </div>
       </div>
-      <div class="cell-12 cell-md-6">
+      <div class="cell-2">
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
           {{ formulario_tienda.oferta_hasta }}
