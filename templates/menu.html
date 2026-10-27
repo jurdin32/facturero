@@ -15,10 +15,10 @@ opciones.
 {% url 'catalogos:conductores' as los_conductores %}
 {% url 'catalogos:vehiculos' as los_vehiculos %}
 {% url 'inventario:inventario' as el_inventario %}
-{% url 'tienda:pedidos' as los_pedidos %}
-{% url 'tienda:categorias' as las_categorias_tienda %}
-{% url 'tienda:preguntas' as las_preguntas_tienda %}
-{% url 'tienda:resenas' as las_resenas_tienda %}
+{% url 'gestion_tienda:pedidos' as los_pedidos %}
+{% url 'gestion_tienda:categorias' as las_categorias_tienda %}
+{% url 'gestion_tienda:preguntas' as las_preguntas_tienda %}
+{% url 'gestion_tienda:resenas' as las_resenas_tienda %}
 {% url 'configuracion:sri' as la_configuracion %}
 {% url 'seguridad:roles' as las_roles %}
 {% url 'seguridad:usuarios' as las_usuarios %}
@@ -215,7 +215,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
 
   {% if "categorias_tienda" in visibles or "pedidos" in visibles or "preguntas_tienda" in visibles or "resenas_tienda" in visibles or extras_tienda %}
     <li class="menu-grupo" style="order: {% orden_apartado 'Tienda' %}">
-      <details{% if '/tienda/pedidos' in request.path or '/tienda/categorias' in request.path or '/tienda/preguntas' in request.path or '/tienda/resenas' in request.path %} open{% endif %}>
+      <details{% if '/wadmin/tienda/pedidos' in request.path or '/wadmin/tienda/categorias' in request.path or '/wadmin/tienda/preguntas' in request.path or '/wadmin/tienda/resenas' in request.path %} open{% endif %}>
         <summary>
           <span class="mif-shop icon" aria-hidden="true"></span>
           <span class="caption">Tienda</span>
@@ -223,7 +223,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
         </summary>
         <ul class="menu-submenu" data-menu-ordenable>
           {% if "categorias_tienda" in visibles %}
-            <li class="{% if '/tienda/categorias' in request.path %}active{% endif %}" style="order: {% orden_opcion 'categorias_tienda' %}">
+            <li class="{% if '/wadmin/tienda/categorias' in request.path %}active{% endif %}" style="order: {% orden_opcion 'categorias_tienda' %}">
               <a href="{{ las_categorias_tienda }}">
                 <span class="mif-folder icon"></span>
                 <span class="caption">Categorías</span>
@@ -231,7 +231,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
             </li>
           {% endif %}
           {% if "pedidos" in visibles %}
-            <li class="{% if '/tienda/pedidos' in request.path %}active{% endif %}" style="order: {% orden_opcion 'pedidos' %}">
+            <li class="{% if '/wadmin/tienda/pedidos' in request.path %}active{% endif %}" style="order: {% orden_opcion 'pedidos' %}">
               <a href="{{ los_pedidos }}">
                 <span class="mif-shop icon"></span>
                 <span class="caption">Pedidos de la tienda</span>
@@ -239,7 +239,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
             </li>
           {% endif %}
           {% if "preguntas_tienda" in visibles %}
-            <li class="{% if '/tienda/preguntas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'preguntas_tienda' %}">
+            <li class="{% if '/wadmin/tienda/preguntas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'preguntas_tienda' %}">
               <a href="{{ las_preguntas_tienda }}">
                 <span class="mif-chat-bubble-outline icon"></span>
                 <span class="caption">Preguntas</span>
@@ -247,7 +247,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
             </li>
           {% endif %}
           {% if "resenas_tienda" in visibles %}
-            <li class="{% if '/tienda/resenas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'resenas_tienda' %}">
+            <li class="{% if '/wadmin/tienda/resenas' in request.path %}active{% endif %}" style="order: {% orden_opcion 'resenas_tienda' %}">
               <a href="{{ las_resenas_tienda }}">
                 <span class="mif-star-full icon"></span>
                 <span class="caption">Reseñas</span>
@@ -262,6 +262,12 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
               </a>
             </li>
           {% endfor %}
+          <li style="order: 9997">
+            <a href="{% url 'tienda:portada' %}" target="_blank" rel="noopener">
+              <span class="mif-external icon"></span>
+              <span class="caption">Ver la tienda</span>
+            </a>
+          </li>
         </ul>
       </details>
     </li>
@@ -317,7 +323,7 @@ se creen desde la aplicación, con dirección, salen solos.{% endcomment %}
             </li>
           {% endfor %}
           <li style="order: 9998">
-            <a href="/admin/">
+            <a href="/wadmin/admin/">
               <span class="mif-dashboard icon"></span>
               <span class="caption">Administración</span>
             </a>

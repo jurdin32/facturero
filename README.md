@@ -22,15 +22,16 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
   catálogo del SRI que se carga en la base).
 - **Catálogo e inventario**: clientes, productos y servicios, conductores, vehículos,
   existencias y kardex.
-- **Tienda en línea**: el catálogo público en `/tienda/` con buscador, ofertas,
+- **Tienda en línea**: el catálogo público en la raíz del dominio —lo privado vive
+  detrás de `/wadmin/`— con buscador, ofertas,
   listados con filtros, lo más vendido y una ficha por producto —galería, precio con
   IVA, características, opiniones con estrellas y «Comprar ahora»—, carrito en la
   sesión y pedidos sin crear cuenta, con **seguimiento por número y correo**. Desde la
   ficha se le **pregunta al vendedor** y se deja la **reseña**; las respuestas y las
   opiniones se moderan antes de publicarse, en sus apartados del menú. La **descripción
-  larga** se escribe en Markdown, con su editor de botones —títulos, listas, tablas y
-  enlaces—: la tabla se arma en una cuadrícula, o se pega ya hecha desde Excel, sin
-  escribir barras ni guiones y se publica ya formateada y limpia. Las categorías se crean desde la
+  larga** se escribe en un editor visual —títulos, negritas, listas, tablas y
+  enlaces—: las tablas se insertan de un clic y se editan en el sitio, y el tabulador
+  pasa de celda en celda. Las categorías se crean desde la
   aplicación y los pedidos se revisan y se pasan a factura desde «Pedidos de la
   tienda». El **carrito** cambia las cantidades y los totales en el acto, sin botón de
   actualizar. La cabecera lleva el **logo de la empresa** —el que se sube en la

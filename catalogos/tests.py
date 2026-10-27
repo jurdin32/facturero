@@ -43,7 +43,7 @@ class PruebasDelCatalogo(TestCase):
 
     def test_el_formulario_acepta_la_coma_y_deja_la_existencia_inicial(self) -> None:
         respuesta = self.client.post(
-            "/catalogos/productos/nuevo/",
+            "/wadmin/catalogos/productos/nuevo/",
             {
                 "tipo": "producto",
                 "codigo_principal": "CAJA-12",
@@ -80,7 +80,7 @@ class PruebasDelCatalogo(TestCase):
             cantidad=Decimal("2"), precio_unitario=Decimal("10.50"),
         )
 
-        respuesta = self.client.get("/catalogos/productos/")
+        respuesta = self.client.get("/wadmin/catalogos/productos/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn("1 vez facturado", respuesta.content.decode())
@@ -92,7 +92,7 @@ class PruebasDelCatalogo(TestCase):
         )
         Factura.objects.create(receptor=receptor, fecha_emision="2026-01-15")
 
-        respuesta = self.client.get("/catalogos/clientes/")
+        respuesta = self.client.get("/wadmin/catalogos/clientes/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn("CLIENTE DE PRUEBA", respuesta.content.decode())
@@ -100,7 +100,7 @@ class PruebasDelCatalogo(TestCase):
     def test_los_avisos_del_servidor_salen_marcados_para_el_aviso_flotante(self) -> None:
         """El aviso se marca con su tipo: interfaz.js lo levanta como aviso de Metro."""
         respuesta = self.client.post(
-            "/catalogos/productos/nuevo/",
+            "/wadmin/catalogos/productos/nuevo/",
             {
                 "tipo": "servicio",
                 "codigo_principal": "HORA",
@@ -124,7 +124,7 @@ class PruebasDelCatalogo(TestCase):
             precio_unitario="10.50", codigo_porcentaje_iva="4",
         )
 
-        pagina = self.client.get("/catalogos/productos/").content.decode()
+        pagina = self.client.get("/wadmin/catalogos/productos/").content.decode()
 
         self.assertIn('id="tabla-productos"', pagina)
         self.assertIn("data-tabla", pagina)
@@ -140,7 +140,7 @@ class PruebasDelCatalogo(TestCase):
             precio_unitario="10.50", codigo_porcentaje_iva="4",
         )
 
-        pagina = self.client.get("/catalogos/productos/").content.decode()
+        pagina = self.client.get("/wadmin/catalogos/productos/").content.decode()
 
         self.assertIn("12,08", pagina)  # 10,50 más el 15 %
         self.assertIn("10,50 + IVA 15%", pagina)
@@ -152,7 +152,7 @@ class PruebasDelCatalogo(TestCase):
             precio_unitario="10.00", codigo_porcentaje_iva="7",
         )
 
-        pagina = self.client.get("/catalogos/productos/").content.decode()
+        pagina = self.client.get("/wadmin/catalogos/productos/").content.decode()
 
         self.assertIn("10,00 + Exento de IVA", pagina)
 
@@ -166,7 +166,7 @@ class PruebasDelTransporte(TestCase):
 
     def test_se_da_de_alta_un_conductor(self) -> None:
         respuesta = self.client.post(
-            "/catalogos/conductores/nuevo/",
+            "/wadmin/catalogos/conductores/nuevo/",
             {
                 "razon_social": "TRANSPORTES DEL NORTE CÍA. LTDA.",
                 "tipo_identificacion": "04",
@@ -183,7 +183,7 @@ class PruebasDelTransporte(TestCase):
 
     def test_se_da_de_alta_un_vehiculo(self) -> None:
         respuesta = self.client.post(
-            "/catalogos/vehiculos/nuevo/",
+            "/wadmin/catalogos/vehiculos/nuevo/",
             {"placa": "PBX-1234", "descripcion": "Camión Hino", "activo": "on"},
         )
 
@@ -198,7 +198,7 @@ class PruebasDelTransporte(TestCase):
         )
 
         respuesta = self.client.post(
-            f"/catalogos/conductores/{conductor.pk}/",
+            f"/wadmin/catalogos/conductores/{conductor.pk}/",
             {
                 "razon_social": "TRANSPORTES DEL SUR",
                 "tipo_identificacion": "04",
@@ -224,7 +224,7 @@ class PruebasDelTransporte(TestCase):
             fecha_ini_transporte="2026-01-15", fecha_fin_transporte="2026-01-15",
         )
 
-        respuesta = self.client.get("/catalogos/conductores/")
+        respuesta = self.client.get("/wadmin/catalogos/conductores/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.context["conductores"][0].cuantas_guias, 1)
@@ -238,7 +238,7 @@ class PruebasDelTransporte(TestCase):
             fecha_ini_transporte="2026-01-15", fecha_fin_transporte="2026-01-15",
         )
 
-        respuesta = self.client.get("/catalogos/vehiculos/")
+        respuesta = self.client.get("/wadmin/catalogos/vehiculos/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(respuesta.context["vehiculos"][0].cuantas_guias, 1)
@@ -249,8 +249,8 @@ class PruebasDelTransporte(TestCase):
         )
         Vehiculo.objects.create(placa="PBX-1234")
 
-        conductores = self.client.get("/catalogos/conductores/", {"q": "norte"})
-        vehiculos = self.client.get("/catalogos/vehiculos/", {"q": "no-existe"})
+        conductores = self.client.get("/wadmin/catalogos/conductores/", {"q": "norte"})
+        vehiculos = self.client.get("/wadmin/catalogos/vehiculos/", {"q": "no-existe"})
 
         self.assertEqual(conductores.context["cuantos"], 1)
         self.assertEqual(vehiculos.context["cuantos"], 0)
@@ -316,7 +316,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
             precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
         )
-        respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "En la tienda")
 
@@ -334,7 +334,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             "imagenes-0-orden": "0",
         })
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 302)
         self.assertEqual(Producto.objects.count(), 1)
@@ -350,7 +350,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         self.assertEqual(producto.precio_unitario, Decimal("10.50"))
 
     def test_sin_datos_de_tienda_el_producto_no_se_publica(self) -> None:
-        respuesta = self.client.post("/catalogos/productos/nuevo/", self.datos())
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", self.datos())
         self.assertEqual(respuesta.status_code, 302)
         self.assertEqual(Producto.objects.count(), 1)
         self.assertEqual(ProductoTienda.objects.count(), 0)
@@ -367,7 +367,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
 
         datos = self.datos()
         datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
-        respuesta = self.client.post(f"/catalogos/productos/{producto.pk}/", datos)
+        respuesta = self.client.post(f"/wadmin/catalogos/productos/{producto.pk}/", datos)
 
         self.assertEqual(respuesta.status_code, 302)
         tienda = ProductoTienda.de(Producto.objects.get(pk=producto.pk))
@@ -384,7 +384,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         tienda.publicado = True
         tienda.save()
 
-        respuesta = self.client.get("/catalogos/productos/")
+        respuesta = self.client.get("/wadmin/catalogos/productos/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "en la tienda")
@@ -393,7 +393,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         datos = self.datos()
         datos.update(self.datos_de_tienda(precio_web="10,00", precio_oferta="12,00"))
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(Producto.objects.count(), 0)
@@ -413,7 +413,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             "imagenes-0-orden": "0",
         })
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 302)
         self.assertEqual(Producto.objects.count(), 1)
@@ -443,7 +443,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             "imagenes-1-orden": "1",
         })
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 302)
         guardadas = list(ImagenProducto.objects.order_by("orden"))
@@ -471,7 +471,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             "imagenes-0-orden": "no es un número",
         })
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "revise las fotos de la tienda")
@@ -491,7 +491,7 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
             "imagenes-0-orden": "0",
         })
 
-        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+        respuesta = self.client.post("/wadmin/catalogos/productos/nuevo/", datos)
 
         self.assertEqual(respuesta.status_code, 302)
         tienda = ProductoTienda.de(Producto.objects.get())

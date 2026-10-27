@@ -125,7 +125,7 @@ class DesgloseYCierreTests(TestCase):
         sesion = servicios.abrir(self.usuario, Decimal("0"))
 
         self.client.post(
-            "/caja/",
+            "/wadmin/caja/",
             {"accion": "cerrar", "saldo_declarado": "0", "cantidad_100_00": "0"},
             follow=True,
         )
@@ -137,7 +137,7 @@ class DesgloseYCierreTests(TestCase):
     def test_cerrar_guarda_el_desglose_y_baja_el_acta(self):
         sesion = servicios.abrir(self.usuario, Decimal("160.22"))
 
-        respuesta = self.client.post("/caja/", {**self._desglose(), "accion": "cerrar"}, follow=True)
+        respuesta = self.client.post("/wadmin/caja/", {**self._desglose(), "accion": "cerrar"}, follow=True)
         self.assertEqual(respuesta.status_code, 200)
 
         cerrada = SesionCaja.objects.get(pk=sesion.pk)
@@ -145,7 +145,7 @@ class DesgloseYCierreTests(TestCase):
         self.assertEqual(cerrada.desglose["100.00"], 1)
         self.assertEqual(cerrada.diferencia, Decimal("0.00"))
 
-        acta = self.client.get(f"/caja/acta/{cerrada.pk}/")
+        acta = self.client.get(f"/wadmin/caja/acta/{cerrada.pk}/")
         self.assertEqual(acta.status_code, 200)
         self.assertEqual(acta["Content-Type"], "application/pdf")
         self.assertTrue(acta.content.startswith(b"%PDF"))
@@ -154,16 +154,16 @@ class DesgloseYCierreTests(TestCase):
     def test_el_acta_de_una_caja_abierta_no_se_genera(self):
         sesion = servicios.abrir(self.usuario, Decimal("0"))
 
-        respuesta = self.client.get(f"/caja/acta/{sesion.pk}/")
+        respuesta = self.client.get(f"/wadmin/caja/acta/{sesion.pk}/")
 
-        self.assertRedirects(respuesta, "/caja/", fetch_redirect_response=False)
+        self.assertRedirects(respuesta, "/wadmin/caja/", fetch_redirect_response=False)
 
     def test_el_acta_de_una_caja_cerrada_por_otro_se_puede_leer(self):
         otro = get_user_model().objects.create_user(username="otro-cajero", password="x")
         sesion = servicios.abrir(otro, Decimal("5.00"))
         servicios.cerrar(sesion, Decimal("5.00"), "Turno corto")
 
-        respuesta = self.client.get(f"/caja/acta/{sesion.pk}/")
+        respuesta = self.client.get(f"/wadmin/caja/acta/{sesion.pk}/")
 
         self.assertEqual(respuesta.status_code, 200)
 
@@ -205,7 +205,7 @@ class LasDosCopiasDelActa(TestCase):
         self.client.force_login(self.cajero)
         with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
             with patch("caja.views.acta_pdf", return_value=b"%PDF-1.4") as falso:
-                respuesta = self.client.get(f"/caja/acta/{self.sesion.pk}/")
+                respuesta = self.client.get(f"/wadmin/caja/acta/{self.sesion.pk}/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(falso.call_args.kwargs["completo"])
@@ -218,7 +218,7 @@ class LasDosCopiasDelActa(TestCase):
         self.client.force_login(self.jefe)
         with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
             with patch("caja.views.acta_pdf", return_value=b"%PDF-1.4") as falso:
-                respuesta = self.client.get(f"/caja/acta/{self.sesion.pk}/")
+                respuesta = self.client.get(f"/wadmin/caja/acta/{self.sesion.pk}/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertTrue(falso.call_args.kwargs["completo"])

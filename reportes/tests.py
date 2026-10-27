@@ -158,7 +158,7 @@ class PruebasDeLosReportes(TestCase):
                     self.assertEqual(len(tabla.totales), len(tabla.columnas), reporte.clave)
 
     def test_el_indice_ensena_los_reportes_por_apartado(self) -> None:
-        pagina = self._get("/reportes/").content.decode()
+        pagina = self._get("/wadmin/reportes/").content.decode()
         for _grupo, reportes in catalogo.por_grupo():
             for reporte in reportes:
                 self.assertIn(reporte.nombre, pagina, reporte.clave)
@@ -166,41 +166,41 @@ class PruebasDeLosReportes(TestCase):
     def test_cada_reporte_se_ve_en_la_pantalla(self) -> None:
         for reporte in catalogo.REPORTES:
             with self.subTest(reporte=reporte.clave):
-                pagina = self._get(f"/reportes/{reporte.clave}/?periodo=mes").content.decode()
+                pagina = self._get(f"/wadmin/reportes/{reporte.clave}/?periodo=mes").content.decode()
                 # Con datos sale la tabla; sin datos, el aviso de que no hay nada.
                 self.assertTrue("<table" in pagina or "No hay nada" in pagina, reporte.clave)
                 # Y siempre el filtro del período y el botón de volver al índice.
                 self.assertIn('name="periodo"', pagina, reporte.clave)
-                self.assertIn("/reportes/", pagina, reporte.clave)
+                self.assertIn("/wadmin/reportes/", pagina, reporte.clave)
 
     def test_el_pdf_se_abre_en_el_navegador(self) -> None:
-        respuesta = self._get("/reportes/ventas/?periodo=mes&formato=pdf")
+        respuesta = self._get("/wadmin/reportes/ventas/?periodo=mes&formato=pdf")
         self.assertEqual(respuesta["Content-Type"], "application/pdf")
         self.assertTrue(respuesta["Content-Disposition"].startswith("inline"))
         self.assertTrue(respuesta.content.startswith(b"%PDF"))
         self.assertGreater(len(respuesta.content), 3000)
 
     def test_el_excel_se_descarga(self) -> None:
-        respuesta = self._get("/reportes/ventas/?periodo=mes&formato=xlsx")
+        respuesta = self._get("/wadmin/reportes/ventas/?periodo=mes&formato=xlsx")
         self.assertIn("spreadsheetml", respuesta["Content-Type"])
         self.assertTrue(respuesta["Content-Disposition"].startswith("attachment"))
         # Un xlsx es un zip: empieza con su firma.
         self.assertTrue(respuesta.content.startswith(b"PK"))
 
     def test_el_periodo_y_la_cuenta_viajan_en_la_direccion(self) -> None:
-        respuesta = self._get("/reportes/libro_mayor/?periodo=personalizado&desde=2026-01-01&hasta=2026-01-31")
+        respuesta = self._get("/wadmin/reportes/libro_mayor/?periodo=personalizado&desde=2026-01-01&hasta=2026-01-31")
         self.assertIn("enero de 2026", respuesta.content.decode())
 
     def test_el_manual_ensena_todas_sus_secciones(self) -> None:
-        pagina = self._get("/reportes/manual/").content.decode()
+        pagina = self._get("/wadmin/reportes/manual/").content.decode()
         for seccion in manual.SECCIONES:
             self.assertIn(seccion["titulo"], pagina, seccion["clave"])
 
     def test_un_reporte_que_no_existe_da_404(self) -> None:
-        self.assertEqual(self.client.get("/reportes/lo-que-sea/").status_code, 404)
+        self.assertEqual(self.client.get("/wadmin/reportes/lo-que-sea/").status_code, 404)
 
     def test_el_filtro_no_se_puede_romper_desde_la_direccion(self) -> None:
-        respuesta = self._get("/reportes/ventas/?periodo=personalizado&desde=xxx&hasta=yyy")
+        respuesta = self._get("/wadmin/reportes/ventas/?periodo=personalizado&desde=xxx&hasta=yyy")
         self.assertIn("Ventas", respuesta.content.decode())
 
 
@@ -215,7 +215,7 @@ class PruebasDeLosPermisosDeReportes(TestCase):
         from django.test import override_settings
 
         with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
-            self.assertEqual(self.client.get("/reportes/").status_code, 403)
+            self.assertEqual(self.client.get("/wadmin/reportes/").status_code, 403)
 
     def test_con_el_modulo_solo_se_ven_los_reportes_concedidos(self) -> None:
         from django.test import override_settings
@@ -226,11 +226,11 @@ class PruebasDeLosPermisosDeReportes(TestCase):
         Permiso.objects.create(rol=rol, opcion="reporte_balance", nivel=Nivel.LECTURA.value)
 
         with override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True}):
-            pagina = self.client.get("/reportes/").content.decode()
+            pagina = self.client.get("/wadmin/reportes/").content.decode()
             self.assertIn("Balance de comprobación", pagina)
             self.assertNotIn("Ventas por cliente", pagina)
-            self.assertEqual(self.client.get("/reportes/balance/").status_code, 200)
-            self.assertEqual(self.client.get("/reportes/ventas_clientes/").status_code, 403)
+            self.assertEqual(self.client.get("/wadmin/reportes/balance/").status_code, 200)
+            self.assertEqual(self.client.get("/wadmin/reportes/ventas_clientes/").status_code, 403)
 
 
 class PruebasDelLogotipo(TestCase):

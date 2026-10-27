@@ -27,7 +27,7 @@
     <div class="cell-12 cell-md-4">
       <div class="filtro filtro-boton">
         <button type="submit" class="button primary"><span class="mif-filter-list"></span> Filtrar</button>
-        <a class="enlace" href="{% url 'tienda:resenas' %}">Limpiar</a>
+        <a class="enlace" href="{% url 'gestion_tienda:resenas' %}">Limpiar</a>
       </div>
     </div>
   </div>
@@ -58,7 +58,7 @@
       <p>{{ resena.comentario }}</p>
 
       <div class="acciones-bloque">
-        <form method="post" action="{% url 'tienda:moderar_resena' resena.pk %}">
+        <form method="post" action="{% url 'gestion_tienda:moderar_resena' resena.pk %}">
           {% csrf_token %}
           {% if resena.aprobada %}
             <button type="submit" name="accion" value="retirar" class="button small outline warning">

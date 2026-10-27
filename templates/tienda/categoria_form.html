@@ -7,14 +7,14 @@
     <h1 class="titulo">{% if es_nueva %}Nueva categoría{% else %}{{ categoria.nombre }}{% endif %}</h1>
     <p class="subtitulo">
       El árbol con el que se navega la tienda.
-      · <a class="enlace" href="{% url 'tienda:categorias' %}">volver a las categorías</a>
+      · <a class="enlace" href="{% url 'gestion_tienda:categorias' %}">volver a las categorías</a>
     </p>
   </div>
   <div class="titulo-acciones">
     <button type="submit" form="formulario-categoria" class="button success">
       <span class="mif-checkmark"></span> Guardar
     </button>
-    <a class="button outline dark" href="{% url 'tienda:categorias' %}">Cancelar</a>
+    <a class="button outline dark" href="{% url 'gestion_tienda:categorias' %}">Cancelar</a>
   </div>
 </div>
 

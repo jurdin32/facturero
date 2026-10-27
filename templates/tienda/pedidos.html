@@ -36,7 +36,7 @@
     <div class="cell-12 cell-md-4">
       <div class="filtro filtro-boton">
         <button type="submit" class="button primary"><span class="mif-search"></span> Filtrar</button>
-        <a class="enlace" href="{% url 'tienda:pedidos' %}">Limpiar</a>
+        <a class="enlace" href="{% url 'gestion_tienda:pedidos' %}">Limpiar</a>
       </div>
     </div>
   </div>
@@ -61,7 +61,7 @@
             <span class="marca"><span class="mif-shop"></span></span>
           </td>
           <td class="col-principal">
-            <a class="listado-titulo" href="{% url 'tienda:pedido' p.pk %}">{{ p.numero }}</a>
+            <a class="listado-titulo" href="{% url 'gestion_tienda:pedido' p.pk %}">{{ p.numero }}</a>
             <span class="listado-meta">{{ p.creado|date:"d/m/Y H:i" }}</span>
           </td>
           <td class="col-detalles">
@@ -85,7 +85,7 @@
             </span>
           </td>
           <td class="col-acciones">
-            <a class="button small square outline primary" href="{% url 'tienda:pedido' p.pk %}"
+            <a class="button small square outline primary" href="{% url 'gestion_tienda:pedido' p.pk %}"
                title="Ver el pedido" aria-label="Ver el pedido"><span class="mif-eye"></span></a>
           </td>
         </tr>

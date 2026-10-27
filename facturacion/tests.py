@@ -113,7 +113,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
 
     def _envio(self, *, producto: Producto | None, cantidad: str = "", precio: str = "") -> dict:
         """Arma el envío con lo que pinta la hoja y rellena la primera línea."""
-        pagina = self.client.get("/facturar/").content.decode()
+        pagina = self.client.get("/wadmin/facturar/").content.decode()
         plantilla = re.search(
             r'<template id="plantilla-linea">(.*?)</template>', pagina, re.S
         ).group(1)
@@ -154,11 +154,11 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         envio = self._envio(producto=self.producto, cantidad="2")
         envio["accion"] = "guardar"
 
-        respuesta = self.client.post("/facturar/", envio)
+        respuesta = self.client.post("/wadmin/facturar/", envio)
 
         self.assertEqual(respuesta.status_code, 302)
         factura = Factura.objects.get()
-        self.assertEqual(respuesta["Location"], f"/facturar/{factura.pk}/")
+        self.assertEqual(respuesta["Location"], f"/wadmin/facturar/{factura.pk}/")
         linea = factura.detalles.get()
         self.assertEqual(linea.descripcion, "CAJA DE DOCE")
         self.assertEqual(linea.codigo_principal, "CAJA-12")
@@ -175,7 +175,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         envio = self._envio(producto=self.producto, cantidad="2")
         envio["accion"] = "guardar"
 
-        respuesta = self.client.post("/facturar/", envio)
+        respuesta = self.client.post("/wadmin/facturar/", envio)
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(Factura.objects.exists())
@@ -186,7 +186,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         envio = self._envio(producto=self.producto)
         envio["accion"] = "guardar"
 
-        respuesta = self.client.post("/facturar/", envio)
+        respuesta = self.client.post("/wadmin/facturar/", envio)
 
         self.assertEqual(respuesta.status_code, 302)
         factura = Factura.objects.get()
@@ -200,7 +200,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         envio["detalles-0-codigo_porcentaje_iva"] = "4"
         envio["accion"] = "guardar"
 
-        respuesta = self.client.post("/facturar/", envio)
+        respuesta = self.client.post("/wadmin/facturar/", envio)
 
         self.assertEqual(respuesta.status_code, 302)
         self.assertEqual(Factura.objects.get().detalles.get().precio_unitario, Decimal("10.5"))
@@ -208,11 +208,11 @@ class PruebasDeLaHojaDeFacturar(TestCase):
     def test_la_factura_guardada_se_puede_volver_a_abrir(self) -> None:
         """Editar el borrador tiene que mostrar sus líneas, no una hoja en blanco."""
         self.client.post(
-            "/facturar/", {**self._envio(producto=self.producto), "accion": "guardar"}
+            "/wadmin/facturar/", {**self._envio(producto=self.producto), "accion": "guardar"}
         )
         factura = Factura.objects.get()
 
-        respuesta = self.client.get(f"/facturar/{factura.pk}/")
+        respuesta = self.client.get(f"/wadmin/facturar/{factura.pk}/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn('value="CAJA DE DOCE"', respuesta.content.decode())
@@ -224,7 +224,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         envio = self._envio(producto=None)
         envio["accion"] = "guardar"
 
-        respuesta = self.client.post("/facturar/", envio)
+        respuesta = self.client.post("/wadmin/facturar/", envio)
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(Factura.objects.exists())
@@ -232,9 +232,9 @@ class PruebasDeLaHojaDeFacturar(TestCase):
 
     def test_el_buscador_de_productos_encuentra_por_codigo_y_por_descripcion(self) -> None:
         """Lo que el modal necesita para pintar la lista, en una sola llamada."""
-        por_nombre = self.client.get("/productos/buscar/", {"q": "caja"}).json()
-        por_codigo = self.client.get("/productos/buscar/", {"q": "CAJA-12"}).json()
-        sin_nada = self.client.get("/productos/buscar/", {"q": "no existe"}).json()
+        por_nombre = self.client.get("/wadmin/productos/buscar/", {"q": "caja"}).json()
+        por_codigo = self.client.get("/wadmin/productos/buscar/", {"q": "CAJA-12"}).json()
+        sin_nada = self.client.get("/wadmin/productos/buscar/", {"q": "no existe"}).json()
 
         self.assertEqual(len(por_nombre["resultados"]), 1)
         self.assertEqual(por_codigo["resultados"][0]["pk"], self.producto.pk)
@@ -248,8 +248,8 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         self.assertEqual(fila["descripcion"], "CAJA DE DOCE")
 
     def test_el_buscador_de_clientes_encuentra_por_nombre_y_por_identificacion(self) -> None:
-        por_nombre = self.client.get("/clientes/buscar/", {"q": "prueba"}).json()
-        por_ruc = self.client.get("/clientes/buscar/", {"q": "1790012345001"}).json()
+        por_nombre = self.client.get("/wadmin/clientes/buscar/", {"q": "prueba"}).json()
+        por_ruc = self.client.get("/wadmin/clientes/buscar/", {"q": "1790012345001"}).json()
 
         self.assertEqual(por_nombre["resultados"][0]["pk"], self.receptor.pk)
         self.assertEqual(por_ruc["resultados"][0]["razon_social"], "CLIENTE DE PRUEBA")
@@ -257,7 +257,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
 
     def test_la_hoja_avisa_que_se_esta_emitiendo(self) -> None:
         """Al enviar se firma y se espera al SRI: el formulario lo dice para el anillo."""
-        pagina = self.client.get("/facturar/").content.decode()
+        pagina = self.client.get("/wadmin/facturar/").content.decode()
 
         self.assertIn('data-espera="Firmando y enviando al SRI', pagina)
 
@@ -270,7 +270,7 @@ class PruebasDeLaHojaDeFacturar(TestCase):
         )
         Factura.objects.create(receptor=receptor, fecha_emision="2026-10-09")
 
-        pagina = self.client.get("/facturas/").content.decode()
+        pagina = self.client.get("/wadmin/facturas/").content.decode()
 
         self.assertIn('id="tabla-facturas"', pagina)
         self.assertIn("data-tabla", pagina)
@@ -306,7 +306,7 @@ class PruebasDelGraficoDelTablero(TestCase):
     def test_el_grafico_ordena_por_unidades_y_da_los_totales(self) -> None:
         self._factura(CAJA=(Decimal("10"), Decimal("1")), HORA=(Decimal("2"), Decimal("10")))
 
-        pagina = self.client.get("/").content.decode()
+        pagina = self.client.get("/wadmin/").content.decode()
 
         self.assertIn("Productos y servicios con más movimiento", pagina)
         self.assertLess(pagina.index("CAJA"), pagina.index("HORA"))
@@ -317,8 +317,8 @@ class PruebasDelGraficoDelTablero(TestCase):
         """El mismo dato, mirado por dinero en vez de por unidades."""
         self._factura(CAJA=(Decimal("10"), Decimal("1")), HORA=(Decimal("2"), Decimal("50")))
 
-        por_unidades = self.client.get("/").content.decode()
-        por_importe = self.client.get("/?orden=importe").content.decode()
+        por_unidades = self.client.get("/wadmin/").content.decode()
+        por_importe = self.client.get("/wadmin/?orden=importe").content.decode()
 
         self.assertLess(por_unidades.index("CAJA"), por_unidades.index("HORA"))
         self.assertLess(por_importe.index("HORA"), por_importe.index("CAJA"))
@@ -326,7 +326,7 @@ class PruebasDelGraficoDelTablero(TestCase):
     def test_un_orden_desconocido_cae_en_el_de_por_omision(self) -> None:
         self._factura(CAJA=(Decimal("1"), Decimal("1")))
 
-        respuesta = self.client.get("/?orden=lo-que-sea")
+        respuesta = self.client.get("/wadmin/?orden=lo-que-sea")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn("CAJA", respuesta.content.decode())
@@ -335,7 +335,7 @@ class PruebasDelGraficoDelTablero(TestCase):
         self._factura(cuando=self.hoy - timedelta(days=40), VIEJO=(Decimal("5"), Decimal("1")))
         self._factura(NUEVO=(Decimal("1"), Decimal("1")))
 
-        pagina = self.client.get("/?dias=14").content.decode()
+        pagina = self.client.get("/wadmin/?dias=14").content.decode()
 
         self.assertIn("NUEVO", pagina)
         self.assertNotIn("VIEJO", pagina)
@@ -343,7 +343,7 @@ class PruebasDelGraficoDelTablero(TestCase):
     def test_ya_no_estan_los_ultimos_comprobantes(self) -> None:
         self._factura(CAJA=(Decimal("1"), Decimal("1")))
 
-        pagina = self.client.get("/").content.decode()
+        pagina = self.client.get("/wadmin/").content.decode()
 
         self.assertNotIn("Últimos comprobantes", pagina)
         self.assertNotIn("lista-compacta", pagina)

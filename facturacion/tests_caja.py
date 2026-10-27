@@ -26,9 +26,9 @@ class PruebasDeLaCajaDelTurno(TestCase):
         self.client.force_login(self.usuario)
 
     def test_sin_caja_abierta_no_se_entra_a_facturar(self) -> None:
-        respuesta = self.client.get("/facturar/")
+        respuesta = self.client.get("/wadmin/facturar/")
 
-        self.assertRedirects(respuesta, "/caja/", fetch_redirect_response=False)
+        self.assertRedirects(respuesta, "/wadmin/caja/", fetch_redirect_response=False)
         avisos = [str(aviso) for aviso in respuesta.wsgi_request._messages]
         self.assertTrue(
             any("abrir la caja" in aviso for aviso in avisos), avisos
@@ -37,25 +37,25 @@ class PruebasDeLaCajaDelTurno(TestCase):
     def test_con_la_caja_abierta_se_entra_a_facturar(self) -> None:
         abrir_caja(self.usuario)
 
-        self.assertEqual(self.client.get("/facturar/").status_code, 200)
+        self.assertEqual(self.client.get("/wadmin/facturar/").status_code, 200)
 
     def test_al_cerrar_la_caja_se_vuelve_a_bloquear(self) -> None:
         sesion = abrir_caja(self.usuario, Decimal("10.00"))
 
-        self.assertEqual(self.client.get("/facturar/").status_code, 200)
+        self.assertEqual(self.client.get("/wadmin/facturar/").status_code, 200)
 
         cerrar_caja(sesion, Decimal("10.00"))
 
-        self.assertEqual(self.client.get("/facturar/").status_code, 302)
+        self.assertEqual(self.client.get("/wadmin/facturar/").status_code, 302)
 
     def test_el_tablero_avisa_que_falta_abrir_la_caja(self) -> None:
-        pagina = self.client.get("/").content.decode()
+        pagina = self.client.get("/wadmin/").content.decode()
 
         self.assertIn("abrir la caja", pagina)
 
     def test_con_caja_abierta_el_tablero_no_avisa(self) -> None:
         abrir_caja(self.usuario)
 
-        pagina = self.client.get("/").content.decode()
+        pagina = self.client.get("/wadmin/").content.decode()
 
         self.assertNotIn("Todavía no ha abierto su caja", pagina)

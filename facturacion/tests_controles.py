@@ -78,7 +78,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
     # ------------------------------------------------------------ las listas
 
     def test_la_lista_de_facturas_usa_los_controles_de_metro(self) -> None:
-        pagina = self._pagina("/facturas/")
+        pagina = self._pagina("/wadmin/facturas/")
         # El buscador de texto lo pone Metro en la tabla; el formulario de arriba
         # solo lleva los filtros que el servidor necesita.
         self.assertIn("data-tabla", pagina)
@@ -91,7 +91,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         self.assertIn('class="button primary"', pagina)
 
     def test_el_inventario_lleva_el_interruptor_de_reposicion(self) -> None:
-        pagina = self._pagina("/inventario/")
+        pagina = self._pagina("/wadmin/inventario/")
         self.assertIn('class="switch"', pagina)
         self.assertIn("data-enviar-al-cambiar", pagina)
 
@@ -99,10 +99,10 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         """Las cuatro listas van sin cabecera de columnas: una fila por registro,
         con su marca a la izquierda, lo esencial en medio y el dato a la derecha."""
         for ruta in (
-            "/facturas/",
-            "/catalogos/clientes/",
-            "/catalogos/productos/",
-            "/inventario/",
+            "/wadmin/facturas/",
+            "/wadmin/catalogos/clientes/",
+            "/wadmin/catalogos/productos/",
+            "/wadmin/inventario/",
         ):
             with self.subTest(ruta=ruta):
                 pagina = self._pagina(ruta)
@@ -114,7 +114,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
     # ---------------------------------------------------------- el tablero
 
     def test_el_tablero_lleva_las_barras_de_progreso(self) -> None:
-        pagina = self._pagina("/")
+        pagina = self._pagina("/wadmin/")
         self.assertIn("progress-component", pagina)
         self.assertIn('class="bar"', pagina)
         # Autorizadas sobre emitidas: una de una, o sea el 100 %.
@@ -134,7 +134,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
             precio_unitario=self.producto.precio_unitario,
         )
 
-        pagina = self._pagina("/")
+        pagina = self._pagina("/wadmin/")
 
         self.assertIn("Productos y servicios con más movimiento", pagina)
         self.assertIn('class="ranking"', pagina)
@@ -163,7 +163,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
     # ------------------------------------------------- la ficha del comprobante
 
     def test_la_ficha_ensena_el_ciclo_del_comprobante(self) -> None:
-        pagina = self._pagina(f"/factura/{self.factura.pk}/")
+        pagina = self._pagina(f"/wadmin/factura/{self.factura.pk}/")
         self.assertIn('class="progress-component exito"', pagina)
         self.assertIn('aria-valuenow="100"', pagina)
         self.assertIn("Firmada", pagina)
@@ -174,7 +174,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         ComprobanteEmitido.objects.filter(pk=self.factura.comprobante.pk).update(
             estado=EstadoComprobante.EN_PROCESO
         )
-        pagina = self._pagina(f"/factura/{self.factura.pk}/")
+        pagina = self._pagina(f"/wadmin/factura/{self.factura.pk}/")
         self.assertIn('class="progress-component cuidado"', pagina)
         self.assertIn('aria-valuenow="80"', pagina)
         self.assertIn("activity-bars", pagina)
@@ -183,7 +183,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         ComprobanteEmitido.objects.filter(pk=self.factura.comprobante.pk).update(
             estado=EstadoComprobante.DEVUELTO
         )
-        pagina = self._pagina(f"/factura/{self.factura.pk}/")
+        pagina = self._pagina(f"/wadmin/factura/{self.factura.pk}/")
         self.assertIn('class="progress-component peligro"', pagina)
         self.assertIn("Reintentar el envío", pagina)
         self.assertIn('class="button warning"', pagina)
@@ -191,7 +191,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
     # ---------------------------------------------------------- los formularios
 
     def test_el_formulario_de_producto_usa_los_controles_de_metro(self) -> None:
-        pagina = self._pagina("/catalogos/productos/nuevo/")
+        pagina = self._pagina("/wadmin/catalogos/productos/nuevo/")
         self.assertIn('data-role="select"', pagina)
         self.assertIn('data-role="input"', pagina)
         # La casilla del tipo de producto y la del IVA llevan su icono delante.
@@ -201,7 +201,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         self.assertIn('class="switch"', pagina)
 
     def test_el_formulario_de_facturar_usa_los_controles_de_metro(self) -> None:
-        pagina = self._pagina("/facturar/")
+        pagina = self._pagina("/wadmin/facturar/")
         self.assertIn('data-role="textarea"', pagina)
         self.assertIn('data-role="select"', pagina)
         self.assertIn('data-role="input"', pagina)
@@ -212,7 +212,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
     def test_las_existencias_traen_su_barra(self) -> None:
         """Un bien con mínimo enseña lo que queda respecto a lo que se quiere."""
         Existencia.objects.create(producto=self.producto, cantidad=Decimal("5"), minimo=Decimal("10"))
-        pagina = self._pagina("/inventario/")
+        pagina = self._pagina("/wadmin/inventario/")
         self.assertIn("stock-celda", pagina)
         self.assertIn('aria-valuenow="25"', pagina)
         self.assertIn('class="progress-component cuidado"', pagina)
@@ -231,14 +231,14 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         dibujados = set(re.findall(r"\.mif-([a-z0-9-]+):before", fuente))
 
         rutas = [
-            "/", "/facturas/", "/facturar/", "/inventario/", "/catalogos/clientes/",
-            "/catalogos/clientes/nuevo/", "/catalogos/productos/nuevo/",
-            "/catalogos/conductores/nuevo/", "/catalogos/vehiculos/nuevo/",
-            "/comprobantes/retenciones/", "/comprobantes/retenciones/nuevo/",
-            "/comprobantes/guias-remision/nuevo/", "/seguridad/", "/seguridad/roles/nuevo/",
-            "/seguridad/usuarios/", "/seguridad/opciones/", "/seguridad/opciones/nueva/",
-            "/tienda/categorias/", "/tienda/pedidos/", "/tienda/preguntas/",
-            "/tienda/resenas/",
+            "/wadmin/", "/wadmin/facturas/", "/wadmin/facturar/", "/wadmin/inventario/", "/wadmin/catalogos/clientes/",
+            "/wadmin/catalogos/clientes/nuevo/", "/wadmin/catalogos/productos/nuevo/",
+            "/wadmin/catalogos/conductores/nuevo/", "/wadmin/catalogos/vehiculos/nuevo/",
+            "/wadmin/comprobantes/retenciones/", "/wadmin/comprobantes/retenciones/nuevo/",
+            "/wadmin/comprobantes/guias-remision/nuevo/", "/wadmin/seguridad/", "/wadmin/seguridad/roles/nuevo/",
+            "/wadmin/seguridad/usuarios/", "/wadmin/seguridad/opciones/", "/wadmin/seguridad/opciones/nueva/",
+            "/wadmin/tienda/categorias/", "/wadmin/tienda/pedidos/", "/wadmin/tienda/preguntas/",
+            "/wadmin/tienda/resenas/",
         ]
         pedidos: set[str] = set()
 
@@ -253,7 +253,7 @@ class PruebasDeLosControlesEnLasPantallas(TestCase):
         for ruta in rutas:
             pedidos.update(re.findall(r"mif-([a-z0-9-]+)", self._pagina(ruta)))
         # La entrada se mira sin sesión, que con sesión manda al tablero.
-        entrada = Client().get("/entrar/")
+        entrada = Client().get("/wadmin/entrar/")
         pedidos.update(re.findall(r"mif-([a-z0-9-]+)", entrada.content.decode()))
 
         self.assertEqual(sorted(pedidos - dibujados), [], "iconos que la fuente no tiene")

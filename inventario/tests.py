@@ -126,7 +126,7 @@ class PruebasDelInventario(TestCase):
     def test_la_pantalla_del_inventario_avisa_de_lo_que_hay_que_reponer(self) -> None:
         Existencia.objects.create(producto=self.bien, cantidad=Decimal("2"), minimo=Decimal("5"))
 
-        respuesta = self.client.get("/inventario/")
+        respuesta = self.client.get("/wadmin/inventario/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn("CAJA DE DOCE", respuesta.content.decode())
@@ -137,7 +137,7 @@ class PruebasDelInventario(TestCase):
         """Anular devuelve la cantidad: la pantalla lo pregunta con un diálogo."""
         self._mover(TipoMovimiento.ENTRADA.value, "10")
 
-        pagina = self.client.get(f"/inventario/producto/{self.bien.pk}/").content.decode()
+        pagina = self.client.get(f"/wadmin/inventario/producto/{self.bien.pk}/").content.decode()
 
         self.assertIn("data-confirmar=", pagina)
         self.assertIn('data-titulo="Anular el movimiento"', pagina)
@@ -216,11 +216,11 @@ class PruebasDelDescuentoAlFacturar(TestCase):
         factura = factura_autorizada(self.bien, cantidad="3")
         descontar_de_la_factura(factura)
 
-        respuesta = self.client.get(f"/inventario/producto/{self.bien.pk}/")
+        respuesta = self.client.get(f"/wadmin/inventario/producto/{self.bien.pk}/")
         cuerpo = respuesta.content.decode()
 
         self.assertEqual(respuesta.status_code, 200)
-        self.assertIn(f'href="/factura/{factura.pk}/"', cuerpo)
+        self.assertIn(f'href="/wadmin/factura/{factura.pk}/"', cuerpo)
         self.assertIn("001-001-1", cuerpo)
 
     def test_avisa_cuando_el_bien_se_queda_en_negativo(self) -> None:

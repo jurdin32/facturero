@@ -10,16 +10,16 @@
     <h1 class="titulo">Pedido {{ pedido.numero }}</h1>
     <p class="subtitulo">
       {{ pedido.creado|date:"d/m/Y H:i" }} ·
-      <a class="enlace" href="{% url 'tienda:pedidos' %}">volver a los pedidos</a>
+      <a class="enlace" href="{% url 'gestion_tienda:pedidos' %}">volver a los pedidos</a>
     </p>
   </div>
   <div class="titulo-acciones">
     {% if puede_gestionar and pedido.se_puede_facturar %}
-      <form method="post" action="{% url 'tienda:facturar' pedido.pk %}">
+      <form method="post" action="{% url 'gestion_tienda:facturar' pedido.pk %}">
         {% csrf_token %}
         <button class="button primary" type="submit"><span class="mif-file-text"></span> Facturar</button>
       </form>
-      <form method="post" action="{% url 'tienda:anular' pedido.pk %}"
+      <form method="post" action="{% url 'gestion_tienda:anular' pedido.pk %}"
             onsubmit="return confirm('¿Anular el pedido {{ pedido.numero }}?');">
         {% csrf_token %}
         <button class="button outline alert" type="submit"><span class="mif-cancel"></span> Anular</button>

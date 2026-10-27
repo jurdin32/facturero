@@ -676,6 +676,41 @@ class PruebasDelLogoDeLaEmpresa(TestCase):
         self.assertNotContains(respuesta, "/media/logos/")
 
 
+class PruebasDeLasDirecciones(TestCase):
+    """La tienda en la raíz y lo de la empresa detrás de ``/wadmin/``."""
+
+    def test_la_tienda_esta_en_la_raiz(self):
+        respuesta = self.client.get("/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertContains(respuesta, "Tienda en línea")
+
+    def test_la_trastienda_queda_detras_de_wadmin(self):
+        self.assertEqual(reverse("gestion_tienda:pedidos"), "/wadmin/tienda/pedidos/")
+        self.assertEqual(reverse("gestion_tienda:categorias"), "/wadmin/tienda/categorias/")
+        self.assertEqual(reverse("facturacion:facturas"), "/wadmin/facturas/")
+        self.assertEqual(reverse("entrar"), "/wadmin/entrar/")
+
+    def test_las_direcciones_de_antes_llevan_a_su_sitio(self):
+        """Los enlaces repartidos cuando la tienda vivía en ``/tienda/``."""
+        respuesta = self.client.get("/tienda/p/mouse-inalambrico/")
+
+        self.assertEqual(respuesta.status_code, 301)
+        self.assertEqual(respuesta["Location"], "/p/mouse-inalambrico/")
+
+    def test_las_de_la_trastienda_tambien(self):
+        respuesta = self.client.get("/tienda/pedidos/")
+
+        self.assertEqual(respuesta.status_code, 301)
+        self.assertEqual(respuesta["Location"], "/wadmin/tienda/pedidos/")
+
+    def test_la_pantalla_de_entrar_de_antes(self):
+        respuesta = self.client.get("/entrar/")
+
+        self.assertEqual(respuesta.status_code, 301)
+        self.assertEqual(respuesta["Location"], "/wadmin/entrar/")
+
+
 class PruebasDeLaTiendaPublica(TestCase):
     """El catálogo que ve cualquiera y el pedido que deja."""
 
@@ -689,7 +724,7 @@ class PruebasDeLaTiendaPublica(TestCase):
         )
 
     def test_la_portada_enseña_solo_lo_publicado(self):
-        respuesta = self.client.get("/tienda/")
+        respuesta = self.client.get("/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, self.producto.nombre)
         self.assertNotContains(respuesta, "Lo que no se publicó")
@@ -703,7 +738,7 @@ class PruebasDeLaTiendaPublica(TestCase):
             ImagenProducto.objects.create(
                 producto=self.producto, imagen=foto, alt="La camiseta de frente", orden=0
             )
-            respuesta = self.client.get("/tienda/")
+            respuesta = self.client.get("/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertIn(self.producto, respuesta.context["diapositivas"])
@@ -713,20 +748,20 @@ class PruebasDeLaTiendaPublica(TestCase):
         self.assertContains(respuesta, "frente.png")
 
     def test_la_categoria_enseña_sus_productos(self):
-        respuesta = self.client.get(f"/tienda/c/{self.categoria.slug}/")
+        respuesta = self.client.get(f"/c/{self.categoria.slug}/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, self.producto.nombre)
 
     def test_la_ficha_de_lo_no_publicado_no_existe(self):
-        respuesta = self.client.get(f"/tienda/p/{self.oculto.slug}/")
+        respuesta = self.client.get(f"/p/{self.oculto.slug}/")
         self.assertEqual(respuesta.status_code, 404)
 
     def test_agregar_deja_el_producto_en_la_sesion(self):
         respuesta = self.client.post(
-            "/tienda/carrito/agregar/",
+            "/carrito/agregar/",
             {"producto": self.producto.pk, "cantidad": "2", "seguir": "1"},
         )
-        self.assertRedirects(respuesta, f"/tienda/p/{self.producto.slug}/")
+        self.assertRedirects(respuesta, f"/p/{self.producto.slug}/")
         self.assertEqual(
             Decimal(self.client.session["carrito_tienda"][str(self.producto.pk)]),
             Decimal("2"),
@@ -734,10 +769,10 @@ class PruebasDeLaTiendaPublica(TestCase):
 
     def test_el_pedido_se_crea_con_la_cedula_y_vacia_el_carrito(self):
         self.client.post(
-            "/tienda/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "2"}
+            "/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "2"}
         )
         respuesta = self.client.post(
-            "/tienda/confirmar/",
+            "/confirmar/",
             {
                 "nombre": "Ana Pérez",
                 "identificacion": "1710034065",
@@ -749,7 +784,7 @@ class PruebasDeLaTiendaPublica(TestCase):
         )
 
         pedido = Pedido.objects.get()
-        self.assertRedirects(respuesta, f"/tienda/gracias/{pedido.referencia}/")
+        self.assertRedirects(respuesta, f"/gracias/{pedido.referencia}/")
         self.assertEqual(pedido.lineas.count(), 1)
         self.assertEqual(pedido.subtotal, Decimal("20.00"))
         self.assertEqual(pedido.iva, Decimal("3.00"))
@@ -761,9 +796,9 @@ class PruebasDeLaTiendaPublica(TestCase):
 
     def test_sin_identificacion_la_factura_va_a_consumidor_final(self):
         self.client.post(
-            "/tienda/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
+            "/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
         )
-        self.client.post("/tienda/confirmar/", {"nombre": "Quien sea"})
+        self.client.post("/confirmar/", {"nombre": "Quien sea"})
 
         pedido = Pedido.objects.get()
         self.assertEqual(pedido.cliente.identificacion, Cliente.CONSUMIDOR_FINAL)
@@ -771,10 +806,10 @@ class PruebasDeLaTiendaPublica(TestCase):
 
     def test_una_identificacion_mal_escrita_no_crea_el_pedido(self):
         self.client.post(
-            "/tienda/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
+            "/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
         )
         respuesta = self.client.post(
-            "/tienda/confirmar/", {"nombre": "Ana", "identificacion": "123"}
+            "/confirmar/", {"nombre": "Ana", "identificacion": "123"}
         )
         self.assertEqual(respuesta.status_code, 200)
         self.assertEqual(Pedido.objects.count(), 0)
@@ -782,12 +817,12 @@ class PruebasDeLaTiendaPublica(TestCase):
 
     def test_el_acuse_se_ve_por_la_referencia(self):
         self.client.post(
-            "/tienda/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
+            "/carrito/agregar/", {"producto": self.producto.pk, "cantidad": "1"}
         )
-        self.client.post("/tienda/confirmar/", {"nombre": "Ana"})
+        self.client.post("/confirmar/", {"nombre": "Ana"})
         pedido = Pedido.objects.get()
 
-        respuesta = self.client.get(f"/tienda/gracias/{pedido.referencia}/")
+        respuesta = self.client.get(f"/gracias/{pedido.referencia}/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, pedido.numero)
 
@@ -816,45 +851,45 @@ class PruebasDeLosPedidos(TestCase):
 
     def test_sin_sesion_no_se_entra(self):
         self.client.logout()
-        respuesta = self.client.get("/tienda/pedidos/")
+        respuesta = self.client.get("/wadmin/tienda/pedidos/")
         self.assertEqual(respuesta.status_code, 302)
-        self.assertIn("/entrar/", respuesta["Location"])
+        self.assertIn("/wadmin/entrar/", respuesta["Location"])
 
     def test_la_lista_y_el_detalle_cargan(self):
-        lista = self.client.get("/tienda/pedidos/")
-        detalle = self.client.get(f"/tienda/pedidos/{self.pedido.pk}/")
+        lista = self.client.get("/wadmin/tienda/pedidos/")
+        detalle = self.client.get(f"/wadmin/tienda/pedidos/{self.pedido.pk}/")
         self.assertEqual(lista.status_code, 200)
         self.assertEqual(detalle.status_code, 200)
         self.assertContains(lista, self.pedido.numero)
 
     def test_facturar_arma_la_factura_con_sus_lineas(self):
-        respuesta = self.client.post(f"/tienda/pedidos/{self.pedido.pk}/facturar/")
+        respuesta = self.client.post(f"/wadmin/tienda/pedidos/{self.pedido.pk}/facturar/")
 
         self.pedido.refresh_from_db()
         self.assertIsNotNone(self.pedido.factura_id)
         factura = self.pedido.factura
         self.assertEqual(respuesta.status_code, 302)
-        self.assertEqual(respuesta["Location"], f"/facturar/{factura.pk}/")
+        self.assertEqual(respuesta["Location"], f"/wadmin/facturar/{factura.pk}/")
         self.assertEqual(factura.detalles.count(), 1)
         self.assertEqual(factura.receptor, self.pedido.cliente)
         self.assertEqual(factura.detalles.first().precio_unitario, Decimal("10.00"))
         self.assertIn(self.pedido.numero, factura.observaciones)
 
     def test_facturar_dos_veces_no_duplica(self):
-        self.client.post(f"/tienda/pedidos/{self.pedido.pk}/facturar/")
-        self.client.post(f"/tienda/pedidos/{self.pedido.pk}/facturar/")
+        self.client.post(f"/wadmin/tienda/pedidos/{self.pedido.pk}/facturar/")
+        self.client.post(f"/wadmin/tienda/pedidos/{self.pedido.pk}/facturar/")
         self.assertEqual(Factura.objects.count(), 1)
         self.assertEqual(Pedido.objects.get(pk=self.pedido.pk).factura.detalles.count(), 1)
 
     def test_un_pedido_anulado_no_se_factura(self):
         self.pedido.anulado = True
         self.pedido.save()
-        self.client.post(f"/tienda/pedidos/{self.pedido.pk}/facturar/")
+        self.client.post(f"/wadmin/tienda/pedidos/{self.pedido.pk}/facturar/")
         self.pedido.refresh_from_db()
         self.assertIsNone(self.pedido.factura_id)
 
     def test_se_puede_anular_mientras_no_tenga_factura(self):
-        respuesta = self.client.post(f"/tienda/pedidos/{self.pedido.pk}/anular/")
+        respuesta = self.client.post(f"/wadmin/tienda/pedidos/{self.pedido.pk}/anular/")
         self.assertEqual(respuesta.status_code, 302)
         self.pedido.refresh_from_db()
         self.assertTrue(self.pedido.anulado)
@@ -864,7 +899,7 @@ class PruebasDeLosPedidos(TestCase):
 
         opcion = Opcion.objects.get(clave="pedidos")
         self.assertTrue(opcion.en_menu)
-        self.assertEqual(opcion.url, "/tienda/pedidos/")
+        self.assertEqual(opcion.url, "/wadmin/tienda/pedidos/")
         # La tienda tiene su apartado, después de Catálogo.
         self.assertEqual(opcion.grupo, "Tienda")
         self.assertGreater(opcion.categoria.orden, 40)   # Catálogo
@@ -880,23 +915,23 @@ class PruebasDeLasCategorias(TestCase):
 
     def test_sin_sesion_no_se_entra(self):
         self.client.logout()
-        respuesta = self.client.get("/tienda/categorias/")
+        respuesta = self.client.get("/wadmin/tienda/categorias/")
         self.assertEqual(respuesta.status_code, 302)
-        self.assertIn("/entrar/", respuesta["Location"])
+        self.assertIn("/wadmin/entrar/", respuesta["Location"])
 
     def test_la_pantalla_lista_las_categorias(self):
         Categoria.objects.create(nombre="Ropa")
-        respuesta = self.client.get("/tienda/categorias/")
+        respuesta = self.client.get("/wadmin/tienda/categorias/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "Ropa")
 
     def test_se_crea_una_categoria(self):
         respuesta = self.client.post(
-            "/tienda/categorias/nueva/",
+            "/wadmin/tienda/categorias/nueva/",
             {"nombre": "Ropa de niño", "padre": "", "descripcion": "", "orden": "0",
              "activa": "on", "slug": ""},
         )
-        self.assertRedirects(respuesta, "/tienda/categorias/")
+        self.assertRedirects(respuesta, "/wadmin/tienda/categorias/")
         categoria = Categoria.objects.get()
         self.assertEqual(categoria.nombre, "Ropa de niño")
         self.assertEqual(categoria.slug, "ropa-de-nino")
@@ -907,7 +942,7 @@ class PruebasDeLasCategorias(TestCase):
         camisetas = Categoria.objects.create(nombre="Camisetas", padre=ropa)
 
         respuesta = self.client.post(
-            f"/tienda/categorias/{ropa.pk}/",
+            f"/wadmin/tienda/categorias/{ropa.pk}/",
             {"nombre": "Ropa", "padre": camisetas.pk, "descripcion": "", "orden": "0",
              "activa": "on", "slug": ropa.slug},
         )
@@ -922,7 +957,7 @@ class PruebasDeLasCategorias(TestCase):
 
         opcion = Opcion.objects.get(clave="categorias_tienda")
         self.assertEqual(opcion.grupo, "Tienda")
-        self.assertEqual(opcion.url, "/tienda/categorias/")
+        self.assertEqual(opcion.url, "/wadmin/tienda/categorias/")
         self.assertLess(opcion.orden, Opcion.objects.get(clave="pedidos").orden)
 
 
@@ -946,10 +981,10 @@ class PruebasDelListado(TestCase):
         )
 
     def _categoria(self, **filtros):
-        return self.client.get("/tienda/c/todo/", filtros)
+        return self.client.get("/c/todo/", filtros)
 
     def test_la_busqueda_encuentra_por_nombre(self):
-        respuesta = self.client.get("/tienda/buscar/", {"q": "mouse"})
+        respuesta = self.client.get("/buscar/", {"q": "mouse"})
         self.assertContains(respuesta, "Mouse barato")
         self.assertNotContains(respuesta, "Teclado caro")
 
@@ -985,17 +1020,17 @@ class PruebasDelListado(TestCase):
         self.assertNotIn("Teclado caro", [p.nombre for p in respuesta.context["productos"]])
 
     def test_las_ofertas_son_las_que_estan_vigentes(self):
-        respuesta = self.client.get("/tienda/ofertas/")
+        respuesta = self.client.get("/ofertas/")
         nombres = [p.nombre for p in respuesta.context["productos"]]
         self.assertIn("Producto con descuento", nombres)
         self.assertNotIn("Mouse barato", nombres)
 
     def test_comprar_ahora_lleva_derecho_al_pedido(self):
         respuesta = self.client.post(
-            "/tienda/carrito/agregar/",
+            "/carrito/agregar/",
             {"producto": self.barato.pk, "cantidad": "1", "comprar": "1"},
         )
-        self.assertRedirects(respuesta, "/tienda/confirmar/")
+        self.assertRedirects(respuesta, "/confirmar/")
 
 
 class PruebasDelTextoEnriquecido(TestCase):
@@ -1090,7 +1125,7 @@ class PruebasDelTextoEnriquecido(TestCase):
             precio_web=Decimal("10.00"),
             descripcion_larga="| Talla | Precio |\n| --- | --- |\n| M | 10 |",
         )
-        respuesta = self.client.get(f"/tienda/p/{producto.slug}/")
+        respuesta = self.client.get(f"/p/{producto.slug}/")
         self.assertContains(respuesta, "<table>")
 
 
@@ -1105,16 +1140,16 @@ class PruebasDeLasPreguntas(TestCase):
         self.gente = User.objects.get(username="quien-lleva-la-tienda")
 
     def test_sin_sesion_no_se_entra_a_la_pantalla(self):
-        respuesta = self.client.get("/tienda/preguntas/")
+        respuesta = self.client.get("/wadmin/tienda/preguntas/")
         self.assertEqual(respuesta.status_code, 302)
-        self.assertIn("/entrar/", respuesta["Location"])
+        self.assertIn("/wadmin/entrar/", respuesta["Location"])
 
     def test_cualquiera_deja_una_pregunta(self):
         respuesta = self.client.post(
-            f"/tienda/p/{self.producto.slug}/preguntar/",
+            f"/p/{self.producto.slug}/preguntar/",
             {"nombre": "Ana", "email": "ana@example.com", "texto": "¿Llega el lunes?"},
         )
-        self.assertRedirects(respuesta, f"/tienda/p/{self.producto.slug}/")
+        self.assertRedirects(respuesta, f"/p/{self.producto.slug}/")
         pregunta = Pregunta.objects.get()
         self.assertEqual(pregunta.nombre, "Ana")
         self.assertEqual(pregunta.producto, self.producto)
@@ -1124,7 +1159,7 @@ class PruebasDeLasPreguntas(TestCase):
         Pregunta.objects.create(
             producto=self.producto, nombre="Ana", texto="¿Llega el lunes?"
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertNotContains(respuesta, "¿Llega el lunes?")
 
     def test_la_respondida_sale_con_su_respuesta(self):
@@ -1132,7 +1167,7 @@ class PruebasDeLasPreguntas(TestCase):
             producto=self.producto, nombre="Ana", texto="¿Llega el lunes?",
             respuesta="Sí, llega.", publicada=True,
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertContains(respuesta, "¿Llega el lunes?")
         self.assertContains(respuesta, "Sí, llega.")
 
@@ -1141,12 +1176,12 @@ class PruebasDeLasPreguntas(TestCase):
             producto=self.producto, nombre="Ana", texto="¿Llega el lunes?",
             respuesta="Sí, llega.", publicada=False,
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertNotContains(respuesta, "¿Llega el lunes?")
 
     def test_el_robot_que_llena_la_trampa_no_pasa(self):
         self.client.post(
-            f"/tienda/p/{self.producto.slug}/preguntar/",
+            f"/p/{self.producto.slug}/preguntar/",
             {"nombre": "Ana", "texto": "Compra ya", "trampa": "spam"},
         )
         self.assertEqual(Pregunta.objects.count(), 0)
@@ -1157,9 +1192,9 @@ class PruebasDeLasPreguntas(TestCase):
         )
         self.client.force_login(self.gente)
         respuesta = self.client.post(
-            f"/tienda/preguntas/{pregunta.pk}/responder/", {"respuesta": "Sí, el lunes."}
+            f"/wadmin/tienda/preguntas/{pregunta.pk}/responder/", {"respuesta": "Sí, el lunes."}
         )
-        self.assertRedirects(respuesta, "/tienda/preguntas/")
+        self.assertRedirects(respuesta, "/wadmin/tienda/preguntas/")
         pregunta.refresh_from_db()
         self.assertTrue(pregunta.contestada)
         self.assertEqual(pregunta.respondida_por, self.gente)
@@ -1171,7 +1206,7 @@ class PruebasDeLasPreguntas(TestCase):
             respuesta="Sí, llega.",
         )
         self.client.force_login(self.gente)
-        self.client.post(f"/tienda/preguntas/{pregunta.pk}/responder/", {"respuesta": "  "})
+        self.client.post(f"/wadmin/tienda/preguntas/{pregunta.pk}/responder/", {"respuesta": "  "})
         pregunta.refresh_from_db()
         self.assertEqual(pregunta.respuesta, "Sí, llega.")
 
@@ -1180,17 +1215,17 @@ class PruebasDeLasPreguntas(TestCase):
             producto=self.producto, nombre="Ana", texto="¿Llega?", respuesta="Sí"
         )
         self.client.force_login(self.gente)
-        self.client.post(f"/tienda/preguntas/{pregunta.pk}/publicar/")
+        self.client.post(f"/wadmin/tienda/preguntas/{pregunta.pk}/publicar/")
         pregunta.refresh_from_db()
         self.assertFalse(pregunta.publicada)
-        self.client.post(f"/tienda/preguntas/{pregunta.pk}/publicar/")
+        self.client.post(f"/wadmin/tienda/preguntas/{pregunta.pk}/publicar/")
         pregunta.refresh_from_db()
         self.assertTrue(pregunta.publicada)
 
     def test_la_pantalla_cuenta_las_que_faltan(self):
         Pregunta.objects.create(producto=self.producto, nombre="Ana", texto="Una")
         self.client.force_login(self.gente)
-        respuesta = self.client.get("/tienda/preguntas/")
+        respuesta = self.client.get("/wadmin/tienda/preguntas/")
         self.assertEqual(respuesta.context["sin_responder"], 1)
 
     def test_las_opciones_del_menu_tienen_su_orden(self):
@@ -1199,8 +1234,8 @@ class PruebasDeLasPreguntas(TestCase):
         preguntas = Opcion.objects.get(clave="preguntas_tienda")
         resenas = Opcion.objects.get(clave="resenas_tienda")
         self.assertEqual(preguntas.grupo, "Tienda")
-        self.assertEqual(preguntas.url, "/tienda/preguntas/")
-        self.assertEqual(resenas.url, "/tienda/resenas/")
+        self.assertEqual(preguntas.url, "/wadmin/tienda/preguntas/")
+        self.assertEqual(resenas.url, "/wadmin/tienda/resenas/")
         self.assertLess(Opcion.objects.get(clave="pedidos").orden, preguntas.orden)
         self.assertLess(preguntas.orden, resenas.orden)
 
@@ -1217,17 +1252,17 @@ class PruebasDeLasResenas(TestCase):
 
     def test_cualquiera_deja_una_resena_y_queda_por_aprobar(self):
         respuesta = self.client.post(
-            f"/tienda/p/{self.producto.slug}/resenar/",
+            f"/p/{self.producto.slug}/resenar/",
             {"nombre": "Ana", "calificacion": "4", "comentario": "Muy bueno"},
         )
-        self.assertRedirects(respuesta, f"/tienda/p/{self.producto.slug}/")
+        self.assertRedirects(respuesta, f"/p/{self.producto.slug}/")
         resena = Resena.objects.get()
         self.assertEqual(resena.calificacion, 4)
         self.assertFalse(resena.aprobada)
 
     def test_sin_calificacion_no_se_guarda(self):
         self.client.post(
-            f"/tienda/p/{self.producto.slug}/resenar/",
+            f"/p/{self.producto.slug}/resenar/",
             {"nombre": "Ana", "comentario": "Muy bueno"},
         )
         self.assertEqual(Resena.objects.count(), 0)
@@ -1237,7 +1272,7 @@ class PruebasDeLasResenas(TestCase):
             producto=self.producto, nombre="Ana", calificacion=5,
             comentario="Excelente producto",
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertNotContains(respuesta, "Excelente producto")
 
     def test_la_aprobada_sale_con_sus_estrellas(self):
@@ -1245,7 +1280,7 @@ class PruebasDeLasResenas(TestCase):
             producto=self.producto, nombre="Ana", calificacion=4,
             comentario="Excelente producto", aprobada=True,
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertContains(respuesta, "Excelente producto")
         self.assertContains(respuesta, "★★★★☆")
 
@@ -1262,7 +1297,7 @@ class PruebasDeLasResenas(TestCase):
             producto=self.producto, nombre="Eva", calificacion=1,
             comentario="Tres", aprobada=False,
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         self.assertEqual(respuesta.context["promedio"], 4.0)
         self.assertEqual(len(respuesta.context["resenas"]), 2)
 
@@ -1275,7 +1310,7 @@ class PruebasDeLasResenas(TestCase):
             producto=self.producto, nombre="Luis", calificacion=5,
             comentario="Dos", aprobada=True,
         )
-        respuesta = self.client.get(f"/tienda/p/{self.producto.slug}/")
+        respuesta = self.client.get(f"/p/{self.producto.slug}/")
         filas = {fila["estrellas"]: fila for fila in respuesta.context["distribucion"]}
         self.assertEqual(filas[5]["cuantas"], 2)
         self.assertEqual(filas[5]["porcentaje"], 100)
@@ -1287,11 +1322,11 @@ class PruebasDeLasResenas(TestCase):
         )
         self.client.force_login(self.gente)
 
-        self.client.post(f"/tienda/resenas/{resena.pk}/moderar/", {"accion": "aprobar"})
+        self.client.post(f"/wadmin/tienda/resenas/{resena.pk}/moderar/", {"accion": "aprobar"})
         resena.refresh_from_db()
         self.assertTrue(resena.aprobada)
 
-        self.client.post(f"/tienda/resenas/{resena.pk}/moderar/", {"accion": "retirar"})
+        self.client.post(f"/wadmin/tienda/resenas/{resena.pk}/moderar/", {"accion": "retirar"})
         resena.refresh_from_db()
         self.assertFalse(resena.aprobada)
 
@@ -1300,7 +1335,7 @@ class PruebasDeLasResenas(TestCase):
             producto=self.producto, nombre="Ana", calificacion=5, comentario="Bueno"
         )
         self.client.force_login(self.gente)
-        respuesta = self.client.get("/tienda/resenas/")
+        respuesta = self.client.get("/wadmin/tienda/resenas/")
         self.assertEqual(respuesta.context["pendientes"], 1)
         self.assertEqual(respuesta.context["cuantas"], 1)
 
@@ -1316,37 +1351,37 @@ class PruebasDelSeguimientoDelPedido(TestCase):
         )
 
     def test_la_pantalla_carga_sin_datos(self):
-        respuesta = self.client.get("/tienda/seguimiento/")
+        respuesta = self.client.get("/seguimiento/")
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(respuesta.context["buscado"])
 
     def test_con_el_correo_aparece_el_pedido(self):
         respuesta = self.client.get(
-            "/tienda/seguimiento/",
+            "/seguimiento/",
             {"numero": self.pedido.numero, "contacto": "ana@example.com"},
         )
         self.assertEqual(respuesta.context["pedido"], self.pedido)
 
     def test_con_la_cedula_aparece_el_pedido(self):
         respuesta = self.client.get(
-            "/tienda/seguimiento/", {"numero": self.pedido.numero, "contacto": "1710034065"}
+            "/seguimiento/", {"numero": self.pedido.numero, "contacto": "1710034065"}
         )
         self.assertEqual(respuesta.context["pedido"], self.pedido)
 
     def test_con_otro_contacto_no_aparece(self):
         respuesta = self.client.get(
-            "/tienda/seguimiento/", {"numero": self.pedido.numero, "contacto": "otro@example.com"}
+            "/seguimiento/", {"numero": self.pedido.numero, "contacto": "otro@example.com"}
         )
         self.assertIsNone(respuesta.context["pedido"])
 
     def test_el_numero_se_escribe_como_sea(self):
         respuesta = self.client.get(
-            "/tienda/seguimiento/", {"numero": "p-000001", "contacto": "ana@example.com"}
+            "/seguimiento/", {"numero": "p-000001", "contacto": "ana@example.com"}
         )
         self.assertEqual(respuesta.context["pedido"], self.pedido)
 
     def test_sin_numero_no_se_busca(self):
-        respuesta = self.client.get("/tienda/seguimiento/", {"contacto": "ana@example.com"})
+        respuesta = self.client.get("/seguimiento/", {"contacto": "ana@example.com"})
         self.assertIsNone(respuesta.context["pedido"])
 
 
@@ -1359,13 +1394,13 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
 
     def test_el_campo_lleva_la_marca_del_editor(self):
         producto = crear_producto()
-        respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
         self.assertContains(respuesta, "data-editor-rico")
         self.assertContains(respuesta, "contenteditable=\"true\"")
 
     def test_la_pantalla_carga_el_guion_del_editor(self):
         producto = crear_producto()
-        respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
         self.assertContains(respuesta, "js/editor_rico.js")
 
 
@@ -1391,7 +1426,7 @@ class PruebasDeLasFotos(TestCase):
         self.producto = crear_producto()
 
     def test_la_pantalla_trae_la_zona_de_soltar(self):
-        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{self.producto.pk}/")
 
         self.assertContains(respuesta, "data-fotos")
         self.assertContains(respuesta, "Arrastre las fotos o los videos aquí")
@@ -1410,19 +1445,19 @@ class PruebasDeLasFotos(TestCase):
             es_video=True,
         )
 
-        respuesta = self.client.get(f"/tienda/p/{tienda.slug}/")
+        respuesta = self.client.get(f"/p/{tienda.slug}/")
 
         self.assertContains(respuesta, '<video id="foto-principal"')
         self.assertContains(respuesta, "demo.mp4")
         self.assertNotContains(respuesta, "Sin foto")
 
     def test_la_pantalla_carga_el_guion_de_las_fotos(self):
-        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{self.producto.pk}/")
 
         self.assertContains(respuesta, "js/fotos_producto.js")
 
     def test_sin_javascript_sigue_estando_el_campo_de_archivo(self):
-        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{self.producto.pk}/")
 
         # El input del formset no se toca: solo se esconde con JavaScript.
         self.assertContains(respuesta, 'type="file"')
@@ -1458,7 +1493,7 @@ class PruebasDeLasFotos(TestCase):
             ),
         }
 
-        self.client.post(f"/catalogos/productos/{self.producto.pk}/", datos)
+        self.client.post(f"/wadmin/catalogos/productos/{self.producto.pk}/", datos)
 
         foto = ImagenProducto.objects.get(producto=self.producto)
         self.assertEqual(foto.alt, "De frente")
@@ -1478,25 +1513,25 @@ class PruebasDeLoQueSeMiro(TestCase):
         )
 
     def test_al_abrir_la_ficha_queda_en_la_sesion(self):
-        self.client.get(f"/tienda/p/{self.primero.slug}/")
+        self.client.get(f"/p/{self.primero.slug}/")
         self.assertEqual(self.client.session["vistos_tienda"], [self.primero.pk])
 
     def test_el_ultimo_va_primero_y_no_se_repite(self):
-        self.client.get(f"/tienda/p/{self.primero.slug}/")
-        self.client.get(f"/tienda/p/{self.segundo.slug}/")
-        self.client.get(f"/tienda/p/{self.primero.slug}/")
+        self.client.get(f"/p/{self.primero.slug}/")
+        self.client.get(f"/p/{self.segundo.slug}/")
+        self.client.get(f"/p/{self.primero.slug}/")
         self.assertEqual(
             self.client.session["vistos_tienda"], [self.primero.pk, self.segundo.pk]
         )
 
     def test_la_portada_los_enseña(self):
-        self.client.get(f"/tienda/p/{self.primero.slug}/")
-        respuesta = self.client.get("/tienda/")
+        self.client.get(f"/p/{self.primero.slug}/")
+        respuesta = self.client.get("/")
         self.assertIn(self.primero, respuesta.context["vistos"])
 
     def test_lo_que_se_despublica_ya_no_sale(self):
-        self.client.get(f"/tienda/p/{self.primero.slug}/")
+        self.client.get(f"/p/{self.primero.slug}/")
         self.primero.publicado = False
         self.primero.save(update_fields=["publicado"])
-        respuesta = self.client.get("/tienda/")
+        respuesta = self.client.get("/")
         self.assertEqual(respuesta.context["vistos"], [])

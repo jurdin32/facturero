@@ -40,7 +40,7 @@ class PruebasDelBloqueo(TestCase):
     def test_una_sesion_bloqueada_no_entrega_la_pagina_que_se_pide(self) -> None:
         self._bloquear()
 
-        respuesta = self.client.get("/")
+        respuesta = self.client.get("/wadmin/")
 
         self.assertEqual(respuesta.status_code, 423)
         pagina = respuesta.content.decode()
@@ -51,7 +51,7 @@ class PruebasDelBloqueo(TestCase):
     def test_la_inactividad_bloquea_la_sesion_sola(self) -> None:
         self._vieja(sesion.minutos_de_bloqueo() + 1)
 
-        respuesta = self.client.get("/")
+        respuesta = self.client.get("/wadmin/")
 
         self.assertEqual(respuesta.status_code, 423)
         self.assertTrue(self.client.session.get(sesion.BLOQUEADA))
@@ -59,7 +59,7 @@ class PruebasDelBloqueo(TestCase):
     def test_mientras_se_usa_no_se_bloquea(self) -> None:
         self._vieja(1)
 
-        respuesta = self.client.get("/")
+        respuesta = self.client.get("/wadmin/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertFalse(self.client.session.get(sesion.BLOQUEADA))
@@ -71,7 +71,7 @@ class PruebasDelBloqueo(TestCase):
         self._bloquear()
 
         with ajustes.usar(bloqueo_inactividad_minutos=0):
-            respuesta = self.client.get("/")
+            respuesta = self.client.get("/wadmin/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertNotEqual(respuesta.status_code, 423)
@@ -79,7 +79,7 @@ class PruebasDelBloqueo(TestCase):
     def test_las_peticiones_de_fondo_reciben_un_aviso_y_no_la_pantalla(self) -> None:
         self._bloquear()
 
-        respuesta = self.client.get("/", headers={"x-requested-with": "XMLHttpRequest"})
+        respuesta = self.client.get("/wadmin/", headers={"x-requested-with": "XMLHttpRequest"})
 
         self.assertEqual(respuesta.status_code, 423)
         self.assertTrue(respuesta.json()["bloqueada"])
@@ -90,16 +90,16 @@ class PruebasDelBloqueo(TestCase):
         # Los estáticos se sirven fuera del bloqueo (si no, la propia pantalla no
         # cargaría sus estilos) y el login tampoco se bloquea.
         self.assertTrue(sesion._exenta("/static/css/interfaz.css"))  # noqa: SLF001
-        self.assertTrue(sesion._exenta("/entrar/"))  # noqa: SLF001
-        login = self.client.get("/entrar/")
+        self.assertTrue(sesion._exenta("/wadmin/entrar/"))  # noqa: SLF001
+        login = self.client.get("/wadmin/entrar/")
         self.assertNotEqual(login.status_code, 423)
 
     def test_el_boton_de_la_barra_bloquea_la_pantalla(self) -> None:
-        respuesta = self.client.post("/bloquear/", {"next": "/inventario/"})
+        respuesta = self.client.post("/wadmin/bloquear/", {"next": "/wadmin/inventario/"})
 
         self.assertEqual(respuesta.status_code, 423)
         self.assertTrue(self.client.session.get(sesion.BLOQUEADA))
-        self.assertIn('value="/inventario/"', respuesta.content.decode())
+        self.assertIn('value="/wadmin/inventario/"', respuesta.content.decode())
 
     # ---------------------------------------------------------- el desbloqueo
 
@@ -107,21 +107,21 @@ class PruebasDelBloqueo(TestCase):
         self._bloquear()
 
         respuesta = self.client.post(
-            "/desbloquear/",
-            {"password": CLAVE, "next": "/inventario/"},
+            "/wadmin/desbloquear/",
+            {"password": CLAVE, "next": "/wadmin/inventario/"},
             headers={"x-requested-with": "XMLHttpRequest"},
         )
 
         self.assertEqual(respuesta.status_code, 200)
-        self.assertEqual(respuesta.json()["siguiente"], "/inventario/")
+        self.assertEqual(respuesta.json()["siguiente"], "/wadmin/inventario/")
         self.assertFalse(self.client.session.get(sesion.BLOQUEADA))
-        self.assertEqual(self.client.get("/inventario/").status_code, 200)
+        self.assertEqual(self.client.get("/wadmin/inventario/").status_code, 200)
 
     def test_desbloquear_con_la_clave_mala_avisa_y_no_deja_pasar(self) -> None:
         self._bloquear()
 
         respuesta = self.client.post(
-            "/desbloquear/",
+            "/wadmin/desbloquear/",
             {"password": "no-es-esa"},
             headers={"x-requested-with": "XMLHttpRequest"},
         )
@@ -129,20 +129,20 @@ class PruebasDelBloqueo(TestCase):
         self.assertEqual(respuesta.status_code, 400)
         self.assertIn("clave", respuesta.json()["error"].lower())
         self.assertTrue(self.client.session.get(sesion.BLOQUEADA))
-        self.assertEqual(self.client.get("/").status_code, 423)
+        self.assertEqual(self.client.get("/wadmin/").status_code, 423)
 
     def test_sin_javascript_el_desbloqueo_redirige(self) -> None:
         self._bloquear()
 
-        respuesta = self.client.post("/desbloquear/", {"password": CLAVE, "next": "/inventario/"})
+        respuesta = self.client.post("/wadmin/desbloquear/", {"password": CLAVE, "next": "/wadmin/inventario/"})
 
         self.assertEqual(respuesta.status_code, 302)
-        self.assertEqual(respuesta.headers["Location"], "/inventario/")
+        self.assertEqual(respuesta.headers["Location"], "/wadmin/inventario/")
 
 
 class PruebasDeLaPantallaDeEntrar(TestCase):
     def test_la_pantalla_de_entrar_trae_su_diseno(self) -> None:
-        respuesta = self.client.get("/entrar/")
+        respuesta = self.client.get("/wadmin/entrar/")
 
         self.assertEqual(respuesta.status_code, 200)
         pagina = respuesta.content.decode()
@@ -158,7 +158,7 @@ class PruebasDeLaPantallaDeEntrar(TestCase):
         self.assertIsNotNone(finders.find("js/entrar.js"))
 
     def test_el_boton_de_entrar_es_la_flecha_del_campo(self) -> None:
-        pagina = self.client.get("/entrar/").content.decode()
+        pagina = self.client.get("/wadmin/entrar/").content.decode()
 
         self.assertIn('name="username"', pagina)
         self.assertIn('name="password"', pagina)
@@ -196,7 +196,7 @@ class PruebasDelMenu(TestCase):
         }
 
     def test_los_apartados_son_plegables_y_llevan_sus_opciones(self) -> None:
-        pagina = self._pagina("/")
+        pagina = self._pagina("/wadmin/")
 
         # El menú se pinta dos veces: el lateral y el panel que abre el móvil.
         menus = pagina.split('class="sidenav"')[1:]
@@ -218,7 +218,7 @@ class PruebasDelMenu(TestCase):
 
     def test_en_el_tablero_no_hay_ningun_apartado_desplegado(self) -> None:
         self.assertEqual(
-            self._apartados(self._pagina("/")),
+            self._apartados(self._pagina("/wadmin/")),
             {
                 "Facturar": False,
                 "Comprobantes": False,
@@ -235,28 +235,28 @@ class PruebasDelMenu(TestCase):
 
     def test_el_apartado_de_la_pantalla_en_la_que_se_esta_viene_desplegado(self) -> None:
         for ruta, apartado in (
-            ("/facturas/", "Facturar"),
-            ("/comprobantes/guias-remision/", "Comprobantes"),
-            ("/catalogos/conductores/", "Catálogo"),
-            ("/catalogos/vehiculos/", "Catálogo"),
-            ("/inventario/", "Catálogo"),
-            ("/tienda/categorias/", "Tienda"),
-            ("/tienda/pedidos/", "Tienda"),
-            ("/configuracion/sri/", "Sistema"),
+            ("/wadmin/facturas/", "Facturar"),
+            ("/wadmin/comprobantes/guias-remision/", "Comprobantes"),
+            ("/wadmin/catalogos/conductores/", "Catálogo"),
+            ("/wadmin/catalogos/vehiculos/", "Catálogo"),
+            ("/wadmin/inventario/", "Catálogo"),
+            ("/wadmin/tienda/categorias/", "Tienda"),
+            ("/wadmin/tienda/pedidos/", "Tienda"),
+            ("/wadmin/configuracion/sri/", "Sistema"),
         ):
             with self.subTest(ruta=ruta):
                 abiertos = self._apartados(self._pagina(ruta))
                 self.assertEqual([nombre for nombre, abierto in abiertos.items() if abierto], [apartado])
 
     def test_la_opcion_de_la_pantalla_actual_va_marcada_dentro_de_su_apartado(self) -> None:
-        pagina = self._pagina("/catalogos/conductores/")
+        pagina = self._pagina("/wadmin/catalogos/conductores/")
 
         self.assertRegex(
-            pagina, r'<li class="active"[^>]*>\s*<a href="/catalogos/conductores/"'
+            pagina, r'<li class="active"[^>]*>\s*<a href="/wadmin/catalogos/conductores/"'
         )
 
     def test_el_menu_se_pinta_igual_en_el_lateral_y_en_el_panel_del_movil(self) -> None:
-        pagina = self._pagina("/")
+        pagina = self._pagina("/wadmin/")
 
         # Dos veces: el lateral de escritorio y el panel que abre el botón del móvil.
         self.assertEqual(pagina.count('class="sidenav"'), 2)
@@ -280,7 +280,7 @@ class PruebasDelMenuConPermisos(TestCase):
         for opcion, nivel in niveles.items():
             Permiso.objects.create(rol=rol, opcion=opcion, nivel=nivel)
 
-    def _menu(self, ruta: str = "/") -> str:
+    def _menu(self, ruta: str = "/wadmin/") -> str:
         """El menú del lateral (el del móvil es el mismo, pintado otra vez)."""
         respuesta = self.client.get(ruta)
         self.assertEqual(respuesta.status_code, 200)
@@ -331,17 +331,17 @@ class PruebasDelMenuConPermisos(TestCase):
 
         # Sin el tablero no se puede mirar la portada: se pide el menú de una de sus
         # pantallas, que es el mismo lateral.
-        menu = self._menu("/seguridad/")
+        menu = self._menu("/wadmin/seguridad/")
 
         self.assertIn("Roles y permisos", menu)
         self.assertIn("Usuarios y sus roles", menu)
-        self.assertIn("/seguridad/", menu)
+        self.assertIn("/wadmin/seguridad/", menu)
 
     @override_settings(PERSONALIZE_OPTIONS={"MODO": "cerrado", "SUPERUSUARIOS_TODO": True})
     def test_el_apartado_de_sistema_viene_desplegado_en_las_de_seguridad(self) -> None:
         self._con_rol(roles=Nivel.LECTURA.value, usuarios=Nivel.LECTURA.value)
 
-        respuesta = self.client.get("/seguridad/")
+        respuesta = self.client.get("/wadmin/seguridad/")
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertRegex(
@@ -367,10 +367,10 @@ class PruebasDeLasTablasDeSeguridad(TestCase):
         self.client.force_login(self.jefe)
 
     def test_el_admin_enseña_las_tablas_de_roles_y_permisos(self) -> None:
-        pagina = self.client.get("/admin/").content.decode()
+        pagina = self.client.get("/wadmin/admin/").content.decode()
 
-        self.assertIn("/admin/personalize_options/rol/", pagina)
-        self.assertIn("/admin/personalize_options/permiso/", pagina)
+        self.assertIn("/wadmin/admin/personalize_options/rol/", pagina)
+        self.assertIn("/wadmin/admin/personalize_options/permiso/", pagina)
 
 
 class PruebasDeLosAjustes(TestCase):
@@ -479,25 +479,25 @@ class PruebasDelAdminDeLaSeguridad(TestCase):
 
     def test_las_pantallas_del_paquete_abren(self) -> None:
         for url in (
-            "/admin/personalize_options/opcion/",
-            "/admin/personalize_options/ajuste/",
-            "/admin/personalize_options/rol/",
-            "/admin/personalize_options/categoria/",
+            "/wadmin/admin/personalize_options/opcion/",
+            "/wadmin/admin/personalize_options/ajuste/",
+            "/wadmin/admin/personalize_options/rol/",
+            "/wadmin/admin/personalize_options/categoria/",
         ):
             self.assertEqual(self.client.get(url).status_code, 200, url)
 
     def test_la_columna_de_roles_se_puede_ordenar(self) -> None:
         # El permiso guarda la clave de la opción, no una foránea: el conteo va
         # con una subconsulta y el orden por esa columna tiene que resolver.
-        self.assertEqual(self.client.get("/admin/personalize_options/opcion/?o=1").status_code, 200)
-        self.assertEqual(self.client.get("/admin/personalize_options/opcion/?o=-1").status_code, 200)
+        self.assertEqual(self.client.get("/wadmin/admin/personalize_options/opcion/?o=1").status_code, 200)
+        self.assertEqual(self.client.get("/wadmin/admin/personalize_options/opcion/?o=-1").status_code, 200)
 
     def test_los_ajustes_se_editan(self) -> None:
         from personalize_options.models import Ajuste
 
         ajuste = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
         respuesta = self.client.post(
-            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/",
+            f"/wadmin/admin/personalize_options/ajuste/{ajuste.pk}/change/",
             {"valor": "30"},
             follow=True,
         )
@@ -512,7 +512,7 @@ class PruebasDelAdminDeLaSeguridad(TestCase):
 
         ajuste = Ajuste.objects.get(clave="bloqueo_inactividad_minutos")
         formulario = self.client.get(
-            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/"
+            f"/wadmin/admin/personalize_options/ajuste/{ajuste.pk}/change/"
         ).content.decode()
 
         self.assertNotIn('name="clave"', formulario)
@@ -520,7 +520,7 @@ class PruebasDelAdminDeLaSeguridad(TestCase):
 
         # Aunque se mande otra clave, se ignora.
         self.client.post(
-            f"/admin/personalize_options/ajuste/{ajuste.pk}/change/",
+            f"/wadmin/admin/personalize_options/ajuste/{ajuste.pk}/change/",
             {"clave": "otra_cosa", "valor": "20"},
             follow=True,
         )

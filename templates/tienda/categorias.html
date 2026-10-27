@@ -13,7 +13,7 @@
     </p>
   </div>
   {% if puede_gestionar %}
-    <a class="button primary" href="{% url 'tienda:categoria_nueva' %}">
+    <a class="button primary" href="{% url 'gestion_tienda:categoria_nueva' %}">
       <span class="mif-plus"></span> Nueva categoría
     </a>
   {% endif %}
@@ -59,7 +59,7 @@
           <td class="col-orden"><span class="cifra">{{ c.orden }}</span></td>
           <td class="col-acciones">
             {% if puede_gestionar %}
-              <a class="button small square outline primary" href="{% url 'tienda:categoria_editar' c.pk %}"
+              <a class="button small square outline primary" href="{% url 'gestion_tienda:categoria_editar' c.pk %}"
                  title="Editar {{ c.nombre }}" aria-label="Editar"><span class="mif-pencil"></span></a>
             {% endif %}
             <a class="button small square outline dark" href="{% url 'tienda:categoria' c.slug %}"
@@ -80,7 +80,7 @@
     <p>Todavía no hay categorías.</p>
     <p class="tenue">Con ellas se navega la tienda: «Ropa › Camisetas», por ejemplo.</p>
     {% if puede_gestionar %}
-      <p><a class="button primary" href="{% url 'tienda:categoria_nueva' %}">
+      <p><a class="button primary" href="{% url 'gestion_tienda:categoria_nueva' %}">
         <span class="mif-plus"></span> Crear la primera
       </a></p>
     {% endif %}

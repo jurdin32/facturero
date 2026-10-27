@@ -237,7 +237,7 @@
           <label class="etiqueta" for="{{ formulario_tienda.categoria.id_for_label }}">Categoría</label>
           {{ formulario_tienda.categoria }}
           {% if formulario_tienda.categoria.errors %}<p class="error">{{ formulario_tienda.categoria.errors.0 }}</p>{% endif %}
-          <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a></p>
+          <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'gestion_tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a></p>
         </div>
       </div>
       <div class="cell-6">

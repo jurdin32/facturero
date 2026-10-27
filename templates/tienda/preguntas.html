@@ -27,7 +27,7 @@
     <div class="cell-12 cell-md-4">
       <div class="filtro filtro-boton">
         <button type="submit" class="button primary"><span class="mif-filter-list"></span> Filtrar</button>
-        <a class="enlace" href="{% url 'tienda:preguntas' %}">Limpiar</a>
+        <a class="enlace" href="{% url 'gestion_tienda:preguntas' %}">Limpiar</a>
       </div>
     </div>
   </div>
@@ -58,7 +58,7 @@
 
       <p>{{ pregunta.texto }}</p>
 
-      <form method="post" action="{% url 'tienda:responder_pregunta' pregunta.pk %}">
+      <form method="post" action="{% url 'gestion_tienda:responder_pregunta' pregunta.pk %}">
         {% csrf_token %}
         <div class="filtro">
           <label class="etiqueta" for="respuesta-{{ pregunta.pk }}">
@@ -72,7 +72,7 @@
             <span class="mif-checkmark"></span> Publicar la respuesta
           </button>
           <button type="submit" class="button small outline {% if pregunta.publicada %}warning{% else %}success{% endif %}"
-                  formaction="{% url 'tienda:publicar_pregunta' pregunta.pk %}">
+                  formaction="{% url 'gestion_tienda:publicar_pregunta' pregunta.pk %}">
             <span class="mif-{% if pregunta.publicada %}block{% else %}eye{% endif %}"></span>
             {% if pregunta.publicada %}Ocultar{% else %}Mostrar{% endif %}
           </button>

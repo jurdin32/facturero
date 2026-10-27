@@ -41,6 +41,7 @@ from .models import Categoria, Pedido, Pregunta, ProductoTienda, Resena
 from .servicios import crear_pedido, factura_del_pedido
 
 __all__ = [
+    "enlace_viejo",
     "portada",
     "categoria",
     "producto",
@@ -70,6 +71,24 @@ __all__ = [
 
 
 # ------------------------------------------------------------------ la tienda
+
+
+#: Lo que se administra, que ahora vive en la trastienda.
+DE_LA_TRASTIENDA = ("categorias", "pedidos", "preguntas", "resenas")
+
+
+def enlace_viejo(request: HttpRequest, resto: str = "") -> HttpResponse:
+    """Las direcciones de antes —``/tienda/...``— llevan a donde están ahora.
+
+    La tienda se mudó a la raíz del dominio para que cualquiera pueda entrar sin
+    escribir una dirección rara. Los enlaces que ya se habían repartido se quedan
+    con la de antes, y esto los manda a su sitio en vez de dar un 404.
+    """
+    primero = resto.split("/")[0]
+    destino = "/" + resto
+    if primero in DE_LA_TRASTIENDA:
+        destino = "/wadmin/tienda/" + resto
+    return redirect(destino, permanent=True)
 
 
 def portada(request: HttpRequest) -> HttpResponse:
@@ -566,7 +585,7 @@ def categoria_form(request: HttpRequest, pk: Optional[int] = None) -> HttpRespon
         if formulario.is_valid():
             guardada = formulario.save()
             messages.success(request, f"«{guardada.nombre}» quedó guardada.")
-            return redirect("tienda:categorias")
+            return redirect("gestion_tienda:categorias")
         messages.error(request, "Revise lo que está marcado en rojo.")
     else:
         formulario = FormularioCategoria(instance=objeto)
@@ -645,12 +664,12 @@ def facturar(request: HttpRequest, pk: int) -> HttpResponse:
     el_pedido = get_object_or_404(Pedido, pk=pk)
     if el_pedido.factura_id:
         messages.info(request, "Ese pedido ya tiene factura.")
-        return redirect("tienda:pedido", pk=pk)
+        return redirect("gestion_tienda:pedido", pk=pk)
     try:
         factura = factura_del_pedido(el_pedido)
     except ValidationError as error:
         messages.error(request, error.messages[0])
-        return redirect("tienda:pedido", pk=pk)
+        return redirect("gestion_tienda:pedido", pk=pk)
     messages.info(
         request, "La factura quedó lista: revísela y emítala cuando esté conforme."
     )
@@ -670,7 +689,7 @@ def anular(request: HttpRequest, pk: int) -> HttpResponse:
         el_pedido.anulado = True
         el_pedido.save(update_fields=["anulado"])
         messages.success(request, "El pedido quedó anulado.")
-    return redirect("tienda:pedido", pk=pk)
+    return redirect("gestion_tienda:pedido", pk=pk)
 
 
 # ------------------------------------------------------------------ ayudas
@@ -782,7 +801,7 @@ def responder_pregunta(request: HttpRequest, pk: int) -> HttpResponse:
     else:
         pregunta.responder(texto, request.user)
         messages.success(request, "La respuesta quedó publicada en la ficha.")
-    return redirect("tienda:preguntas")
+    return redirect("gestion_tienda:preguntas")
 
 
 @login_required
@@ -798,7 +817,7 @@ def publicar_pregunta(request: HttpRequest, pk: int) -> HttpResponse:
         request,
         "La pregunta quedó oculta." if not pregunta.publicada else "La pregunta quedó visible.",
     )
-    return redirect("tienda:preguntas")
+    return redirect("gestion_tienda:preguntas")
 
 
 @login_required
@@ -835,4 +854,4 @@ def moderar_resena(request: HttpRequest, pk: int) -> HttpResponse:
         request,
         "La reseña quedó publicada." if resena.aprobada else "La reseña quedó retirada.",
     )
-    return redirect("tienda:resenas")
+    return redirect("gestion_tienda:resenas")

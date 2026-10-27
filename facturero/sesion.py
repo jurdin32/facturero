@@ -28,17 +28,21 @@ ULTIMA = "ultima_actividad"
 #: Clave de la sesión que dice si la pantalla está bloqueada.
 BLOQUEADA = "bloqueada"
 
+#: La aplicación vive detrás de esta ruta; lo demás —la tienda— es público y no se
+#: bloquea nunca.
+PRIVADO = "/wadmin/"
+
 #: Rutas que se atienden aunque la pantalla esté bloqueada (si no, no habría forma
 #: de desbloquear ni de cargar la propia pantalla).
 EXENTAS = (
-    "/entrar/",
-    "/salir/",
-    "/bloquear/",
-    "/desbloquear/",
+    "/wadmin/entrar/",
+    "/wadmin/salir/",
+    "/wadmin/bloquear/",
+    "/wadmin/desbloquear/",
+    "/wadmin/admin/jsi18n/",
     "/static/",
     "/media/",
     "/favicon.ico",
-    "/admin/jsi18n/",
 )
 
 
@@ -54,6 +58,8 @@ def minutos_de_bloqueo() -> int:
 
 
 def _exenta(ruta: str) -> bool:
+    if not ruta.startswith(PRIVADO):
+        return True
     return any(ruta.startswith(prefijo) for prefijo in EXENTAS)
 
 
