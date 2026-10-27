@@ -359,6 +359,77 @@
       return marcada ? marcada.closest("table") : null;
     }
 
+    /** Marca una lista de celdas; con `sumar` se añaden a lo ya marcado. */
+    function marcarCeldas(tabla, celdas, sumar) {
+      if (!sumar) {
+        limpiarMarcas();
+      }
+      celdas.forEach(function (celda) {
+        celda.classList.add("celda-elegida");
+      });
+      area.focus();
+      actualizarBotones(tabla);
+    }
+
+    function celdasDeLaFila(tabla, fila) {
+      var laFila = filasDe(tabla)[fila];
+      return laFila ? Array.prototype.slice.call(laFila.children) : [];
+    }
+
+    function celdasDeLaColumna(tabla, columna) {
+      var mapa = rejilla(tabla);
+      var salida = [];
+      filasDe(tabla).forEach(function (fila, f) {
+        var celda = mapa[f + ":" + columna];
+        if (celda && salida.indexOf(celda) === -1) {
+          salida.push(celda);
+        }
+      });
+      return salida;
+    }
+
+    /** La marca, si es un rectángulo completo: solo entonces se puede unir. */
+    function esRectangulo(tabla) {
+      var marcadas = Array.prototype.slice.call(
+        tabla.querySelectorAll(".celda-elegida")
+      );
+      if (marcadas.length < 2) {
+        return false;
+      }
+      var filas = [];
+      var columnas = [];
+      marcadas.forEach(function (celda) {
+        var sitio = coordenadasDe(tabla, celda);
+        if (sitio) {
+          filas.push(sitio.fila);
+          columnas.push(sitio.columna);
+        }
+      });
+      if (!filas.length) {
+        return false;
+      }
+      var f1 = Math.min.apply(null, filas);
+      var f2 = Math.max.apply(null, filas);
+      var c1 = Math.min.apply(null, columnas);
+      var c2 = Math.max.apply(null, columnas);
+      var mapa = rejilla(tabla);
+      var dentro = [];
+      for (var f = f1; f <= f2; f++) {
+        for (var c = c1; c <= c2; c++) {
+          var celda = mapa[f + ":" + c];
+          if (celda && dentro.indexOf(celda) === -1) {
+            dentro.push(celda);
+          }
+        }
+      }
+      if (dentro.length !== marcadas.length) {
+        return false;
+      }
+      return marcadas.every(function (celda) {
+        return dentro.indexOf(celda) !== -1;
+      });
+    }
+
     function actualizarBotones(tabla) {
       if (!barraTabla) {
         return;
@@ -372,7 +443,7 @@
       var cuantas = barraTabla.querySelector("[data-cuenta-celdas]");
       var marcadas = tabla ? tabla.querySelectorAll(".celda-elegida").length : 0;
       if (unir) {
-        unir.disabled = marcadas < 2;
+        unir.disabled = !tabla || !esRectangulo(tabla);
       }
       if (cuantas) {
         cuantas.hidden = marcadas < 1;
@@ -416,55 +487,130 @@
       return celda;
     }
 
-    function anadirFila(tabla) {
-      var cuerpo = tabla.tBodies[tabla.tBodies.length - 1];
-      var filas = filasDe(tabla);
-      var modelo = filas[filas.length - 1];
-      if (!cuerpo) {
-        cuerpo = document.createElement("tbody");
-        tabla.appendChild(cuerpo);
+    /** Dónde está el cursor dentro de la tabla (o la esquina si no hay celda). */
+    function sitioDelCursor(tabla) {
+      var celda = celdaActual(tabla);
+      var sitio = celda ? coordenadasDe(tabla, celda) : null;
+      if (sitio) {
+        return sitio;
       }
+      var mapa = rejilla(tabla);
+      var filas = 0;
+      var columnas = 0;
+      for (var clave in mapa) {
+        var partes = clave.split(":");
+        filas = Math.max(filas, parseInt(partes[0], 10));
+        columnas = Math.max(columnas, parseInt(partes[1], 10));
+      }
+      return { fila: filas, columna: columnas };
+    }
+
+    /** La fila de abajo del cursor, con las mismas celdas que la suya. */
+    function anadirFila(tabla) {
+      var sitio = sitioDelCursor(tabla);
+      var filas = filasDe(tabla);
+      var modelo = filas[sitio.fila] || filas[filas.length - 1];
       var nueva = document.createElement("tr");
       var cuantas = modelo ? modelo.children.length : 1;
       for (var i = 0; i < cuantas; i++) {
         nueva.appendChild(celdaVacia(modelo ? modelo.children[i] : null));
       }
-      cuerpo.appendChild(nueva);
+      if (modelo && modelo.parentNode) {
+        modelo.parentNode.insertBefore(nueva, modelo.nextSibling);
+      } else {
+        var cuerpo = tabla.tBodies[tabla.tBodies.length - 1];
+        if (!cuerpo) {
+          cuerpo = document.createElement("tbody");
+          tabla.appendChild(cuerpo);
+        }
+        cuerpo.appendChild(nueva);
+      }
       var primera = nueva.querySelector("td, th");
       if (primera) {
         colocarEn(primera);
       }
     }
 
+    /** Una columna nueva a la derecha de la del cursor. */
     function anadirColumna(tabla) {
-      filasDe(tabla).forEach(function (fila) {
-        var modelo = fila.children[fila.children.length - 1];
-        fila.appendChild(celdaVacia(modelo));
+      var sitio = sitioDelCursor(tabla);
+      var mapa = rejilla(tabla);
+      var vistas = [];
+      filasDe(tabla).forEach(function (fila, f) {
+        var celda = mapa[f + ":" + sitio.columna] || fila.children[fila.children.length - 1];
+        if (!celda || vistas.indexOf(celda) !== -1) {
+          return;
+        }
+        vistas.push(celda);
+        celda.parentNode.insertBefore(celdaVacia(celda), celda.nextSibling);
       });
     }
 
+    /** Se lleva la fila del cursor. */
     function quitarFila(tabla) {
+      var sitio = sitioDelCursor(tabla);
       var filas = filasDe(tabla);
-      if (filas.length <= 2) {
+      var fila = filas[sitio.fila];
+      if (!fila) {
+        return;
+      }
+      fila.parentNode.removeChild(fila);
+      if (!filasDe(tabla).length) {
         quitarTabla(tabla);
         return;
       }
-      var ultima = filas[filas.length - 1];
-      if (ultima.parentNode.tagName === "THEAD") {
-        return;
+      var donde = filasDe(tabla)[Math.min(sitio.fila, filasDe(tabla).length - 1)];
+      var primera = donde ? donde.querySelector("td, th") : null;
+      if (primera) {
+        colocarEn(primera);
       }
-      ultima.parentNode.removeChild(ultima);
+      mirarTabla();
     }
 
+    /** Se lleva la columna del cursor en todas las filas. */
     function quitarColumna(tabla) {
-      var filas = filasDe(tabla);
-      if (!filas.length || filas[0].children.length <= 1) {
+      var sitio = sitioDelCursor(tabla);
+      var mapa = rejilla(tabla);
+      var vistas = [];
+      var columnas = 0;
+      for (var clave in mapa) {
+        columnas = Math.max(columnas, parseInt(clave.split(":")[1], 10) + 1);
+      }
+      if (columnas <= 1) {
         quitarTabla(tabla);
         return;
       }
-      filas.forEach(function (fila) {
-        fila.removeChild(fila.children[fila.children.length - 1]);
+      filasDe(tabla).forEach(function (fila, f) {
+        var celda = mapa[f + ":" + sitio.columna];
+        if (!celda || vistas.indexOf(celda) !== -1) {
+          return;
+        }
+        vistas.push(celda);
+        if ((celda.colSpan || 1) > 1) {
+          // Una celda unida que abarca la columna: se encoge en vez de irse.
+          celda.colSpan = celda.colSpan - 1;
+        } else {
+          celda.parentNode.removeChild(celda);
+        }
       });
+      // Una fila que se quedó sin celdas se va con la columna.
+      filasDe(tabla).forEach(function (fila) {
+        if (!fila.children.length) {
+          fila.parentNode.removeChild(fila);
+        }
+      });
+      if (!filasDe(tabla).length) {
+        quitarTabla(tabla);
+        return;
+      }
+      var despues = rejilla(tabla);
+      var destino =
+        despues[sitio.fila + ":" + Math.min(sitio.columna, columnas - 2)] ||
+        despues["0:0"];
+      if (destino) {
+        colocarEn(destino);
+      }
+      mirarTabla();
     }
 
     /** Une en una sola las celdas marcadas con Mayúsculas y clic. */
@@ -667,6 +813,15 @@
           anadirColumna(tabla);
         } else if (que === "columna-menos") {
           quitarColumna(tabla);
+        } else if (que === "marcar-fila" || que === "marcar-columna") {
+          var sitio = sitioDelCursor(tabla);
+          var sumar = evento.ctrlKey || evento.metaKey;
+          var celdas =
+            que === "marcar-fila"
+              ? celdasDeLaFila(tabla, sitio.fila)
+              : celdasDeLaColumna(tabla, sitio.columna);
+          marcarCeldas(tabla, celdas, sumar);
+          return;
         } else if (que === "unir") {
           unirCeldas(tabla);
           return;
@@ -787,6 +942,34 @@
         marcando = null;
         return;
       }
+      if (evento.ctrlKey || evento.metaKey) {
+        /* Selección libre: con Ctrl, una celda del cuerpo entra o sale de la
+           marca, y una de la cabecera mete o saca su columna entera. */
+        evento.preventDefault();
+        var suya = celda.closest("table");
+        var enCabecera =
+          celda.tagName === "TH" && celda.parentNode.parentNode.tagName === "THEAD";
+        var grupo = enCabecera
+          ? celdasDeLaColumna(suya, (coordenadasDe(suya, celda) || {}).columna)
+          : [celda];
+        var todas = grupo.every(function (otra) {
+          return otra.classList.contains("celda-elegida");
+        });
+        grupo.forEach(function (otra) {
+          if (todas) {
+            otra.classList.remove("celda-elegida");
+          } else {
+            otra.classList.add("celda-elegida");
+          }
+          if (!otra.getAttribute("class")) {
+            otra.removeAttribute("class");
+          }
+        });
+        celdaRecordada = celda;
+        area.focus();
+        actualizarBotones(suya);
+        return;
+      }
       marcando = celda;
       celdaRecordada = celda;
       limpiarMarcas();
@@ -847,20 +1030,29 @@
       }
       var f1 = Math.min.apply(null, filas);
       var f2 = Math.max.apply(null, filas);
-      var c1 = Math.min.apply(null, columnas);
-      var c2 = Math.max.apply(null, columnas);
+      // Solo las columnas marcadas, en su orden: así se llevan columnas sueltas.
+      var elegidas = columnas
+        .filter(function (valor, indice) {
+          return columnas.indexOf(valor) === indice;
+        })
+        .sort(function (a, b) {
+          return a - b;
+        });
       var salida = document.createElement("table");
       var cuerpo = document.createElement("tbody");
       var plano = [];
       for (var f = f1; f <= f2; f++) {
         var fila = document.createElement("tr");
         var linea = [];
-        for (var c = c1; c <= c2; c++) {
-          var celda = mapa[f + ":" + c];
+        for (var i = 0; i < elegidas.length; i++) {
+          var celda = mapa[f + ":" + elegidas[i]];
+          var vale = celda && marcadas.indexOf(celda) !== -1;
           var nueva = document.createElement("td");
-          nueva.innerHTML = celda ? celda.innerHTML : "<br>";
+          nueva.innerHTML = vale ? celda.innerHTML : "<br>";
           fila.appendChild(nueva);
-          linea.push((celda ? celda.textContent : "").replace(/\s+/g, " ").trim());
+          linea.push(
+            (vale ? celda.textContent : "").replace(/\s+/g, " ").trim()
+          );
         }
         cuerpo.appendChild(fila);
         plano.push(linea.join("\t"));
@@ -1082,6 +1274,24 @@
             ponerEnElPortapapeles(region, tecla === "x");
             return;
           }
+        }
+      }
+      if (evento.key === "Delete" || evento.key === "Backspace") {
+        var conMarcas = tablaDeLasMarcas();
+        if (conMarcas) {
+          evento.preventDefault();
+          Array.prototype.forEach.call(
+            conMarcas.querySelectorAll(".celda-elegida"),
+            function (celda) {
+              celda.innerHTML = "<br>";
+            }
+          );
+          limpiarMarcas();
+          guardar();
+          ajustar();
+          mirarTabla();
+          anotarYa();
+          return;
         }
       }
       if (evento.key !== "Tab") {

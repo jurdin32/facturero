@@ -1474,6 +1474,8 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
 
         self.assertContains(respuesta, 'data-tabla="unir"')
         self.assertContains(respuesta, 'data-tabla="dividir"')
+        self.assertContains(respuesta, 'data-tabla="marcar-fila"')
+        self.assertContains(respuesta, 'data-tabla="marcar-columna"')
         self.assertContains(respuesta, "data-cuenta-celdas")
         self.assertContains(respuesta, "data-ancho")
 

@@ -352,10 +352,19 @@
 
           <div class="editor-rico-tabla" data-tabla-barra hidden>
             <span class="editor-rico-tabla-rotulo">Tabla</span>
-            <button type="button" data-tabla="fila-mas">+ Fila</button>
-            <button type="button" data-tabla="fila-menos">− Fila</button>
-            <button type="button" data-tabla="columna-mas">+ Columna</button>
-            <button type="button" data-tabla="columna-menos">− Columna</button>
+            <button type="button" data-tabla="fila-mas"
+                    title="Insertar una fila debajo de la del cursor">+ Fila</button>
+            <button type="button" data-tabla="fila-menos"
+                    title="Quitar la fila del cursor">− Fila</button>
+            <button type="button" data-tabla="columna-mas"
+                    title="Insertar una columna a la derecha de la del cursor">+ Columna</button>
+            <button type="button" data-tabla="columna-menos"
+                    title="Quitar la columna del cursor">− Columna</button>
+            <span class="editor-rico-tabla-separador" aria-hidden="true"></span>
+            <button type="button" data-tabla="marcar-fila"
+                    title="Marcar toda la fila del cursor (con Ctrl, añadir otra)">Fila</button>
+            <button type="button" data-tabla="marcar-columna"
+                    title="Marcar toda la columna del cursor (con Ctrl, añadir otra)">Columna</button>
             <label class="editor-rico-tabla-ancho" title="Ancho de la columna donde está el cursor">
               Ancho
               <input type="number" min="5" max="90" step="5" data-ancho aria-label="Ancho de la columna">
@@ -374,7 +383,7 @@
                  value="{{ formulario_tienda.descripcion_larga.value|default_if_none:'' }}"
                  data-campo>
         </div>
-        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones: el tabulador pasa de celda en celda y lo que se pega —una tabla o una lista de Excel— se reparte por las celdas, creciendo si no cabe. Con Mayúsculas y clic se marcan varias celdas, para unirlas o para copiarlas con Ctrl+C. El ancho de una columna se cambia arrastrando su borde o escribiéndolo en «Ancho». Ctrl+Z deshace y Ctrl+Mayúsculas+Z rehace.</p>
+        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones: el tabulador pasa de celda en celda y lo que se pega —una tabla o una lista de Excel— se reparte por las celdas, creciendo si no cabe. «Fila» y «Columna» marcan la del cursor; con Ctrl se añaden otras sueltas, y con Ctrl+clic se marca una celda. Lo marcado se copia con Ctrl+C, se vacía con Supr y se une con «Unir» si es un rectángulo. El ancho se cambia arrastrando el borde de la columna o escribiéndolo en «Ancho». Ctrl+Z deshace y Ctrl+Mayúsculas+Z rehace.</p>
       </div>
     </section>
 
