@@ -11,9 +11,15 @@
   "use strict";
 
   //: El lado mayor al que se reduce la foto. Con 1600 px sobra para la ficha,
-  //: que enseña la imagen a 600 y a pantalla completa en el móvil.
-  var LADO_MAXIMO = 1600;
-  var CALIDAD = 0.82;
+  //: que enseña la imagen a 600 y a pantalla completa en el móvil. El segundo
+  //: valor solo se usa si aun así la foto no baja del peso.
+  var LADOS = [1600, 1200];
+  var LADO_MAXIMO = LADOS[0];
+  //: A lo que se intenta llegar. Se prueba la calidad más alta y se baja solo si
+  //: hace falta: mejor una foto de 200 KB nítida que una de 90 KB con manchas.
+  var PESO_OBJETIVO = 200 * 1024;
+  //: De mayor a menor: se usa la primera que quepa en el objetivo.
+  var CALIDADES = [0.88, 0.82, 0.76, 0.7];
   var PESO_MINIMO_PARA_COMPRIMIR = 300 * 1024;
   var PESO_MAXIMO = 5 * 1024 * 1024;
 
@@ -47,42 +53,99 @@
     return base + (tipo === "image/webp" ? ".webp" : ".jpg");
   }
 
-  /** Deja la foto en algo que se pueda subir: 1600 px de lado y poco peso. */
+  /**
+   * Deja la foto en el tamaño pedido. Bajar de golpe con el lienzo pierde
+   * detalle, así que se parte por la mitad hasta acercarse y solo entonces se
+   * da el paso final, que es lo que mantiene los bordes limpios.
+   */
+  function escalar(imagen, ancho, alto, conAlfa) {
+    var actual = imagen;
+    var anchoActual = imagen.width;
+    var altoActual = imagen.height;
+    while (anchoActual / 2 >= ancho && altoActual / 2 >= alto) {
+      var mitad = document.createElement("canvas");
+      mitad.width = Math.max(1, Math.round(anchoActual / 2));
+      mitad.height = Math.max(1, Math.round(altoActual / 2));
+      var pincelMitad = mitad.getContext("2d");
+      pincelMitad.imageSmoothingEnabled = true;
+      pincelMitad.imageSmoothingQuality = "high";
+      pincelMitad.drawImage(actual, 0, 0, mitad.width, mitad.height);
+      actual = mitad;
+      anchoActual = mitad.width;
+      altoActual = mitad.height;
+    }
+    var lienzo = document.createElement("canvas");
+    lienzo.width = ancho;
+    lienzo.height = alto;
+    var pincel = lienzo.getContext("2d");
+    pincel.imageSmoothingEnabled = true;
+    pincel.imageSmoothingQuality = "high";
+    if (!conAlfa) {
+      // El JPG no lleva transparencia: sin fondo blanco saldría negro.
+      pincel.fillStyle = "#fff";
+      pincel.fillRect(0, 0, ancho, alto);
+    }
+    pincel.drawImage(actual, 0, 0, ancho, alto);
+    return lienzo;
+  }
+
+  function aBlob(lienzo, tipo, calidad) {
+    return new Promise(function (listo) {
+      lienzo.toBlob(function (blob) { listo(blob); }, tipo, calidad);
+    });
+  }
+
+  /** Deja la foto en algo que se pueda subir: 1600 px de lado y lo más liviana
+   *  posible sin que se note. */
   function comprimir(archivo) {
     return cargarImagen(archivo).then(function (imagen) {
       var lado = Math.max(imagen.width, imagen.height);
-      var escala = lado > LADO_MAXIMO ? LADO_MAXIMO / lado : 1;
-      if (escala === 1 && archivo.size <= PESO_MINIMO_PARA_COMPRIMIR) {
+      if (lado <= LADO_MAXIMO && archivo.size <= PESO_MINIMO_PARA_COMPRIMIR) {
         return archivo;
       }
-      var ancho = Math.max(1, Math.round(imagen.width * escala));
-      var alto = Math.max(1, Math.round(imagen.height * escala));
-      var lienzo = document.createElement("canvas");
-      lienzo.width = ancho;
-      lienzo.height = alto;
-      var pincel = lienzo.getContext("2d");
-      // Un fondo blanco: las fotos con transparencia no quedan con manchas negras.
-      pincel.fillStyle = "#fff";
-      pincel.fillRect(0, 0, ancho, alto);
-      pincel.drawImage(imagen, 0, 0, ancho, alto);
       var tipo = soportaWebp ? "image/webp" : "image/jpeg";
-      return new Promise(function (listo) {
-        lienzo.toBlob(
-          function (blob) {
-            if (!blob || blob.size >= archivo.size) {
-              listo(archivo);
-              return;
-            }
-            listo(
-              new File([blob], nombreNuevo(archivo, blob.type), {
-                type: blob.type,
-                lastModified: Date.now()
-              })
-            );
-          },
-          tipo,
-          CALIDAD
-        );
+      var mejor = null;
+
+      function probar(lienzo, indice) {
+        return aBlob(lienzo, tipo, CALIDADES[indice]).then(function (blob) {
+          if (!blob) {
+            return null;
+          }
+          if (!mejor || blob.size < mejor.size) {
+            mejor = blob;
+          }
+          if (blob.size <= PESO_OBJETIVO || indice === CALIDADES.length - 1) {
+            return blob.size <= PESO_OBJETIVO ? blob : null;
+          }
+          return probar(lienzo, indice + 1);
+        });
+      }
+
+      // Primero a 1600 px con la mejor calidad que quepa; si ni con la más baja
+      // se llega al peso, se prueba un escalón más pequeño antes de rendirse.
+      function intentar(indiceLado) {
+        if (indiceLado >= LADOS.length) {
+          return Promise.resolve(null);
+        }
+        var destino = Math.min(LADOS[indiceLado], lado);
+        var escala = destino / lado;
+        var ancho = Math.max(1, Math.round(imagen.width * escala));
+        var alto = Math.max(1, Math.round(imagen.height * escala));
+        var lienzo = escalar(imagen, ancho, alto, tipo === "image/webp");
+        return probar(lienzo, 0).then(function (blob) {
+          return blob || intentar(indiceLado + 1);
+        });
+      }
+
+      return intentar(0).then(function (blob) {
+        var elegido = blob || mejor;
+        if (!elegido || elegido.size >= archivo.size) {
+          return archivo;
+        }
+        return new File([elegido], nombreNuevo(archivo, elegido.type), {
+          type: elegido.type,
+          lastModified: Date.now()
+        });
       });
     });
   }
@@ -122,6 +185,23 @@
 
     function tarjetas() {
       return Array.prototype.slice.call(rejilla.querySelectorAll("[data-foto-tarjeta]"));
+    }
+
+    /* El texto alternativo no se pregunta: se pone el nombre del producto, que es
+     * lo que ayuda a quien usa un lector de pantalla, y el campo se esconde. */
+    function ocultarAlternativo(tarjeta) {
+      var alt = tarjeta.querySelector("input[name$='-alt']");
+      if (!alt) {
+        return null;
+      }
+      var caja = alt.closest(".input") || alt;
+      caja.style.display = "none";
+      return alt;
+    }
+
+    function textoAlternativo() {
+      var nombre = (caja.getAttribute("data-nombre") || "").trim() || "Foto del producto";
+      return nombre.slice(0, 160);
     }
 
     /** Numera el orden por la posición y marca cuál es la principal. */
@@ -188,9 +268,9 @@
       if (vacia) {
         vacia.hidden = true;
       }
-      var alt = tarjeta.querySelector("input[name$='-alt']");
+      var alt = ocultarAlternativo(tarjeta);
       if (alt && !alt.value) {
-        alt.placeholder = archivo.name.replace(/\.[^.]+$/, "").slice(0, 60);
+        alt.value = textoAlternativo();
       }
     }
 
@@ -201,6 +281,7 @@
       }
       decir("Preparando las fotos…");
       var hechas = 0;
+      var peso = 0;
 
       archivos.reduce(function (cadena, archivo) {
         return cadena.then(function () {
@@ -216,6 +297,7 @@
               }
               ponerArchivo(tarjetaLibre(), final);
               hechas += 1;
+              peso += final.size;
               return null;
             })
             .catch(function () {
@@ -231,7 +313,8 @@
         reordenar();
         if (hechas) {
           decir(
-            hechas === 1 ? "Foto lista para guardar." : hechas + " fotos listas para guardar."
+            (hechas === 1 ? "Foto lista" : hechas + " fotos listas") +
+              " para guardar · " + pesoLegible(peso)
           );
         }
       });
@@ -321,6 +404,8 @@
         reordenar();
       });
     }
+
+    tarjetas().forEach(ocultarAlternativo);
 
     // Las tarjetas vacías que trae el formset no se enseñan hasta que hay foto.
     tarjetas().forEach(function (tarjeta) {

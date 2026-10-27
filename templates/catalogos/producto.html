@@ -266,11 +266,13 @@
         <h3 class="etiqueta">Fotos</h3>
         <p class="ayuda">
           Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
-          principal. Se reducen solas al subirlas (1600 px y menos de 5 MB).
+          principal. Se reducen solas al subirlas: se ven igual de bien y pesan mucho
+          menos.
         </p>
         {{ formset_imagenes.management_form }}
 
-        <div class="fotos" data-fotos>
+        <div class="fotos" data-fotos
+             data-nombre="{% if formulario_tienda.titulo.value %}{{ formulario_tienda.titulo.value }}{% else %}{{ producto.descripcion|default:'Producto' }}{% endif %}">
           <div class="fotos-soltar" data-soltar>
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
                  stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
