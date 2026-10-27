@@ -140,6 +140,45 @@ class PruebasDelBloqueo(TestCase):
         self.assertEqual(respuesta.headers["Location"], "/wadmin/inventario/")
 
 
+class PruebasDeLasDireccionesDeAntes(TestCase):
+    """La aplicación se mudó detrás de /wadmin/: los marcadores viejos siguen."""
+
+    def test_el_admin_de_antes_lleva_al_admin(self) -> None:
+        respuesta = self.client.get("/admin/")
+
+        self.assertEqual(respuesta.status_code, 301)
+        self.assertEqual(respuesta["Location"], "/wadmin/admin/")
+
+    def test_una_pantalla_del_admin_conserva_su_direccion(self) -> None:
+        respuesta = self.client.get("/admin/sri_fe/producto/13/change/")
+
+        self.assertEqual(respuesta.status_code, 301)
+        self.assertEqual(
+            respuesta["Location"], "/wadmin/admin/sri_fe/producto/13/change/"
+        )
+
+    def test_las_pantallas_de_la_aplicacion_tambien(self) -> None:
+        for vieja, nueva in (
+            ("/facturas/", "/wadmin/facturas/"),
+            ("/catalogos/productos/", "/wadmin/catalogos/productos/"),
+            ("/caja/", "/wadmin/caja/"),
+        ):
+            respuesta = self.client.get(vieja)
+            self.assertEqual(respuesta.status_code, 301, vieja)
+            self.assertEqual(respuesta["Location"], nueva)
+
+    def test_la_cadena_de_la_direccion_no_se_pierde(self) -> None:
+        respuesta = self.client.get("/facturas/?page=2")
+
+        self.assertEqual(respuesta["Location"], "/wadmin/facturas/?page=2")
+
+    def test_el_admin_de_ahora_sigue_en_su_sitio(self) -> None:
+        respuesta = self.client.get("/wadmin/admin/")
+
+        self.assertEqual(respuesta.status_code, 302)
+        self.assertTrue(respuesta["Location"].startswith("/wadmin/admin/login/"))
+
+
 class PruebasDeLaPantallaDeEntrar(TestCase):
     def test_la_pantalla_de_entrar_trae_su_diseno(self) -> None:
         respuesta = self.client.get("/wadmin/entrar/")

@@ -13,12 +13,26 @@ from django.views.generic import RedirectView
 
 from tienda import views as tienda_views
 
+from . import redirecciones
+
 urlpatterns = [
     # Las direcciones de antes (``/tienda/...``) llevan a donde están ahora.
     path("tienda/", tienda_views.enlace_viejo),
     path("tienda/<path:resto>", tienda_views.enlace_viejo),
     path("entrar/", RedirectView.as_view(url="/wadmin/entrar/", permanent=True)),
+]
 
+# Y las de la aplicación, que ahora vive detrás de /wadmin/: un marcador al admin
+# o a las facturas de antes sigue llevando a su pantalla.
+urlpatterns += [
+    path(f"{prefijo}/", redirecciones.al_privado) for prefijo in redirecciones.PRIVADOS
+]
+urlpatterns += [
+    path(f"{prefijo}/<path:resto>", redirecciones.al_privado)
+    for prefijo in redirecciones.PRIVADOS
+]
+
+urlpatterns += [
     # La tienda en línea, pública, en la raíz del dominio.
     path("", include("tienda.urls")),
 
