@@ -723,6 +723,40 @@
     caja.appendChild(ancla);
     caja.appendChild(crearGuia(doc));
 
+    // El campo mide lo que mide su texto: con una altura fija, una descripción
+    // corta dejaba media tarjeta en blanco y una larga pedía scroll enseguida.
+    var ALTO_MINIMO = 180;
+    var ALTO_MAXIMO = 620;
+
+    function ajustarAlto() {
+      // Un campo escondido no tiene altura que medir: se ajusta cuando se ve.
+      if (campo.offsetParent === null) {
+        return;
+      }
+      // A cero y no a `auto`: con `auto` manda el `rows` del campo, y el texto
+      // corto seguía dejando el hueco de las dieciséis líneas.
+      campo.style.height = "0px";
+      var alto = Math.min(Math.max(campo.scrollHeight, ALTO_MINIMO), ALTO_MAXIMO);
+      campo.style.height = alto + "px";
+      campo.style.overflowY = campo.scrollHeight > ALTO_MAXIMO ? "auto" : "hidden";
+    }
+
+    campo.addEventListener("input", ajustarAlto);
+    ajustarAlto();
+
+    // El editor vive dentro de un paso que se enseña y se esconde: al aparecer,
+    // la altura se vuelve a medir.
+    if (typeof MutationObserver === "function") {
+      var mirar = new MutationObserver(function () {
+        if (campo.offsetParent !== null) {
+          ajustarAlto();
+        }
+      });
+      for (var padre = campo.parentNode; padre && padre !== document.body; padre = padre.parentNode) {
+        mirar.observe(padre, { attributes: true, attributeFilter: ["hidden"] });
+      }
+    }
+
     // La última posición del cursor, para saber dónde va una tabla cuando el
     // botón se pulsa sin haber vuelto a tocar el campo.
     ["keyup", "mouseup", "focus", "select"].forEach(function (evento) {

@@ -5483,7 +5483,9 @@ td.col-clave {
   width: 100%;
   padding: .8rem .9rem;
   resize: vertical;
-  min-height: 360px;
+  /* La altura la pone el texto (lo hace el JS): con un mínimo alto, una
+   * descripción de cuatro líneas dejaba media tarjeta en blanco. */
+  min-height: 180px;
   border: 0;
   outline: none;
   background: #fff;
@@ -5493,11 +5495,11 @@ td.col-clave {
 }
 
 .editor-markdown .textarea {
-  min-height: 360px;
+  min-height: 180px;
 }
 
 .editor-markdown .textarea textarea {
-  min-height: 340px;
+  min-height: 160px;
 }
 
 /* Metro pone una ✕ para vaciar el campo; aquí estorba al lado del editor. */
