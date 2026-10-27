@@ -42,7 +42,7 @@ from factec.django.documentos import Cliente, Producto
 from factec.django.models import EstadoComprobante
 from factec.modelos import cuantizar
 
-from .texto import markdown_a_html
+from .texto import a_html
 
 __all__ = [
     "Categoria",
@@ -495,8 +495,12 @@ class ProductoTienda(Producto):
 
     @property
     def descripcion_html(self) -> str:
-        """La descripción larga, escrita en Markdown, ya convertida y limpia."""
-        return markdown_a_html(self.descripcion_larga)
+        """La descripción larga, ya limpia y lista para la ficha.
+
+        Se escribe en el editor visual, que entrega HTML; lo que quedó en Markdown
+        de antes se sigue convirtiendo.
+        """
+        return a_html(self.descripcion_larga)
 
     @property
     def resenas_aprobadas(self) -> Any:

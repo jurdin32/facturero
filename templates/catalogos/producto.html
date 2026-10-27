@@ -313,8 +313,52 @@
     <section class="tarjeta-ficha">
       <h3 class="tarjeta-ficha-titulo">Descripción larga</h3>
       <div class="campo-caja">
-        {{ formulario_tienda.descripcion_larga }}
-        <p class="ayuda">Materiales, medidas, qué incluye… Se puede escribir Markdown: títulos, listas y tablas.</p>
+        {% comment %}
+        Editor visual: el área es editable y lo que se escribe es HTML, que es lo
+        que se guarda en el campo oculto. Trae su propia barra y, cuando el cursor
+        está en una tabla, la de filas y columnas.
+        {% endcomment %}
+        <div class="editor-rico" data-editor-rico>
+          <div class="editor-rico-barra" role="toolbar" aria-label="Formato de la descripción">
+            <button type="button" class="editor-boton fuerte" data-formato="negrita"
+                    title="Negrita" aria-label="Negrita">B</button>
+            <button type="button" class="editor-boton cursiva" data-formato="cursiva"
+                    title="Cursiva" aria-label="Cursiva">I</button>
+            <button type="button" class="editor-boton titulo" data-formato="titulo"
+                    title="Título" aria-label="Título">H</button>
+            <button type="button" class="editor-boton" data-formato="vinetas"
+                    title="Lista con viñetas" aria-label="Lista con viñetas">•</button>
+            <button type="button" class="editor-boton" data-formato="numerada"
+                    title="Lista numerada" aria-label="Lista numerada">1.</button>
+            <button type="button" class="editor-boton tabla" data-formato="tabla"
+                    title="Insertar una tabla" aria-label="Insertar una tabla">▦ Tabla</button>
+            <button type="button" class="editor-boton" data-formato="enlace"
+                    title="Enlace" aria-label="Enlace">🔗</button>
+            <button type="button" class="editor-boton" data-formato="cita"
+                    title="Cita" aria-label="Cita">❝</button>
+            <button type="button" class="editor-boton" data-formato="codigo"
+                    title="Código" aria-label="Código">&lt;/&gt;</button>
+            <button type="button" class="editor-boton" data-formato="separador"
+                    title="Separador" aria-label="Separador">―</button>
+          </div>
+
+          <div class="editor-rico-area" contenteditable="true" data-area
+               role="textbox" aria-multiline="true" aria-label="Descripción larga"></div>
+
+          <div class="editor-rico-tabla" data-tabla-barra hidden>
+            <span class="editor-rico-tabla-rotulo">Tabla</span>
+            <button type="button" data-tabla="fila-mas">+ Fila</button>
+            <button type="button" data-tabla="fila-menos">− Fila</button>
+            <button type="button" data-tabla="columna-mas">+ Columna</button>
+            <button type="button" data-tabla="columna-menos">− Columna</button>
+            <button type="button" class="peligro" data-tabla="quitar">Quitar</button>
+          </div>
+
+          <input type="hidden" name="descripcion_larga" id="id_descripcion_larga"
+                 value="{{ formulario_tienda.descripcion_larga.value|default_if_none:'' }}"
+                 data-campo>
+        </div>
+        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones, y el tabulador pasa de celda en celda.</p>
       </div>
     </section>
 
@@ -431,6 +475,6 @@
 
 {% block scripts %}
   <script src="{% static 'js/asistente_producto.js' %}?v={{ sello_estatico }}"></script>
-  <script src="{% static 'js/editor_markdown.js' %}?v={{ sello_estatico }}"></script>
+  <script src="{% static 'js/editor_rico.js' %}?v={{ sello_estatico }}"></script>
   <script src="{% static 'js/fotos_producto.js' %}?v={{ sello_estatico }}"></script>
 {% endblock %}

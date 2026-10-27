@@ -999,7 +999,7 @@ class PruebasDelListado(TestCase):
 
 
 class PruebasDelTextoEnriquecido(TestCase):
-    """La descripción larga: Markdown que sale ya limpio a la ficha."""
+    """La descripción larga: lo del editor visual, ya limpio, en la ficha."""
 
     def test_el_markdown_se_convierte(self):
         from .texto import markdown_a_html
@@ -1051,6 +1051,26 @@ class PruebasDelTextoEnriquecido(TestCase):
 
         self.assertEqual(markdown_a_html(""), "")
         self.assertEqual(markdown_a_html("   "), "")
+
+    def test_el_html_del_editor_se_respeta(self):
+        from .texto import a_html
+
+        html = a_html("<h2>Medidas</h2><p>Ancho <strong>40 cm</strong></p>")
+        self.assertIn("<h2>Medidas</h2>", html)
+        self.assertIn("<strong>40 cm</strong>", html)
+
+    def test_un_parrafo_vacio_no_deja_hueco(self):
+        """El editor deja un párrafo suelto al pulsar Enter de más."""
+        from .texto import a_html
+
+        self.assertEqual(a_html("<p>Hola</p><p><br></p>"), "<p>Hola</p>")
+        self.assertEqual(a_html("<p><br></p>"), "")
+
+    def test_una_tabla_sola_no_esta_vacia(self):
+        from .texto import a_html
+
+        html = a_html("<table><tbody><tr><td>1</td><td>2</td></tr></tbody></table><p><br></p>")
+        self.assertIn("<table>", html)
 
     def test_el_producto_publica_la_descripcion_ya_formateada(self):
         producto = crear_en_tienda(
@@ -1340,12 +1360,13 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
     def test_el_campo_lleva_la_marca_del_editor(self):
         producto = crear_producto()
         respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
-        self.assertContains(respuesta, "data-editor-markdown")
+        self.assertContains(respuesta, "data-editor-rico")
+        self.assertContains(respuesta, "contenteditable=\"true\"")
 
     def test_la_pantalla_carga_el_guion_del_editor(self):
         producto = crear_producto()
         respuesta = self.client.get(f"/catalogos/productos/{producto.pk}/")
-        self.assertContains(respuesta, "js/editor_markdown.js")
+        self.assertContains(respuesta, "js/editor_rico.js")
 
 
 class PruebasDeLasFotos(TestCase):
