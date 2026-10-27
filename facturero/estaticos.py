@@ -9,8 +9,9 @@ versión vieja (y entonces el buscador no abre, o el estilo se ve a medias, y
 parece que el cambio no se hizo). El sello es la fecha del archivo más nuevo de
 los propios: cambia al guardarlos y el navegador los vuelve a pedir.
 
-Los de terceros —Metro y sus iconos— no llevan sello: no se tocan, y se agradece
-que se queden en la caché.
+Los de Metro también lo llevan: su hoja quedó recortada a lo que la aplicación
+usa, sus iconos van en WOFF2 y su guion se toca al subir de versión, así que
+también hay que poder cambiarlos sin que el navegador se quede con lo viejo.
 """
 
 from __future__ import annotations
@@ -26,6 +27,9 @@ __all__ = ["PROPIOS", "sello", "sello_estatico"]
 #: se piden con `?v=` tienen que estar aquí: si falta uno, al cambiarlo el navegador
 #: sigue con la copia vieja.
 PROPIOS = (
+    "css/metro/metro.css",
+    "js/metro/metro.js",
+    "icons/core/style.css",
     "css/interfaz.css",
     "js/interfaz.js",
     "js/facturacion.js",

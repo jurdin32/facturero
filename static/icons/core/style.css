@@ -1,9 +1,8 @@
 @font-face {
   font-family: 'metro-ui-core';
   src:
-    url('fonts/metro-ui-core.ttf?kj6kn6') format('truetype'),
-    url('fonts/metro-ui-core.woff?kj6kn6') format('woff'),
-    url('fonts/metro-ui-core.svg?kj6kn6#metro-ui-core') format('svg');
+    url('fonts/metro-ui-core.woff2?kj6kn6') format('woff2'),
+    url('fonts/metro-ui-core.ttf?kj6kn6') format('truetype');
   font-weight: normal;
   font-style: normal;
   font-display: block;

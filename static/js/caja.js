@@ -15,7 +15,15 @@
   // ------------------------------------------------------------- el desglose
 
   function aNumero(texto) {
-    var limpio = String(texto || "").replace(/\s/g, "").replace(/\./g, "").replace(",", ".");
+    var limpio = String(texto || "").replace(/\s/g, "");
+    if (!limpio) {
+      return 0;
+    }
+    // El valor de la casilla llega como «50.00». El punto sólo separa miles
+    // cuando hay coma decimal («1.500,00»): si no hay coma, es el decimal.
+    if (limpio.indexOf(",") !== -1) {
+      limpio = limpio.replace(/\./g, "").replace(",", ".");
+    }
     var valor = parseFloat(limpio);
     return isNaN(valor) ? 0 : valor;
   }
