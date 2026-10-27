@@ -827,6 +827,39 @@ class PruebasDeLaTiendaPublica(TestCase):
         self.assertContains(respuesta, pedido.numero)
 
 
+class PruebasDelCssDeLaFicha(TestCase):
+    """Lo que no se puede medir con una petición: que en el móvil no se desborde.
+
+    La galería pone las miniaturas en fila; con más de tres, la página se iba a lo
+    ancho y aparecía una franja gris al costado. La tira se desliza en su caja y las
+    columnas de la ficha no crecen con el contenido (``minmax(0, 1fr)``).
+    """
+
+    @staticmethod
+    def _bloque_movil() -> str:
+        from pathlib import Path
+
+        from django.conf import settings
+
+        css = (Path(settings.BASE_DIR) / "static" / "css" / "tienda.css").read_text(
+            encoding="utf-8"
+        )
+        inicio = css.index("@media (max-width: 900px)")
+        return css[inicio:css.index("\n}\n", inicio)]
+
+    def test_las_miniaturas_se_deslizan_en_su_caja(self):
+        bloque = self._bloque_movil()
+
+        self.assertIn("overflow-x: auto", bloque)
+        self.assertIn(".miniaturas", bloque)
+
+    def test_la_ficha_no_crece_con_las_miniaturas(self):
+        bloque = self._bloque_movil()
+
+        self.assertIn(".ficha, .dos-columnas { grid-template-columns: minmax(0, 1fr)", bloque)
+        self.assertIn(".galeria { grid-template-columns: minmax(0, 1fr)", bloque)
+
+
 class PruebasDeLosPedidos(TestCase):
     """La pantalla de pedidos y el paso a la factura."""
 

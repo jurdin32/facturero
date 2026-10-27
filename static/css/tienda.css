@@ -989,9 +989,24 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
   .banner-foto { max-width: 420px; }
   .listado-caja { grid-template-columns: 1fr; }
   .filtros { position: static; }
-  .ficha, .dos-columnas { grid-template-columns: 1fr; gap: 1.2rem; }
-  .galeria { grid-template-columns: 1fr; }
-  .miniaturas { flex-direction: row; }
+  /* minmax(0, …) y no 1fr: con 1fr la columna crece hasta el contenido y las
+     miniaturas de una galería larga empujan la página a lo ancho. */
+  .ficha, .dos-columnas { grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
+  .galeria { grid-template-columns: minmax(0, 1fr); }
+  .miniaturas {
+    flex-direction: row;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x proximity;
+    padding-bottom: .25rem;
+    scrollbar-width: thin;
+  }
+  .miniaturas img,
+  .miniaturas .miniatura-video {
+    flex: none;
+    scroll-snap-align: start;
+  }
   .cabecera-fila { flex-wrap: wrap; gap: .7rem; }
   .buscador { order: 3; flex-basis: 100%; max-width: none; }
   .fila { grid-template-columns: 110px minmax(0, 1fr); }
