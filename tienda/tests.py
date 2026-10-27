@@ -644,6 +644,7 @@ class PruebasDelLogoDeLaEmpresa(TestCase):
             ambiente=1,
             ruc="0703886697001",
             razon_social="URDIN GONZALEZ JOHNNY EDGAR",
+            nombre_comercial="ORVIQUE",
             dir_matriz="PANAMERICANA Y CARCHI",
             estab="001",
             pto_emi="001",
@@ -658,7 +659,13 @@ class PruebasDelLogoDeLaEmpresa(TestCase):
 
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, self.logo.url)
-        self.assertContains(respuesta, "URDIN GONZALEZ JOHNNY EDGAR")
+        self.assertContains(respuesta, 'alt="ORVIQUE"')
+
+    def test_el_pie_lleva_el_nombre_del_negocio_no_el_de_la_persona(self):
+        respuesta = self.client.get(reverse("tienda:portada"))
+
+        self.assertContains(respuesta, "ORVIQUE")
+        self.assertNotContains(respuesta, "URDIN GONZALEZ JOHNNY EDGAR")
 
     def test_sin_logo_propio_la_tienda_sigue_saliendo(self):
         self.logo.delete()

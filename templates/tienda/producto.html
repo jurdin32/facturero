@@ -103,7 +103,7 @@
         <div class="vendedor">
           <p class="vendedor-titulo">
             <span class="vendedor-icono" aria-hidden="true">✓</span>
-            Vendido por <strong>{% if emisor %}{{ emisor.razon_social }}{% else %}la casa{% endif %}</strong>
+            Vendido por <strong>{% if emisor.nombre_comercial %}{{ emisor.nombre_comercial }}{% elif emisor %}{{ emisor.razon_social }}{% else %}la casa{% endif %}</strong>
           </p>
           <p class="vendedor-linea">Factura electrónica autorizada por el SRI a su nombre.</p>
           <p class="vendedor-linea">Garantía directa con el vendedor · Entrega a coordinar.</p>

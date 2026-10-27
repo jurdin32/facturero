@@ -19,7 +19,7 @@
   <div class="lienzo cabecera-fila">
     <a class="marca" href="{% url 'tienda:portada' %}">
       {% if logo_empresa %}
-        <img src="{{ logo_empresa }}" alt="{{ emisor.razon_social|default:'Tienda' }}">
+        <img src="{{ logo_empresa }}" alt="{{ emisor.nombre_comercial|default:'Tienda' }}">
       {% else %}
         {% imagen_marca "logo-ancho" "logo" "marca" as logo %}
         {% if logo %}<img src="{{ logo }}" alt="Tienda">{% else %}Tienda{% endif %}
@@ -75,7 +75,8 @@
 
 <footer class="pie">
   <div class="lienzo">
-    <span>{% if emisor %}Facturación de {{ emisor.razon_social }}{% else %}Tienda en línea{% endif %}</span>
+    {# El nombre del negocio, no el de la persona que firma la factura. #}
+    <span>{% if emisor.nombre_comercial %}{{ emisor.nombre_comercial }}{% else %}Tienda en línea{% endif %}</span>
     <span>Los precios se muestran con IVA. La factura se emite al confirmar el pedido.</span>
   </div>
 </footer>
