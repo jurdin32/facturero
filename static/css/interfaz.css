@@ -5177,21 +5177,25 @@ td.col-clave {
 
 .fotos.con-arrastre .fotos-lista:empty { display: none; }
 
+/* Una fila por foto, todo en línea: miniatura, nombre, peso y acciones. */
 .foto {
   display: grid;
-  grid-template-columns: 48px minmax(0, 1fr) auto auto;
+  grid-template-columns: 44px minmax(0, 1fr) 78px auto auto;
   align-items: center;
   gap: var(--e3);
-  padding: var(--e2) var(--e3);
+  min-height: 56px;
+  padding: 6px var(--e3);
   background: var(--hoja);
   border-bottom: 1px solid var(--linea);
 }
 
 .foto:last-child { border-bottom: 0; }
 
+.foto:hover { background: var(--hoja-2); }
+
 .foto-mini {
-  width: 48px;
-  height: 48px;
+  width: 44px;
+  height: 44px;
   border-radius: var(--radio-s);
   background: var(--fondo);
   border: 1px solid var(--linea);
@@ -5209,12 +5213,6 @@ td.col-clave {
 
 .foto-vacia { color: var(--tinta-4); }
 
-.foto-datos {
-  display: grid;
-  gap: 3px;
-  min-width: 0;
-}
-
 .foto-nombre {
   font-size: .84rem;
   font-weight: 600;
@@ -5224,25 +5222,17 @@ td.col-clave {
   white-space: nowrap;
 }
 
-.foto-peso { font-size: .76rem; color: var(--tinta-3); }
+/* El peso, alineado a la derecha y con cifras de ancho fijo: se comparan de un
+ * vistazo. */
+.foto-peso {
+  font-size: .78rem;
+  color: var(--tinta-3);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
 
 .foto-peso:empty { display: none; }
-
-.foto-barra {
-  display: block;
-  height: 4px;
-  max-width: 320px;
-  border-radius: 2px;
-  background: var(--linea);
-  overflow: hidden;
-}
-
-.foto-barra > span {
-  display: block;
-  height: 100%;
-  width: 100%;
-  background: var(--verde);
-}
 
 .foto-principal {
   display: none;
@@ -5297,6 +5287,10 @@ td.col-clave {
 .foto-campos .input-clear-button { display: none !important; }
 
 /* Sin JavaScript, el campo de archivo se ve como siempre. */
+/* Con arrastre la fila ya resume la foto: los campos del formset no se ven,
+ * pero siguen viajando con el formulario. */
+.fotos.con-arrastre .foto-campos { display: none; }
+
 .fotos:not(.con-arrastre) .fotos-lista { border: 0; }
 
 .fotos:not(.con-arrastre) .foto {

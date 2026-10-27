@@ -292,15 +292,12 @@
                     <span class="foto-vacia" data-vacia>·</span>
                   {% endif %}
                 </div>
-                <div class="foto-datos">
-                  <span class="foto-nombre" data-nombre-foto>
-                    {% if foto.instance.pk %}{{ foto.instance.nombre_archivo }}{% else %}Foto nueva{% endif %}
-                  </span>
-                  <span class="foto-peso" data-peso>
-                    {% if foto.instance.peso %}{{ foto.instance.peso|filesizeformat }}{% endif %}
-                  </span>
-                  <span class="foto-barra"><span></span></span>
-                </div>
+                <span class="foto-nombre" data-nombre-foto>
+                  {% if foto.instance.pk %}{{ foto.instance.nombre_archivo }}{% else %}Foto nueva{% endif %}
+                </span>
+                <span class="foto-peso" data-peso>
+                  {% if foto.instance.peso %}{{ foto.instance.peso|filesizeformat }}{% endif %}
+                </span>
                 <span class="foto-principal">Principal</span>
                 <div class="foto-acciones">
                   <button type="button" data-izquierda aria-label="Moverla arriba">↑</button>
@@ -328,11 +325,8 @@
               <img alt="" data-vista hidden>
               <span class="foto-vacia" data-vacia>·</span>
             </div>
-            <div class="foto-datos">
-              <span class="foto-nombre" data-nombre-foto>Foto nueva</span>
-              <span class="foto-peso" data-peso></span>
-              <span class="foto-barra"><span></span></span>
-            </div>
+            <span class="foto-nombre" data-nombre-foto>Foto nueva</span>
+            <span class="foto-peso" data-peso></span>
             <span class="foto-principal">Principal</span>
             <div class="foto-acciones">
               <button type="button" data-izquierda aria-label="Moverla arriba">↑</button>
