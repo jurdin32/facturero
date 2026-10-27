@@ -846,62 +846,25 @@ select { padding-right: var(--e6); }
   color: var(--tinta-3);
 }
 
-/* La ficha del producto, en tres partes numeradas: lo del producto, lo de la
- * tienda y lo que se ve en la web. Cada parte es la tarjeta; lo de dentro se
- * aplana para que no parezcan cajas dentro de cajas. */
-.paso {
-  margin-bottom: var(--e6);
-  padding: var(--e5);
-  background: var(--hoja);
-  border: 1px solid var(--linea);
-  border-radius: var(--radio-m);
-}
-
-.paso:last-of-type { margin-bottom: 0; }
-
-.paso-cabecera {
-  display: flex;
-  gap: var(--e3);
-  align-items: flex-start;
-  margin-bottom: var(--e5);
-}
-
-.paso-numero {
-  flex: none;
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  background: var(--marca-tinte);
-  color: var(--marca-osc);
-  font-size: var(--texto-s);
-  font-weight: 700;
-  display: grid;
-  place-items: center;
-}
-
-.paso-titulo { margin: 0; font-size: var(--texto-l); font-weight: 600; color: var(--tinta); }
-.paso-nota { margin: 2px 0 0; font-size: var(--texto-s); color: var(--tinta-4); }
-
-.paso .bloque,
-.paso .resumen {
-  margin: 0 0 var(--e6);
-  padding: var(--e6) 0 0;
-  border: 0;
+/* Dentro de una tarjeta, las sub-partes van sin caja propia: se separan con una
+ * línea, para que no parezcan cajas dentro de cajas. */
+.columna-principal > .bloque-suave + .bloque-suave,
+.columna-lateral > .bloque-suave + .bloque-suave {
+  margin-top: var(--e6);
+  padding-top: var(--e5);
   border-top: 1px solid var(--linea);
-  border-radius: 0;
-  background: transparent;
-  box-shadow: none;
 }
 
-.paso .bloque:last-child { margin-bottom: 0; }
-.paso .resumen:last-child { margin-bottom: 0; }
-.paso .resumen + .resumen { margin-top: 0; }
+/* La ficha del producto lleva su asistente dentro del formulario: la tarjeta del
+ * asistente no necesita el aire de abajo del resto. */
+.hoja form > .asistente { margin-bottom: var(--e5); }
 
-/* El primero de cada columna arranca sin línea: la pone el corte de arriba. */
-.paso .columna-principal > :first-child,
-.paso .columna-lateral > :first-child { padding-top: 0; border-top: 0; }
-
-.paso .columnas-paso { margin-bottom: 0; }
+/* Los botones que pasan de un paso a otro, al pie de la tarjeta. */
+.acciones-paso {
+  margin-top: var(--e5);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--linea);
+}
 
 /* Los apartados de una tarjeta larga: un renglón con su línea encima, sin abrir
  * otra tarjeta. El primero va pegado al título de la sección. */
@@ -1150,7 +1113,6 @@ select { padding-right: var(--e6); }
 .hoja form { flex-direction: column; margin-bottom: var(--e5); }
 .hoja form:last-child { margin-bottom: 0; }
 .hoja form > .bloque,
-.hoja form > .paso,
 .hoja form > .columnas,
 .hoja form > .row { width: 100%; }
 

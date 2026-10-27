@@ -33,20 +33,52 @@
 
 <form method="post" enctype="multipart/form-data" id="formulario-producto" novalidate>{% csrf_token %}
 
-  {# 1 · Lo que el producto necesita para facturarse. Nada de esto es de la tienda. #}
-  <section class="paso">
-    <div class="paso-cabecera">
-      <span class="paso-numero">1</span>
-      <div>
-        <h2 class="paso-titulo">Lo básico</h2>
-        <p class="paso-nota">Con esto ya se factura. Nada de aquí depende de la tienda.</p>
-      </div>
+  {% comment %}
+  La ficha, como el asistente de configuración del SRI: arriba la barra con el
+  progreso y los tres pasos —se puede saltar a cualquiera— y debajo el paso que
+  se esté viendo. Sin JavaScript se ven los tres seguidos, que es como se envía.
+  {% endcomment %}
+  <div class="bloque asistente" data-asistente>
+    <div class="asistente-barra">
+      {% include "fragmentos/progreso.html" with valor=33 etiqueta="Progreso de la ficha del producto" %}
+      <span class="asistente-cuenta" data-cuenta>1 de 3</span>
     </div>
+    <ol class="pasos" data-pasos>
+      <li class="paso paso-activo" data-paso="1">
+        <a href="#paso-basico" data-ir="1" aria-current="step">
+          <span class="paso-numero">1</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Lo básico</span>
+            <span class="paso-que">Lo que se factura</span>
+          </span>
+        </a>
+      </li>
+      <li class="paso" data-paso="2">
+        <a href="#paso-tienda" data-ir="2">
+          <span class="paso-numero">2</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">En la tienda</span>
+            <span class="paso-que">Publicarlo y ponerle precio</span>
+          </span>
+        </a>
+      </li>
+      <li class="paso" data-paso="3">
+        <a href="#paso-ficha" data-ir="3">
+          <span class="paso-numero">3</span>
+          <span class="paso-texto">
+            <span class="paso-titulo">Fotos y descripción</span>
+            <span class="paso-que">Lo que se ve en la web</span>
+          </span>
+        </a>
+      </li>
+    </ol>
+  </div>
 
+  <section class="bloque" id="paso-basico" data-seccion="1">
     <div class="columnas columnas-paso">
       <div class="columna-principal">
 
-        <div class="bloque">
+        <div class="bloque-suave">
           <h3 class="bloque-titulo">Lo que es</h3>
           <div class="row">
             <div class="cell-12 cell-md-6">
@@ -88,7 +120,7 @@
           </div>
         </div>
 
-        <section class="bloque" id="bloque-inventario">
+        <div class="bloque-suave" id="bloque-inventario">
           <h3 class="bloque-titulo">Inventario</h3>
           <div class="row">
             {% if es_nuevo %}
@@ -119,11 +151,11 @@
               el libro cuadre. <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">Mover el inventario</a>
             </p>
           {% endif %}
-        </section>
+        </div>
       </div>
 
       <aside class="columna-lateral">
-        <div class="resumen">
+        <div class="bloque-suave">
           <h3 class="bloque-titulo">A cómo se factura</h3>
           <div class="row">
             <div class="cell-5">
@@ -147,7 +179,7 @@
           </div>
         </div>
 
-        <div class="resumen">
+        <div class="bloque-suave">
           <h3 class="bloque-titulo">Estado</h3>
           <div class="campo-caja">
             <label class="switch">
@@ -158,17 +190,16 @@
         </div>
       </aside>
     </div>
+
+    <div class="acciones-fila acciones-paso">
+      <button type="button" class="button" data-seguir="2">Seguir con la tienda</button>
+    </div>
   </section>
 
-  {# 2 · Cómo se publica y a qué precio en la web. #}
-  <section class="paso" id="bloque-tienda">
-    <div class="paso-cabecera">
-      <span class="paso-numero">2</span>
-      <div>
-        <h2 class="paso-titulo">En la tienda</h2>
-        <p class="paso-nota">Si no se publica, se sigue facturando igual y no aparece en la web.</p>
-      </div>
-    </div>
+  <section class="bloque" id="paso-tienda" data-seccion="2">
+    <p class="ayuda">
+      Si no se publica, se sigue facturando igual y no aparece en la web.
+    </p>
 
     {% if formulario_tienda.non_field_errors %}
       <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
@@ -265,17 +296,17 @@
         </div>
       </div>
     </div>
+
+    <div class="acciones-fila acciones-paso">
+      <button type="button" class="button outline dark" data-seguir="1">Atrás</button>
+      <button type="button" class="button" data-seguir="3">Seguir con las fotos</button>
+    </div>
   </section>
 
-  {# 3 · Lo que se ve en la ficha del producto en la web. #}
-  <section class="paso" id="paso-ficha">
-    <div class="paso-cabecera">
-      <span class="paso-numero">3</span>
-      <div>
-        <h2 class="paso-titulo">Fotos y descripción</h2>
-        <p class="paso-nota">Lo que se ve en la ficha del producto en la web.</p>
-      </div>
-    </div>
+  <section class="bloque" id="paso-ficha" data-seccion="3">
+    <p class="ayuda">
+      Lo que se ve en la ficha del producto en la web.
+    </p>
 
     <div class="row">
       <div class="cell-12">
@@ -375,6 +406,11 @@
         {% endif %}
       </div>
     </div>
+
+    <div class="acciones-fila acciones-paso">
+      <button type="button" class="button outline dark" data-seguir="2">Atrás</button>
+      <button type="submit" class="button success"><span class="mif-checkmark"></span> Guardar el producto</button>
+    </div>
   </section>
 
 </form>
@@ -382,6 +418,7 @@
 {% endblock %}
 
 {% block scripts %}
+  <script src="{% static 'js/asistente_producto.js' %}?v={{ sello_estatico }}"></script>
   <script src="{% static 'js/editor_markdown.js' %}?v={{ sello_estatico }}"></script>
   <script src="{% static 'js/fotos_producto.js' %}?v={{ sello_estatico }}"></script>
 {% endblock %}
