@@ -1345,8 +1345,7 @@ class PruebasDeLasFotos(TestCase):
         respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
 
         self.assertContains(respuesta, "data-fotos")
-        self.assertContains(respuesta, "Añadir fotos")
-        self.assertContains(respuesta, "Arrastre o elija")
+        self.assertContains(respuesta, "Arrastre las fotos aquí")
         self.assertContains(respuesta, "data-archivo")
 
     def test_la_pantalla_carga_el_guion_de_las_fotos(self):
