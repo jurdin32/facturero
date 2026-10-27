@@ -14,13 +14,18 @@
         Código <span class="cifra">{{ producto.codigo_principal }}</span> ·
         <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">ver su inventario</a> ·
         <a class="enlace" href="{% url 'catalogos:productos' %}">volver al catálogo</a>
+        {% if tienda and tienda.publicado and tienda.activo and tienda.slug %}
+          · <a class="enlace" href="{% url 'tienda:producto' tienda.slug %}"
+               target="_blank" rel="noopener">verla en la tienda</a>
+        {% endif %}
       {% endif %}
     </p>
   </div>
   {% if not es_nuevo and existencia %}
     <div class="titulo-acciones">
-      <span class="dato-fuerte">
-        En existencia: <span class="mono {% if existencia.bajo_minimo %}stock-bajo{% endif %}">{{ existencia.cantidad|floatformat:"-3" }}</span>
+      <span class="stock-chip{% if existencia.bajo_minimo %} stock-chip-bajo{% endif %}">
+        <span class="mif-archive icon" aria-hidden="true"></span>
+        En existencia: <b class="cifra">{{ existencia.cantidad|floatformat:"-3" }}</b>
       </span>
     </div>
   {% endif %}
@@ -351,6 +356,11 @@
             <button type="button" data-tabla="fila-menos">− Fila</button>
             <button type="button" data-tabla="columna-mas">+ Columna</button>
             <button type="button" data-tabla="columna-menos">− Columna</button>
+            <span class="editor-rico-tabla-separador" aria-hidden="true"></span>
+            <button type="button" data-tabla="unir" disabled
+                    title="Unir las celdas marcadas">Unir</button>
+            <button type="button" data-tabla="dividir" disabled
+                    title="Partir la celda en las que ocupaba">Dividir</button>
             <button type="button" class="peligro" data-tabla="quitar">Quitar</button>
           </div>
 
@@ -358,7 +368,7 @@
                  value="{{ formulario_tienda.descripcion_larga.value|default_if_none:'' }}"
                  data-campo>
         </div>
-        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones, y el tabulador pasa de celda en celda.</p>
+        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones: el tabulador pasa de celda en celda, se pega una tabla o una lista de Excel repartiéndola en las celdas, y con Mayúsculas y clic se marcan varias para unirlas.</p>
       </div>
     </section>
 

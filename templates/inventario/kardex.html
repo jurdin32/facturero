@@ -15,8 +15,9 @@
     </p>
   </div>
   <div class="titulo-acciones">
-    <span class="dato-fuerte">
-      Existencia: <span class="mono {% if existencia.bajo_minimo %}stock-bajo{% endif %}">{{ existencia.cantidad|floatformat:"-3" }}</span>
+    <span class="stock-chip{% if existencia.bajo_minimo %} stock-chip-bajo{% endif %}">
+      <span class="mif-archive icon" aria-hidden="true"></span>
+      Existencia: <b class="cifra">{{ existencia.cantidad|floatformat:"-3" }}</b>
       {% if producto.unidad_medida %}<span class="tenue">{{ producto.unidad_medida }}</span>{% endif %}
     </span>
     <button type="submit" form="formulario-movimiento" class="button success">

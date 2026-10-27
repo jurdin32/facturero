@@ -320,6 +320,34 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         self.assertEqual(respuesta.status_code, 200)
         self.assertContains(respuesta, "En la tienda")
 
+    def test_la_pantalla_lleva_a_ver_la_ficha_en_la_tienda(self) -> None:
+        """Desde el producto se mira cómo queda en la web, sin buscar la dirección."""
+        producto = Producto.objects.create(
+            tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
+            precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
+        )
+        tienda = ProductoTienda.extender(producto)
+        tienda.publicado = True
+        tienda.save()
+
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
+
+        self.assertContains(respuesta, "verla en la tienda")
+        self.assertContains(respuesta, f"/p/{tienda.slug}/")
+
+    def test_lo_que_no_esta_publicado_no_ofrece_verlo_en_la_tienda(self) -> None:
+        producto = Producto.objects.create(
+            tipo="producto", codigo_principal="CAJA-12", descripcion="CAJA DE DOCE",
+            precio_unitario=Decimal("10.50"), unidad_medida="CAJA",
+        )
+        tienda = ProductoTienda.extender(producto)
+        tienda.publicado = False
+        tienda.save()
+
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
+
+        self.assertNotContains(respuesta, "verla en la tienda")
+
     def test_el_producto_se_publica_desde_su_pantalla(self) -> None:
         foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
         datos = self.datos()

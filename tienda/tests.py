@@ -1134,6 +1134,21 @@ class PruebasDelTextoEnriquecido(TestCase):
         self.assertEqual(a_html("<p>Hola</p><p><br></p>"), "<p>Hola</p>")
         self.assertEqual(a_html("<p><br></p>"), "")
 
+    def test_las_celdas_unidas_se_conservan(self):
+        """El editor deja unir celdas; la ficha tiene que respetarlo."""
+        from .texto import a_html
+
+        html = a_html('<table><tr><td colspan="2" rowspan="3">A</td></tr></table>')
+
+        self.assertIn('colspan="2"', html)
+        self.assertIn('rowspan="3"', html)
+
+    def test_una_union_absurda_se_queda_fuera(self):
+        from .texto import a_html
+
+        self.assertNotIn("colspan", a_html('<table><tr><td colspan="9999">A</td></tr></table>'))
+        self.assertNotIn("colspan", a_html('<table><tr><td colspan="dos">A</td></tr></table>'))
+
     def test_una_tabla_sola_no_esta_vacia(self):
         from .texto import a_html
 

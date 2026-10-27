@@ -27,12 +27,17 @@ ETIQUETAS = (
     "a",
 )
 
-#: Los atributos que se dejan. Nada de estilos ni de guiones.
+#: Los atributos que se dejan. Nada de estilos ni de guiones. ``rowspan`` y
+#: ``colspan`` van porque el editor deja unir celdas.
 ATRIBUTOS = {
     "a": ["href", "title", "rel", "target"],
-    "th": ["align"],
-    "td": ["align"],
+    "th": ["align", "rowspan", "colspan"],
+    "td": ["align", "rowspan", "colspan"],
 }
+
+#: Lo más que puede abarcar una celda unida: más que eso solo puede venir de un
+#: texto manipulado a mano, y rompería la tabla en la ficha.
+UNION_MAXIMA = 50
 
 #: Los enlaces que se permiten.
 ESQUEMAS = ("http", "https", "mailto")
@@ -85,12 +90,20 @@ def _tablas_de_una_columna_como_lista(texto: str) -> str:
 ES_HTML = re.compile(r"<\s*(p|div|br|table|h[2-6]|ul|ol|li|strong|em|blockquote|pre)\b", re.I)
 
 
+def _atributo_permitido(etiqueta: str, nombre: str, valor: str) -> bool:
+    """Los atributos de la lista blanca, y los spans solo con un número cuerdo."""
+    if nombre in ("rowspan", "colspan"):
+        limpio = (valor or "").strip()
+        return limpio.isdigit() and 1 <= int(limpio) <= UNION_MAXIMA
+    return nombre in ATRIBUTOS.get(etiqueta, ())
+
+
 def _limpiar(html: str) -> str:
     """Pasa la lista blanca y quita los párrafos que no dicen nada."""
     limpio = bleach.clean(
         html,
         tags=ETIQUETAS,
-        attributes=ATRIBUTOS,
+        attributes=_atributo_permitido,
         protocols=ESQUEMAS,
         strip=True,
     )

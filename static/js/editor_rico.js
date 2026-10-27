@@ -110,7 +110,12 @@
 
     /* ------------------------------------------------------------ las tablas */
 
-    function tablaActual() {
+    //: La celda en la que se estaba, para cuando el foco se va a los botones.
+    var celdaRecordada = null;
+    //: La celda desde la que se arrastra para marcar varias.
+    var marcando = null;
+
+    function celdaDeSeleccion() {
       var seleccion = window.getSelection();
       if (!seleccion || !seleccion.rangeCount) {
         return null;
@@ -122,17 +127,139 @@
       if (!nodo || !nodo.closest) {
         return null;
       }
-      var tabla = nodo.closest("table");
-      return tabla && area.contains(tabla) ? tabla : null;
+      var celda = nodo.closest("td, th");
+      return celda && area.contains(celda) ? celda : null;
+    }
+
+    function tablaActual() {
+      var celda = celdaDeSeleccion();
+      return celda ? celda.closest("table") : null;
+    }
+
+    /** La celda que se está editando: la de la selección o la última que hubo. */
+    function celdaActual(tabla) {
+      var celda = celdaDeSeleccion();
+      if (celda && (!tabla || celda.closest("table") === tabla)) {
+        celdaRecordada = celda;
+        return celda;
+      }
+      if (
+        celdaRecordada &&
+        area.contains(celdaRecordada) &&
+        (!tabla || celdaRecordada.closest("table") === tabla)
+      ) {
+        return celdaRecordada;
+      }
+      return null;
+    }
+
+    /** La rejilla de la tabla: qué celda ocupa cada sitio, contando los spans. */
+    function rejilla(tabla) {
+      var mapa = {};
+      filasDe(tabla).forEach(function (fila, f) {
+        var columna = 0;
+        Array.prototype.forEach.call(fila.children, function (celda) {
+          while (mapa[f + ":" + columna]) {
+            columna++;
+          }
+          var alto = Math.max(1, celda.rowSpan || 1);
+          var ancho = Math.max(1, celda.colSpan || 1);
+          for (var i = 0; i < alto; i++) {
+            for (var j = 0; j < ancho; j++) {
+              mapa[f + i + ":" + (columna + j)] = celda;
+            }
+          }
+          columna += ancho;
+        });
+      });
+      return mapa;
+    }
+
+    /** Dónde empieza una celda: su esquina de arriba a la izquierda. */
+    function coordenadasDe(tabla, celda) {
+      var mapa = rejilla(tabla);
+      for (var clave in mapa) {
+        if (mapa[clave] === celda) {
+          var partes = clave.split(":");
+          return { fila: parseInt(partes[0], 10), columna: parseInt(partes[1], 10) };
+        }
+      }
+      return null;
+    }
+
+    function limpiarMarcas() {
+      Array.prototype.forEach.call(
+        area.querySelectorAll(".celda-elegida"),
+        function (celda) {
+          celda.classList.remove("celda-elegida");
+          if (!celda.getAttribute("class")) {
+            celda.removeAttribute("class");
+          }
+        }
+      );
+    }
+
+    function marcarHasta(tabla, desde, hasta) {
+      var mapa = rejilla(tabla);
+      var a = coordenadasDe(tabla, desde);
+      var b = coordenadasDe(tabla, hasta);
+      if (!a || !b) {
+        return;
+      }
+      limpiarMarcas();
+      var f1 = Math.min(a.fila, b.fila);
+      var f2 = Math.max(a.fila, b.fila);
+      var c1 = Math.min(a.columna, b.columna);
+      var c2 = Math.max(a.columna, b.columna);
+      for (var f = f1; f <= f2; f++) {
+        for (var c = c1; c <= c2; c++) {
+          var celda = mapa[f + ":" + c];
+          if (celda) {
+            celda.classList.add("celda-elegida");
+          }
+        }
+      }
+      var seleccion = window.getSelection();
+      if (seleccion && seleccion.removeAllRanges) {
+        seleccion.removeAllRanges();
+      }
+      actualizarBotones(tabla);
+    }
+
+    function tablaDeLasMarcas() {
+      var marcada = area.querySelector(".celda-elegida");
+      return marcada ? marcada.closest("table") : null;
+    }
+
+    function actualizarBotones(tabla) {
+      if (!barraTabla) {
+        return;
+      }
+      if (!tabla) {
+        tabla = tablaDeLasMarcas();
+      }
+      var unir = barraTabla.querySelector('[data-tabla="unir"]');
+      var dividir = barraTabla.querySelector('[data-tabla="dividir"]');
+      var marcadas = tabla ? tabla.querySelectorAll(".celda-elegida").length : 0;
+      if (unir) {
+        unir.disabled = marcadas < 2;
+      }
+      if (dividir) {
+        var celda = tabla ? celdaActual(tabla) : null;
+        var partida =
+          celda && ((celda.rowSpan || 1) > 1 || (celda.colSpan || 1) > 1);
+        dividir.disabled = !partida;
+      }
     }
 
     function mirarTabla() {
       if (!barraTabla) {
         return;
       }
-      var dentro = !!tablaActual();
-      barraTabla.hidden = !dentro;
-      caja.classList.toggle("con-tabla", dentro);
+      var tabla = tablaActual() || tablaDeLasMarcas();
+      barraTabla.hidden = !tabla;
+      caja.classList.toggle("con-tabla", !!tabla);
+      actualizarBotones(tabla);
     }
 
     function filasDe(tabla) {
@@ -196,6 +323,123 @@
       });
     }
 
+    /** Une en una sola las celdas marcadas con Mayúsculas y clic. */
+    function unirCeldas(tabla) {
+      var marcadas = Array.prototype.slice.call(
+        tabla.querySelectorAll(".celda-elegida")
+      );
+      if (marcadas.length < 2) {
+        return;
+      }
+      var mapa = rejilla(tabla);
+      var filas = [];
+      var columnas = [];
+      marcadas.forEach(function (celda) {
+        var sitio = coordenadasDe(tabla, celda);
+        if (sitio) {
+          filas.push(sitio.fila);
+          columnas.push(sitio.columna);
+        }
+      });
+      if (!filas.length) {
+        return;
+      }
+      var f1 = Math.min.apply(null, filas);
+      var f2 = Math.max.apply(null, filas);
+      var c1 = Math.min.apply(null, columnas);
+      var c2 = Math.max.apply(null, columnas);
+      var dentro = [];
+      for (var f = f1; f <= f2; f++) {
+        for (var c = c1; c <= c2; c++) {
+          var celda = mapa[f + ":" + c];
+          if (celda && dentro.indexOf(celda) === -1) {
+            dentro.push(celda);
+          }
+        }
+      }
+      if (dentro.length < 2) {
+        return;
+      }
+      var destino = mapa[f1 + ":" + c1] || dentro[0];
+      // Lo que había escrito en cada una se queda en la de arriba a la izquierda.
+      var trozos = [];
+      dentro.forEach(function (celda) {
+        var texto = (celda.textContent || "").trim();
+        if (texto) {
+          trozos.push(texto);
+        }
+      });
+      var unico = [];
+      trozos.forEach(function (texto) {
+        if (unico.indexOf(texto) === -1) {
+          unico.push(texto);
+        }
+      });
+      destino.innerHTML = unico.length ? unico.join("<br>") : "<br>";
+      dentro.forEach(function (celda) {
+        if (celda !== destino && celda.parentNode) {
+          celda.parentNode.removeChild(celda);
+        }
+      });
+      var ancho = c2 - c1 + 1;
+      var alto = f2 - f1 + 1;
+      if (ancho > 1) {
+        destino.colSpan = ancho;
+      } else {
+        destino.removeAttribute("colspan");
+      }
+      if (alto > 1) {
+        destino.rowSpan = alto;
+      } else {
+        destino.removeAttribute("rowspan");
+      }
+      limpiarMarcas();
+      colocarEn(destino);
+      guardar();
+      ajustar();
+      mirarTabla();
+    }
+
+    /** Parte una celda unida y devuelve el hueco que ocupaba. */
+    function dividirCelda(tabla) {
+      var celda = celdaActual(tabla);
+      if (!celda) {
+        return;
+      }
+      var alto = Math.max(1, celda.rowSpan || 1);
+      var ancho = Math.max(1, celda.colSpan || 1);
+      if (alto === 1 && ancho === 1) {
+        return;
+      }
+      var sitio = coordenadasDe(tabla, celda);
+      if (!sitio) {
+        return;
+      }
+      var fila = celda.parentNode;
+      celda.removeAttribute("rowspan");
+      celda.removeAttribute("colspan");
+      var siguiente = celda.nextSibling;
+      for (var j = 1; j < ancho; j++) {
+        fila.insertBefore(celdaVacia(celda), siguiente);
+      }
+      var filas = filasDe(tabla);
+      for (var i = 1; i < alto; i++) {
+        var otra = filas[sitio.fila + i];
+        if (!otra) {
+          continue;
+        }
+        var antes = otra.children[sitio.columna] || null;
+        for (var k = 0; k < ancho; k++) {
+          otra.insertBefore(celdaVacia(celda), antes);
+        }
+      }
+      limpiarMarcas();
+      colocarEn(celda);
+      guardar();
+      ajustar();
+      mirarTabla();
+    }
+
     function quitarTabla(tabla) {
       tabla.parentNode.removeChild(tabla);
       if (barraTabla) {
@@ -227,13 +471,17 @@
     }
 
     if (barraTabla) {
+      // Sin esto, pulsar un botón se lleva la selección y se pierde la celda.
+      barraTabla.addEventListener("mousedown", function (evento) {
+        evento.preventDefault();
+      });
       barraTabla.addEventListener("click", function (evento) {
         var boton = evento.target.closest("[data-tabla]");
         if (!boton) {
           return;
         }
         evento.preventDefault();
-        var tabla = tablaActual();
+        var tabla = tablaActual() || tablaDeLasMarcas();
         if (!tabla) {
           return;
         }
@@ -246,6 +494,12 @@
           anadirColumna(tabla);
         } else if (que === "columna-menos") {
           quitarColumna(tabla);
+        } else if (que === "unir") {
+          unirCeldas(tabla);
+          return;
+        } else if (que === "dividir") {
+          dividirCelda(tabla);
+          return;
         } else if (que === "quitar") {
           quitarTabla(tabla);
         }
@@ -263,8 +517,57 @@
     });
     area.addEventListener("blur", guardar);
     area.addEventListener("keyup", mirarTabla);
-    area.addEventListener("mouseup", mirarTabla);
     area.addEventListener("click", mirarTabla);
+
+    /* Marcar varias celdas para unirlas: con Mayúsculas y clic, o arrastrando
+       por encima de ellas. */
+    function celdaDelEvento(evento) {
+      var nodo = evento.target;
+      if (nodo && nodo.nodeType === 3) {
+        nodo = nodo.parentNode;
+      }
+      var celda = nodo && nodo.closest ? nodo.closest("td, th") : null;
+      return celda && area.contains(celda) ? celda : null;
+    }
+
+    area.addEventListener("mousedown", function (evento) {
+      var celda = celdaDelEvento(evento);
+      if (!celda) {
+        marcando = null;
+        limpiarMarcas();
+        return;
+      }
+      if (evento.shiftKey) {
+        evento.preventDefault();
+        var tabla = celda.closest("table");
+        marcarHasta(tabla, celdaRecordada || celda, celda);
+        marcando = null;
+        return;
+      }
+      marcando = celda;
+      celdaRecordada = celda;
+      limpiarMarcas();
+    });
+
+    area.addEventListener("mousemove", function (evento) {
+      if (!marcando || evento.buttons !== 1) {
+        return;
+      }
+      var celda = celdaDelEvento(evento);
+      if (!celda || celda === marcando) {
+        return;
+      }
+      var tabla = marcando.closest("table");
+      if (celda.closest("table") !== tabla) {
+        return;
+      }
+      marcarHasta(tabla, marcando, celda);
+    });
+
+    area.addEventListener("mouseup", function () {
+      marcando = null;
+      mirarTabla();
+    });
 
     /* Lo que llega de una web trae estilos, clases y hasta guiones. Se queda el
        texto con su formato básico: negritas, listas, enlaces http y tablas. */
@@ -293,8 +596,105 @@
       return documento.body.innerHTML;
     }
 
+    /* Pegar una tabla —o una lista copiada de Excel— con el cursor en una celda
+       la reparte por las celdas, como en una hoja de cálculo. Si lo pegado no
+       cabe, la tabla crece. */
+    function escaparHtml(texto) {
+      var caja = document.createElement("div");
+      caja.textContent = texto;
+      return caja.innerHTML;
+    }
+
+    function matrizDePegado(html, texto) {
+      var documento = null;
+      if (html) {
+        documento = new DOMParser().parseFromString(html, "text/html");
+        var tabla = documento.querySelector("table");
+        if (tabla) {
+          return filasDe(tabla).map(function (fila) {
+            return Array.prototype.map.call(fila.children, function (celda) {
+              return (celda.textContent || "").replace(/\s+/g, " ").trim();
+            });
+          });
+        }
+      }
+      var plano = (texto || "").replace(/\r\n?/g, "\n");
+      var sinFinal = plano.replace(/\n+$/, "");
+      if (!/[\t\n]/.test(sinFinal)) {
+        return null;
+      }
+      return sinFinal.split("\n").map(function (linea) {
+        return linea.split("\t");
+      });
+    }
+
+    function fraseDePegado(html) {
+      // Una tabla perdida en el HTML, que no venga de una celda.
+      return /<\s*table\b/i.test(html || "");
+    }
+
+    function volcarMatriz(tabla, celda, matriz) {
+      var sitio = coordenadasDe(tabla, celda);
+      if (!sitio) {
+        return;
+      }
+      var ancho = 0;
+      matriz.forEach(function (fila) {
+        ancho = Math.max(ancho, fila.length);
+      });
+      var cuerpo = tabla.tBodies[tabla.tBodies.length - 1];
+      if (!cuerpo) {
+        cuerpo = document.createElement("tbody");
+        tabla.appendChild(cuerpo);
+      }
+      // Las filas que falten.
+      var filas = filasDe(tabla);
+      while (filas.length < sitio.fila + matriz.length) {
+        var modelo = filas[filas.length - 1];
+        var nueva = document.createElement("tr");
+        var cuantas = Math.max(modelo ? modelo.children.length : 0, ancho);
+        for (var i = 0; i < cuantas; i++) {
+          nueva.appendChild(celdaVacia(modelo ? modelo.children[i] : null));
+        }
+        cuerpo.appendChild(nueva);
+        filas.push(nueva);
+      }
+      // Las columnas que falten, en todas las filas.
+      var mapa = rejilla(tabla);
+      var ultima = 0;
+      for (var clave in mapa) {
+        ultima = Math.max(ultima, parseInt(clave.split(":")[1], 10));
+      }
+      var necesarias = sitio.columna + ancho - 1;
+      if (necesarias > ultima) {
+        filas.forEach(function (fila) {
+          for (var c = ultima + 1; c <= necesarias; c++) {
+            fila.appendChild(celdaVacia(fila.children[fila.children.length - 1]));
+          }
+        });
+      }
+      // Y los datos, cada uno en su celda.
+      mapa = rejilla(tabla);
+      matriz.forEach(function (datos, i) {
+        datos.forEach(function (valor, j) {
+          var destino = mapa[sitio.fila + i + ":" + (sitio.columna + j)];
+          if (!destino) {
+            return;
+          }
+          if (destino.querySelector("table")) {
+            return;
+          }
+          destino.innerHTML = valor ? escaparHtml(valor) : "<br>";
+        });
+      });
+      colocarEn(mapa[sitio.fila + ":" + sitio.columna] || celda);
+      guardar();
+      ajustar();
+      mirarTabla();
+    }
+
     // Pegar desde una web trae estilos y guiones: se queda el texto con su
-    // formato básico y nada más.
+    // formato básico y nada más. Dentro de una tabla, los datos se reparten.
     area.addEventListener("paste", function (evento) {
       var datos = evento.clipboardData || window.clipboardData;
       if (!datos) {
@@ -302,16 +702,21 @@
       }
       var html = datos.getData("text/html");
       var texto = datos.getData("text/plain");
+      var tabla = tablaActual();
+      if (tabla) {
+        var celda = celdaActual(tabla);
+        var matriz = matrizDePegado(html, texto);
+        var esTabla = fraseDePegado(html);
+        if (celda && matriz && (esTabla || matriz.length > 1 || matriz[0].length > 1)) {
+          evento.preventDefault();
+          volcarMatriz(tabla, celda, matriz);
+          return;
+        }
+      }
       if (!html) {
         return;
       }
       evento.preventDefault();
-      // Dentro de una celda se pega el texto: una tabla ahí dentro quedaría
-      // metida en otra y no hay quien la edite.
-      if (tablaActual()) {
-        ejecutar("insertText", texto);
-        return;
-      }
       // Sin el texto plano de reserva, un HTML raro dejaría el área vacía.
       ejecutar("insertHTML", limpiarPegado(html) || texto);
     });

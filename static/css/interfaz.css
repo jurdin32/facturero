@@ -1442,6 +1442,41 @@ table[data-tabla] th:not([class*="col-"]):not([class*="sortable"]) {
 
 .stock-bajo { color: var(--rojo); font-weight: 600; }
 
+/* La existencia en la cabecera de una ficha: una píldora al lado de los botones. */
+.stock-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 12px;
+  border: 1px solid var(--linea-2);
+  border-radius: 999px;
+  background: var(--fondo);
+  color: var(--tinta-3);
+  font-size: var(--texto-s);
+  white-space: nowrap;
+}
+
+.stock-chip .cifra {
+  color: var(--tinta);
+  font-weight: 700;
+  font-size: var(--texto-m);
+}
+
+.stock-chip-bajo {
+  border-color: #fec84b;
+  background: var(--ambar-tinte);
+}
+
+.stock-chip-bajo .cifra { color: var(--ambar); }
+
+/* El nombre de quien compró, en la ficha del pedido. */
+.pedido-nombre {
+  margin: 0 0 var(--e2);
+  font-size: var(--texto-l);
+  font-weight: 600;
+  color: var(--tinta);
+}
+
 .stock-celda { display: flex; align-items: center; gap: var(--e2); max-width: 11rem; }
 .stock-celda .cifra { font-size: var(--texto-s); }
 .stock-celda .progress-component { flex: 1 1 4rem; }
@@ -3129,8 +3164,10 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
  * tarjeta: es lo que lo hace parecer un lazo, así que no se recorta. */
 .dato > .ribbon { top: 16px; }
 
-.dato-fuerte { border-color: var(--marca); box-shadow: 0 0 0 1px var(--marca) inset, var(--sombra-2); }
-.dato-atencion { border-color: #fec84b; background: var(--ambar-tinte); }
+/* Son modificadores de la tarjeta: sin el `.dato` delante, el borde y la sombra
+ * se colaban en los textos sueltos que llevan la misma clase. */
+.dato.dato-fuerte { border-color: var(--marca); box-shadow: 0 0 0 1px var(--marca) inset, var(--sombra-2); }
+.dato.dato-atencion { border-color: #fec84b; background: var(--ambar-tinte); }
 
 .dato-etiqueta {
   margin: 0;
@@ -5571,22 +5608,19 @@ td.col-clave {
 
 .editor-rico-area th { background: var(--fondo); font-weight: 600; }
 
-/* La barra de la tabla va sobre el área, sin tapar el texto. */
+/* La barra de la tabla va debajo del área: flotando por encima tapaba la
+   cabecera justo cuando hay que hacer clic en las celdas. */
 .editor-rico-tabla {
-  position: absolute;
-  top: 44px;
-  right: 10px;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
   gap: 4px;
-  padding: 4px 6px;
+  margin-top: 6px;
+  padding: 5px 7px;
   border: 1px solid var(--linea);
   border-radius: var(--radio-s);
-  background: var(--hoja);
-  box-shadow: var(--sombra-2);
+  background: var(--fondo);
   font-size: .78rem;
-  z-index: 2;
 }
 
 .editor-rico-tabla[hidden] { display: none; }
@@ -5610,7 +5644,28 @@ td.col-clave {
   cursor: pointer;
 }
 
-.editor-rico-tabla button:hover { border-color: var(--marca); color: var(--marca-osc); }
+.editor-rico-tabla button:hover:not(:disabled) { border-color: var(--marca); color: var(--marca-osc); }
+
+.editor-rico-tabla button:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+/* Un separador fino entre las filas y las columnas y lo de unir celdas. */
+.editor-rico-tabla-separador {
+  width: 1px;
+  height: 16px;
+  background: var(--linea-2);
+  margin: 0 2px;
+}
+
+/* Las celdas que se marcan con Mayúsculas y clic para unirlas. */
+.editor-rico-area td.celda-elegida,
+.editor-rico-area th.celda-elegida {
+  background: var(--marca-tinte);
+  outline: 1px solid var(--marca);
+  outline-offset: -1px;
+}
 
 .editor-rico-tabla button.peligro:hover {
   border-color: var(--rojo);
