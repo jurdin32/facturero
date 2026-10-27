@@ -229,9 +229,8 @@ class FormularioImagen(forms.ModelForm):
         fields = ["imagen", "alt", "orden"]
         labels = {"imagen": "Foto", "alt": "Texto alternativo", "orden": "Orden"}
         widgets = {
-            "imagen": forms.ClearableFileInput(
-                attrs={"accept": ".png,.jpg,.jpeg,.webp,.avif"}
-            ),
+            # Sin el «Actualmente: …» de Django: la foto ya se ve en la miniatura.
+            "imagen": forms.FileInput(attrs={"accept": ".png,.jpg,.jpeg,.webp,.avif"}),
             "alt": forms.TextInput(attrs=caja(placeholder="Qué se ve en la foto")),
             "orden": forms.NumberInput(attrs=numero()),
         }

@@ -40,6 +40,7 @@ PROPIOS = (
     "js/contabilidad.js",
     "js/caja.js",
     "js/editor_markdown.js",
+    "js/fotos_producto.js",
     "js/tienda.js",
     "js/ordenar_menu.js",
     "js/imprimir.js",

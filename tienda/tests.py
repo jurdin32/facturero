@@ -1320,6 +1320,84 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
         self.assertContains(respuesta, "js/editor_markdown.js")
 
 
+class PruebasDeLasFotos(TestCase):
+    """Las fotos se sueltan en un recuadro, sin perder el formulario de siempre."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.carpeta = tempfile.mkdtemp()
+        cls.override = override_settings(MEDIA_ROOT=cls.carpeta)
+        cls.override.enable()
+        super().setUpClass()
+
+    @classmethod
+    def tearDownClass(cls):
+        super().tearDownClass()
+        cls.override.disable()
+        shutil.rmtree(cls.carpeta, ignore_errors=True)
+
+    def setUp(self):
+        self.gente = User.objects.create_user("quien-lleva-la-tienda", "clave-de-prueba")
+        self.client.force_login(self.gente)
+        self.producto = crear_producto()
+
+    def test_la_pantalla_trae_la_zona_de_soltar(self):
+        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+
+        self.assertContains(respuesta, "data-fotos")
+        self.assertContains(respuesta, "Arrastre las fotos aquí")
+        self.assertContains(respuesta, "data-archivo")
+
+    def test_la_pantalla_carga_el_guion_de_las_fotos(self):
+        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+
+        self.assertContains(respuesta, "js/fotos_producto.js")
+
+    def test_sin_javascript_sigue_estando_el_campo_de_archivo(self):
+        respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
+
+        # El input del formset no se toca: solo se esconde con JavaScript.
+        self.assertContains(respuesta, 'type="file"')
+        self.assertContains(respuesta, "TOTAL_FORMS")
+
+    def test_una_foto_se_guarda_con_el_formulario(self):
+        datos = {
+            "tipo": self.producto.tipo,
+            "codigo_principal": self.producto.codigo_principal,
+            "descripcion": self.producto.descripcion,
+            "unidad_medida": self.producto.unidad_medida or "UNIDAD",
+            "precio_unitario": "10,00",
+            "codigo_porcentaje_iva": self.producto.codigo_porcentaje_iva or "4",
+            "activo": "on",
+            "minimo": "0",
+            "ubicacion": "",
+            "publicado": "on",
+            "orden": "0",
+            "titulo": "",
+            "resumen": "",
+            "descripcion_larga": "",
+            "precio_web": "",
+            "precio_oferta": "",
+            "oferta_desde": "",
+            "oferta_hasta": "",
+            "peso": "",
+            "imagenes-TOTAL_FORMS": "1",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-0-alt": "De frente",
+            "imagenes-0-orden": "0",
+            "imagenes-0-imagen": SimpleUploadedFile(
+                "frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png"
+            ),
+        }
+
+        self.client.post(f"/catalogos/productos/{self.producto.pk}/", datos)
+
+        foto = ImagenProducto.objects.get(producto=self.producto)
+        self.assertEqual(foto.alt, "De frente")
+        self.assertEqual(foto.orden, 0)
+        self.assertEqual(foto.imagen.name.rsplit(".", 1)[-1], "png")
+
+
 class PruebasDeLoQueSeMiro(TestCase):
     """La portada recuerda lo último que se miró, como en un marketplace."""
 

@@ -264,42 +264,77 @@
         </div>
 
         <h3 class="etiqueta">Fotos</h3>
-        <p class="ayuda">La de menor orden es la principal. PNG, JPG, WEBP o AVIF, hasta 5 MB.</p>
+        <p class="ayuda">
+          Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
+          principal. Se reducen solas al subirlas (1600 px y menos de 5 MB).
+        </p>
         {{ formset_imagenes.management_form }}
-        {% for foto in formset_imagenes %}
-          <div class="row">
-            <div class="cell-12 cell-md-4">
-              {{ foto.id }}
-              <div class="campo-caja">
-                <label class="etiqueta" for="{{ foto.imagen.id_for_label }}">Foto {{ forloop.counter }}</label>
-                {% if foto.instance.pk %}
-                  <div class="foto-vista"><img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}"></div>
-                {% endif %}
-                {{ foto.imagen }}
-                {% if foto.imagen.errors %}<p class="error">{{ foto.imagen.errors.0 }}</p>{% endif %}
-                {% if foto.instance.pk %}
-                  <label class="switch">
-                    {{ foto.DELETE }}
-                    <span class="caption-append">Quitar esta foto</span>
-                  </label>
-                {% endif %}
-              </div>
-            </div>
-            <div class="cell-12 cell-md-4">
-              <div class="campo-caja">
-                <label class="etiqueta" for="{{ foto.alt.id_for_label }}">Texto alternativo</label>
-                {{ foto.alt }}
-                <p class="ayuda">Lo que se lee cuando la imagen no carga.</p>
-              </div>
-            </div>
-            <div class="cell-12 cell-md-4">
-              <div class="campo-caja">
-                <label class="etiqueta" for="{{ foto.orden.id_for_label }}">Orden</label>
-                {{ foto.orden }}
-              </div>
-            </div>
+
+        <div class="fotos" data-fotos>
+          <div class="fotos-soltar" data-soltar>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path>
+              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+            </svg>
+            <p class="fotos-titulo">Arrastre las fotos aquí</p>
+            <p class="fotos-o">o</p>
+            <button type="button" class="boton claro" data-elegir>Elegir fotos</button>
+            <p class="fotos-nota">JPG, PNG, WEBP o AVIF · puede soltar varias a la vez</p>
+            <input class="fotos-archivo" type="file" accept="image/*" multiple data-archivo
+                   aria-label="Elegir las fotos del producto">
           </div>
-        {% endfor %}
+
+          <div class="fotos-rejilla" data-rejilla>
+            {% for foto in formset_imagenes %}
+              <figure class="foto" data-foto-tarjeta>
+                {{ foto.id }}
+                <div class="foto-marco">
+                  {% if foto.instance.pk %}
+                    <img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}" data-vista>
+                  {% else %}
+                    <img alt="" data-vista hidden>
+                    <span class="foto-vacia" data-vacia>Sin foto</span>
+                  {% endif %}
+                  <span class="foto-principal">Principal</span>
+                  <button type="button" class="foto-quitar" data-quitar
+                          aria-label="Quitar la foto">×</button>
+                  <div class="foto-mover">
+                    <button type="button" data-izquierda aria-label="Moverla antes">‹</button>
+                    <button type="button" data-derecha aria-label="Moverla después">›</button>
+                  </div>
+                </div>
+                <div class="foto-campos">
+                  {{ foto.imagen }}
+                  {{ foto.orden }}
+                  {{ foto.DELETE }}
+                  {{ foto.alt }}
+                </div>
+                {% if foto.imagen.errors %}<p class="error">{{ foto.imagen.errors.0 }}</p>{% endif %}
+              </figure>
+            {% endfor %}
+          </div>
+
+          <p class="foto-aviso" data-aviso aria-live="polite"></p>
+        </div>
+
+        <template data-plantilla-foto>
+          <figure class="foto" data-foto-tarjeta>
+            <div class="foto-marco">
+              <img alt="" data-vista hidden>
+              <span class="foto-vacia" data-vacia>Sin foto</span>
+              <span class="foto-principal">Principal</span>
+              <button type="button" class="foto-quitar" data-quitar
+                      aria-label="Quitar la foto">×</button>
+              <div class="foto-mover">
+                <button type="button" data-izquierda aria-label="Moverla antes">‹</button>
+                <button type="button" data-derecha aria-label="Moverla después">›</button>
+              </div>
+            </div>
+            <div class="foto-campos">{{ formset_imagenes.empty_form }}</div>
+          </figure>
+        </template>
+
         {% if formset_imagenes.non_form_errors %}
           <p class="error">{{ formset_imagenes.non_form_errors.0 }}</p>
         {% endif %}
@@ -311,4 +346,5 @@
 
 {% block scripts %}
   <script src="{% static 'js/editor_markdown.js' %}?v={{ sello_estatico }}"></script>
+  <script src="{% static 'js/fotos_producto.js' %}?v={{ sello_estatico }}"></script>
 {% endblock %}

@@ -5101,6 +5101,220 @@ td.col-clave {
   border: 1px solid var(--linea);
 }
 
+/* ------------------------------------------------- las fotos, para soltarlas
+ *
+ * Sin JavaScript se ve el campo de archivo de siempre (la rejilla está, pero sin
+ * la clase `con-arrastre` no se esconde nada). Con JavaScript, el recuadro de
+ * arriba es la zona de soltar y abajo van las miniaturas.
+ */
+
+.fotos-soltar {
+  display: none;
+  position: relative;
+  margin-bottom: var(--e3);
+}
+
+.fotos.con-arrastre .fotos-soltar {
+  display: grid;
+  justify-items: center;
+  gap: var(--e1);
+  padding: var(--e5) var(--e4);
+  border: 2px dashed var(--borde-campo);
+  border-radius: var(--radio-m);
+  background: var(--hoja-2);
+  color: var(--tinta-3);
+  text-align: center;
+  cursor: pointer;
+}
+
+.fotos-soltar.encima {
+  border-color: var(--marca);
+  background: var(--marca-tinte);
+  color: var(--marca-osc);
+}
+
+.fotos-soltar svg {
+  width: 34px;
+  height: 34px;
+  color: var(--tinta-4);
+}
+
+.fotos-soltar.encima svg { color: var(--marca); }
+
+.fotos-titulo {
+  margin: var(--e1) 0 0;
+  color: var(--tinta);
+  font-weight: 700;
+}
+
+.fotos-o {
+  margin: 0;
+  font-size: .78rem;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--tinta-4);
+}
+
+.fotos-nota {
+  margin: var(--e2) 0 0;
+  font-size: .76rem;
+  color: var(--tinta-3);
+}
+
+/* El campo de archivo de verdad: se dispara desde el botón. */
+.fotos-archivo {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.fotos-rejilla {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: var(--e3);
+}
+
+.fotos.con-arrastre .fotos-rejilla:empty { display: none; }
+
+.foto { margin: 0; }
+
+.foto-marco {
+  position: relative;
+  aspect-ratio: 1;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  background: var(--fondo);
+  overflow: hidden;
+}
+
+.foto-marco img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.foto-vacia {
+  display: grid;
+  place-items: center;
+  height: 100%;
+  color: var(--tinta-4);
+  font-size: .78rem;
+}
+
+.foto-principal {
+  display: none;
+  position: absolute;
+  left: 4px;
+  bottom: 4px;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: var(--marca);
+  color: #fff;
+  font-size: .68rem;
+  font-weight: 700;
+}
+
+.foto-principal.visible { display: block; }
+
+.foto-quitar {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(16, 24, 40, .72);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.foto-quitar:hover { background: var(--rojo); }
+
+.foto-mover {
+  position: absolute;
+  left: 4px;
+  right: 4px;
+  bottom: 4px;
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+
+.foto-marco:hover .foto-mover,
+.foto-marco:focus-within .foto-mover { opacity: 1; }
+
+.foto-mover button {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(16, 24, 40, .72);
+  color: #fff;
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.foto-mover button:hover { background: var(--marca); }
+
+.foto-campos input[type="file"],
+.foto-campos input[name$="-orden"],
+.foto-campos input[name$="-DELETE"],
+.foto-campos input[name$="-id"] {
+  display: none;
+}
+
+/* Metro envuelve cada campo en un div con su botón de limpiar: aquí estorban. */
+.foto-campos .input { width: 100%; }
+.foto-campos .input.campo-num { display: none; }
+.foto-campos .button-group,
+.foto-campos .input-clear-button { display: none !important; }
+
+/* El texto alternativo, debajo de la miniatura. */
+.foto-campos .input input[type="text"],
+.foto-campos input[type="text"] {
+  width: 100%;
+  height: 30px;
+  margin-top: var(--e1);
+  padding: 0 var(--e2);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: #fff;
+  font: inherit;
+  font-size: .76rem;
+  color: var(--tinta);
+}
+
+.foto-campos .input input[type="text"]:focus,
+.foto-campos input[type="text"]:focus {
+  outline: 0;
+  border-color: var(--marca);
+  box-shadow: var(--anillo);
+}
+
+/* Sin JavaScript, el campo de archivo se ve como siempre. */
+.fotos:not(.con-arrastre) .fotos-rejilla { display: block; }
+
+.fotos:not(.con-arrastre) .foto { margin-bottom: var(--e3); }
+
+.fotos:not(.con-arrastre) .foto-campos input[type="file"] { display: block; }
+
+.foto-aviso { margin: var(--e2) 0 0; font-size: .8rem; color: var(--verde); }
+.foto-aviso:empty { display: none; }
+.foto-aviso.error { color: var(--rojo); }
+
 /* ------------------------------------------- el editor de la descripción larga */
 
 .editor-markdown {

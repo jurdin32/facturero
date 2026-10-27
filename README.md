@@ -144,7 +144,7 @@ En las plantillas, los controles de escritura se esconden así:
 python manage.py test
 ```
 
-Son **466 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
+Son **470 pruebas**: los comprobantes de punta a punta, la caja y su acta, la
 supervisión de los cuadres y los vales, la contabilidad del paquete `conta_ec`,
 los reportes en sus tres salidas, los períodos, los permisos y el menú, la tienda
 con sus pedidos, preguntas, reseñas y el texto enriquecido.
