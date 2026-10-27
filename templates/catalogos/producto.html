@@ -78,17 +78,17 @@
     <div class="columnas columnas-paso">
       <div class="columna-principal">
 
-        <div class="bloque-suave">
-          <h3 class="bloque-titulo">Lo que es</h3>
+        <section class="tarjeta-ficha">
+          <h3 class="tarjeta-ficha-titulo">Lo que es</h3>
           <div class="row">
-            <div class="cell-6">
+            <div class="cell-5">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
                 {{ formulario.tipo }}
                 <p class="ayuda">Un bien lleva inventario; un servicio no se agota.</p>
               </div>
             </div>
-            <div class="cell-3">
+            <div class="cell-4">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.codigo_principal.id_for_label }}">{{ formulario.codigo_principal.label }}</label>
                 {{ formulario.codigo_principal }}
@@ -118,10 +118,10 @@
               </div>
             </div>
           </div>
-        </div>
+        </section>
 
-        <div class="bloque-suave" id="bloque-inventario">
-          <h3 class="bloque-titulo">Inventario</h3>
+        <section class="tarjeta-ficha" id="bloque-inventario">
+          <h3 class="tarjeta-ficha-titulo">Inventario</h3>
           <div class="row">
             {% if es_nuevo %}
               <div class="cell-4">
@@ -132,13 +132,13 @@
                 </div>
               </div>
             {% endif %}
-            <div class="{% if es_nuevo %}cell-4{% else %}cell-3{% endif %}">
+            <div class="cell-4">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.minimo.id_for_label }}">Mínimo para reponer</label>
                 {{ formulario.minimo }}
               </div>
             </div>
-            <div class="{% if es_nuevo %}cell-4{% else %}cell-9{% endif %}">
+            <div class="{% if es_nuevo %}cell-4{% else %}cell-8{% endif %}">
               <div class="campo-caja">
                 <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
                 {{ formulario.ubicacion }}
@@ -151,12 +151,12 @@
               el libro cuadre. <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">Mover el inventario</a>
             </p>
           {% endif %}
-        </div>
+        </section>
       </div>
 
       <aside class="columna-lateral">
-        <div class="bloque-suave">
-          <h3 class="bloque-titulo">A cómo se factura</h3>
+        <section class="tarjeta-ficha">
+          <h3 class="tarjeta-ficha-titulo">A cómo se factura</h3>
           <div class="row">
             <div class="cell-5">
               <div class="campo-caja">
@@ -177,17 +177,17 @@
             {{ formulario.codigo_auxiliar }}
             <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
           </div>
-        </div>
+        </section>
 
-        <div class="bloque-suave">
-          <h3 class="bloque-titulo">Estado</h3>
+        <section class="tarjeta-ficha">
+          <h3 class="tarjeta-ficha-titulo">Estado</h3>
           <div class="campo-caja">
             <label class="switch">
               {{ formulario.activo }}
               <span class="caption-append">Ofrecerlo en las facturas nuevas</span>
             </label>
           </div>
-        </div>
+        </section>
       </aside>
     </div>
 
@@ -197,7 +197,7 @@
   </section>
 
   <section class="bloque" id="paso-tienda" data-seccion="2">
-    <p class="ayuda">
+    <p class="ayuda paso-nota">
       Si no se publica, se sigue facturando igual y no aparece en la web.
     </p>
 
@@ -205,6 +205,7 @@
       <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
     {% endif %}
 
+    <section class="tarjeta-ficha">
     <div class="row">
       <div class="cell-5">
         <div class="campo-caja">
@@ -296,6 +297,7 @@
         </div>
       </div>
     </div>
+    </section>
 
     <div class="acciones-fila acciones-paso">
       <button type="button" class="button outline dark" data-seguir="1">Atrás</button>
@@ -304,21 +306,20 @@
   </section>
 
   <section class="bloque" id="paso-ficha" data-seccion="3">
-    <p class="ayuda">
+    <p class="ayuda paso-nota">
       Lo que se ve en la ficha del producto en la web.
     </p>
 
-    <div class="row">
-      <div class="cell-12">
-        <div class="campo-caja">
-          <label class="etiqueta" for="{{ formulario_tienda.descripcion_larga.id_for_label }}">Descripción larga</label>
-          {{ formulario_tienda.descripcion_larga }}
-          <p class="ayuda">Materiales, medidas, qué incluye…</p>
-        </div>
+    <section class="tarjeta-ficha">
+      <h3 class="tarjeta-ficha-titulo">Descripción larga</h3>
+      <div class="campo-caja">
+        {{ formulario_tienda.descripcion_larga }}
+        <p class="ayuda">Materiales, medidas, qué incluye… Se puede escribir Markdown: títulos, listas y tablas.</p>
       </div>
+    </section>
 
-      <div class="cell-12">
-        <h3 class="bloque-titulo">Fotos</h3>
+    <section class="tarjeta-ficha">
+      <h3 class="tarjeta-ficha-titulo">Fotos</h3>
         <p class="ayuda">
           Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
           principal. Se reducen solas al subirlas: se ven igual de bien y pesan mucho
@@ -404,8 +405,7 @@
         {% if formset_imagenes.non_form_errors %}
           <p class="error">{{ formset_imagenes.non_form_errors.0 }}</p>
         {% endif %}
-      </div>
-    </div>
+    </section>
 
     <div class="acciones-fila acciones-paso">
       <button type="button" class="button outline dark" data-seguir="2">Atrás</button>

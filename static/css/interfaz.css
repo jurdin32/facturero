@@ -846,25 +846,68 @@ select { padding-right: var(--e6); }
   color: var(--tinta-3);
 }
 
-/* Dentro de una tarjeta, las sub-partes van sin caja propia: se separan con una
- * línea, para que no parezcan cajas dentro de cajas. */
-.columna-principal > .bloque-suave + .bloque-suave,
-.columna-lateral > .bloque-suave + .bloque-suave {
-  margin-top: var(--e6);
-  padding-top: var(--e5);
-  border-top: 1px solid var(--linea);
+/* Las secciones de la ficha del producto: cada una es su tarjeta blanca sobre el
+ * fondo gris, con una sombra que apenas se nota y su título en negrita. */
+.tarjeta-ficha {
+  /* Metro centra los `<section>` con `margin: 0 auto`, que en una columna flex
+   * los encoge al ancho de su contenido. */
+  width: 100%;
+  margin: 0;
+  padding: var(--e5);
+  background: var(--hoja);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-m);
+  box-shadow: var(--sombra-1);
 }
+
+.tarjeta-ficha + .tarjeta-ficha { margin-top: var(--e4); }
+
+.tarjeta-ficha-titulo {
+  margin: 0 0 var(--e4);
+  font-size: var(--texto-m);
+  font-weight: 600;
+  color: var(--tinta);
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+/* Dentro de cada tarjeta los campos guardan el mismo aire. */
+.tarjeta-ficha .row + .campo-caja,
+.tarjeta-ficha .campo-caja + .campo-caja { margin-top: var(--e4); }
+
+/* Las dos columnas de la ficha, más parejas: la derecha no se queda corta.
+ * Necesita las dos clases para ganarle a `.columnas`, que es la regla general. */
+.columnas.columnas-paso {
+  grid-template-columns: minmax(0, 1fr) clamp(320px, 40%, 430px);
+  gap: var(--e5);
+}
+
+.columnas-paso > .columna-principal,
+.columnas-paso > .columna-lateral {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e5);
+}
+
+/* El paso no es una tarjeta: lo son las secciones de dentro, así que el fondo
+ * claro se ve entre ellas. */
+.hoja form > [data-seccion] {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+}
+
+.paso-nota { margin: 0 0 var(--e4); }
+
+/* El paso se cierra con sus botones a la derecha, como el resto de la casa. */
+.acciones-paso { margin-top: var(--e5); justify-content: flex-end; }
 
 /* La ficha del producto lleva su asistente dentro del formulario: la tarjeta del
  * asistente no necesita el aire de abajo del resto. */
 .hoja form > .asistente { margin-bottom: var(--e5); }
 
-/* Los botones que pasan de un paso a otro, al pie de la tarjeta. */
-.acciones-paso {
-  margin-top: var(--e5);
-  padding-top: var(--e4);
-  border-top: 1px solid var(--linea);
-}
+
 
 /* Los apartados de una tarjeta larga: un renglón con su línea encima, sin abrir
  * otra tarjeta. El primero va pegado al título de la sección. */
