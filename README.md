@@ -29,7 +29,8 @@ Está hecho con **Django 6** y se apoya en dos paquetes de la casa:
   ficha se le **pregunta al vendedor** y se deja la **reseña**; las respuestas y las
   opiniones se moderan antes de publicarse, en sus apartados del menú. La **descripción
   larga** se escribe en Markdown, con su editor de botones —títulos, listas, tablas y
-  enlaces—, y se publica ya formateada y limpia. Las categorías se crean desde la
+  enlaces—: la tabla se arma en una cuadrícula, o se pega ya hecha desde Excel, sin
+  escribir barras ni guiones y se publica ya formateada y limpia. Las categorías se crean desde la
   aplicación y los pedidos se revisan y se pasan a factura desde «Pedidos de la
   tienda». Se publica desde la pantalla del producto, sin darlo de alta dos veces; lo
   que no se publica se sigue facturando igual.

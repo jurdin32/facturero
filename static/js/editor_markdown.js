@@ -24,8 +24,7 @@
       linea: "- ", ejemplo: "Primer punto\n- Segundo punto" },
     { texto: "1.", titulo: "Lista numerada", clase: "",
       linea: "1. ", ejemplo: "Primer paso\n2. Segundo paso" },
-    { texto: "▦", titulo: "Tabla", clase: "",
-      plantilla: "| Columna | Columna |\n| --- | --- |\n| Dato | Dato |\n| Dato | Dato |\n" },
+    { texto: "▦ Tabla", titulo: "Tabla: se arma en una cuadrícula", clase: "tabla", tabla: true },
     { texto: "🔗", titulo: "Enlace", clase: "",
       antes: "[", despues: "](https://)", ejemplo: "el texto del enlace" },
     { texto: "❝", titulo: "Cita", clase: "", linea: "> ", ejemplo: "Una nota al margen" },
@@ -39,7 +38,7 @@
     ["## Título", "un título de sección"],
     ["- punto", "lista con viñetas"],
     ["1. paso", "lista numerada"],
-    ["| a | b |", "tabla (la segunda línea son los guiones)"],
+    ["▦ Tabla", "una tabla, armada en una cuadrícula"],
     ["[texto](https://…)", "un enlace"],
     ["> nota", "una cita"],
     ["`código`", "código en línea"]
@@ -97,8 +96,451 @@
     escribir(campo, salto + boton.plantilla, parte.inicio, parte.fin);
   }
 
+  /* --------------------------------------------------------------- las tablas
+   *
+   * Una tabla en Markdown son barras y una segunda línea de guiones: pedirle eso
+   * a quien factura no tiene sentido. El botón de la tabla abre una cuadrícula
+   * donde se escribe como en una hoja de cálculo, y aquí se pasa a Markdown. Si
+   * el cursor estaba dentro de una tabla, la carga para retocarla.
+   */
+
+  var TABLA_COLUMNAS = 8;
+  var TABLA_FILAS = 6;
+  var SEPARADORA = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/;
+  var HUECO = "\u0000";
+
+  function celdasDe(linea) {
+    var texto = linea.trim();
+    if (texto.charAt(0) === "|") {
+      texto = texto.slice(1);
+    }
+    if (texto.charAt(texto.length - 1) === "|") {
+      texto = texto.slice(0, -1);
+    }
+    return texto.replace(/\\\|/g, HUECO).split("|").map(function (celda) {
+      return celda.replace(new RegExp(HUECO, "g"), "|").trim();
+    });
+  }
+
+  function aMarkdown(datos) {
+    var columnas = 1;
+    datos.forEach(function (fila) {
+      columnas = Math.max(columnas, fila.length);
+    });
+    var normal = datos.map(function (fila) {
+      var copia = fila.slice(0, columnas);
+      while (copia.length < columnas) {
+        copia.push("");
+      }
+      return copia.map(function (celda) {
+        return String(celda).replace(/\|/g, "\\|").replace(/\n/g, " ").trim();
+      });
+    });
+    if (!normal.length) {
+      normal = [[""]];
+    }
+    var salida = ["| " + normal[0].join(" | ") + " |"];
+    salida.push("| " + normal[0].map(function () { return "---"; }).join(" | ") + " |");
+    normal.slice(1).forEach(function (fila) {
+      salida.push("| " + fila.join(" | ") + " |");
+    });
+    return salida.join("\n") + "\n";
+  }
+
+  function tablaEnCursor(campo) {
+    var valor = campo.value;
+    var posicion = campo.selectionStart;
+    var desde = valor.lastIndexOf("\n", posicion - 1) + 1;
+    var hasta = valor.indexOf("\n", posicion);
+    if (hasta === -1) {
+      hasta = valor.length;
+    }
+    if (valor.slice(desde, hasta).indexOf("|") === -1) {
+      return null;
+    }
+
+    while (desde > 0) {
+      var anterior = valor.lastIndexOf("\n", desde - 2) + 1;
+      if (valor.slice(anterior, desde - 1).indexOf("|") === -1) {
+        break;
+      }
+      desde = anterior;
+    }
+    while (hasta < valor.length) {
+      var siguiente = valor.indexOf("\n", hasta + 1);
+      var fin = siguiente === -1 ? valor.length : siguiente;
+      if (valor.slice(hasta + 1, fin).indexOf("|") === -1) {
+        break;
+      }
+      hasta = fin;
+    }
+
+    var lineas = valor.slice(desde, hasta).split("\n").filter(function (linea) {
+      return linea.trim() !== "";
+    });
+    if (lineas.length < 2 || !SEPARADORA.test(lineas[1])) {
+      return null;
+    }
+    return {
+      desde: desde,
+      hasta: hasta,
+      datos: [celdasDe(lineas[0])].concat(lineas.slice(2).map(celdasDe))
+    };
+  }
+
+  function insertarTabla(campo, markdown, desde, hasta) {
+    var valor = campo.value;
+    var antes = valor.slice(0, desde);
+    var despues = valor.slice(hasta);
+    var previo = antes && !/\n$/.test(antes) ? "\n\n" : "";
+    var posterior = despues && !/^\n/.test(despues) ? "\n" : "";
+    escribir(campo, previo + markdown + posterior, desde, hasta);
+  }
+
+  /* Los datos que se pegan desde una hoja de cálculo: columnas separadas por
+   * tabuladores (lo que copia Excel) o, si no, por punto y coma o coma. */
+  function datosPegados(texto) {
+    var lineas = texto.replace(/\r/g, "").split("\n").filter(function (linea) {
+      return linea.trim() !== "";
+    });
+    if (!lineas.length) {
+      return [];
+    }
+    if (lineas[0].indexOf("|") !== -1) {
+      return lineas.filter(function (linea) {
+        return !SEPARADORA.test(linea);
+      }).map(celdasDe);
+    }
+    var separador = "\t";
+    if (lineas[0].indexOf("\t") === -1) {
+      separador = lineas[0].indexOf(";") !== -1 ? ";" : (lineas[0].indexOf(",") !== -1 ? "," : null);
+    }
+    return lineas.map(function (linea) {
+      if (separador === null) {
+        return [linea.trim()];
+      }
+      return linea.split(separador).map(function (celda) {
+        return celda.trim();
+      });
+    });
+  }
+
+  function plural(cantidad, uno, varios) {
+    return cantidad + " " + (cantidad === 1 ? uno : varios);
+  }
+
+  function crearDialogoTabla(doc, campo) {
+    var dlg = doc.createElement("dialog");
+    dlg.className = "editor-tabla";
+    dlg.setAttribute("aria-label", "Tabla de la descripción");
+
+    var caja = doc.createElement("div");
+    caja.className = "editor-tabla-caja";
+    dlg.appendChild(caja);
+
+    var cabecera = doc.createElement("div");
+    cabecera.className = "editor-tabla-cabecera";
+    var titulo = doc.createElement("h2");
+    titulo.className = "editor-tabla-titulo";
+    cabecera.appendChild(titulo);
+    var cerrar = doc.createElement("button");
+    cerrar.type = "button";
+    cerrar.className = "editor-tabla-cerrar";
+    cerrar.textContent = "×";
+    cerrar.setAttribute("aria-label", "Cerrar");
+    cerrar.addEventListener("click", function () { dlg.close(); });
+    cabecera.appendChild(cerrar);
+    caja.appendChild(cabecera);
+
+    var ayuda = doc.createElement("p");
+    ayuda.className = "editor-tabla-ayuda";
+    ayuda.textContent = "Elija el tamaño y escriba dentro de las celdas. La primera fila es el encabezado.";
+    caja.appendChild(ayuda);
+
+    var rapida = doc.createElement("div");
+    rapida.className = "editor-tabla-rapida";
+    rapida.setAttribute("role", "group");
+    rapida.setAttribute("aria-label", "Tamaño de la tabla");
+    var celdas = [];
+    for (var f = 0; f < TABLA_FILAS; f++) {
+      for (var c = 0; c < TABLA_COLUMNAS; c++) {
+        var celda = doc.createElement("button");
+        celda.type = "button";
+        celda.className = "editor-tabla-rapida-celda";
+        celda.dataset.fila = f + 1;
+        celda.dataset.columna = c + 1;
+        celda.setAttribute("aria-label", plural(c + 1, "columna", "columnas") + " × " + plural(f + 1, "fila", "filas"));
+        rapida.appendChild(celda);
+        celdas.push(celda);
+      }
+    }
+    caja.appendChild(rapida);
+
+    var medida = doc.createElement("p");
+    medida.className = "editor-tabla-medida";
+    medida.setAttribute("aria-live", "polite");
+    caja.appendChild(medida);
+
+    function marcarRapida(filas, columnas) {
+      celdas.forEach(function (una) {
+        var activa = +una.dataset.fila <= filas && +una.dataset.columna <= columnas;
+        una.classList.toggle("activa", activa);
+      });
+    }
+
+    function actualizarMedida() {
+      medida.textContent = plural(dlg.estado.columnas, "columna", "columnas") + " × " + plural(dlg.estado.filas, "fila", "filas");
+      marcarRapida(dlg.estado.filas, dlg.estado.columnas);
+    }
+    dlg.actualizarMedida = actualizarMedida;
+
+    rapida.addEventListener("mouseover", function (evento) {
+      var una = evento.target.closest(".editor-tabla-rapida-celda");
+      if (!una) {
+        return;
+      }
+      marcarRapida(+una.dataset.fila, +una.dataset.columna);
+      medida.textContent = plural(+una.dataset.columna, "columna", "columnas") + " × " + plural(+una.dataset.fila, "fila", "filas");
+    });
+    rapida.addEventListener("mouseleave", actualizarMedida);
+    rapida.addEventListener("click", function (evento) {
+      var una = evento.target.closest(".editor-tabla-rapida-celda");
+      if (!una) {
+        return;
+      }
+      cambiarTamano(+una.dataset.fila, +una.dataset.columna);
+      var primera = caja.querySelector(".editor-tabla-celda");
+      if (primera) {
+        primera.focus();
+        primera.select();
+      }
+    });
+
+    var tamano = doc.createElement("div");
+    tamano.className = "editor-tabla-tamano";
+
+    function grupo(rotulo, singular, eje) {
+      var grupoCaja = doc.createElement("div");
+      grupoCaja.className = "editor-tabla-paso";
+      var etiqueta = doc.createElement("span");
+      etiqueta.textContent = rotulo;
+      grupoCaja.appendChild(etiqueta);
+      [["−", -1], ["+", 1]].forEach(function (par, indice) {
+        if (indice === 1) {
+          var cuenta = doc.createElement("output");
+          cuenta.className = "editor-tabla-cuenta";
+          cuenta.textContent = "2";
+          grupoCaja.appendChild(cuenta);
+        }
+        var boton = doc.createElement("button");
+        boton.type = "button";
+        boton.className = "editor-tabla-paso-boton";
+        boton.textContent = par[0];
+        boton.setAttribute("aria-label", (par[1] < 0 ? "Quitar una " : "Añadir una ") + singular);
+        boton.addEventListener("click", function () {
+          if (eje === "filas") {
+            cambiarTamano(dlg.estado.filas + par[1], dlg.estado.columnas);
+          } else {
+            cambiarTamano(dlg.estado.filas, dlg.estado.columnas + par[1]);
+          }
+        });
+        grupoCaja.appendChild(boton);
+      });
+      tamano.appendChild(grupoCaja);
+      return grupoCaja;
+    }
+
+    var grupoColumnas = grupo("Columnas", "columna", "columnas");
+    var grupoFilas = grupo("Filas", "fila", "filas");
+    caja.appendChild(tamano);
+
+    var cuadricula = doc.createElement("div");
+    cuadricula.className = "editor-tabla-cuadricula";
+    cuadricula.setAttribute("role", "group");
+    cuadricula.setAttribute("aria-label", "Celdas de la tabla");
+    caja.appendChild(cuadricula);
+
+    function cambiarTamano(filas, columnas) {
+      filas = Math.min(TABLA_FILAS, Math.max(1, filas));
+      columnas = Math.min(TABLA_COLUMNAS, Math.max(1, columnas));
+      var estado = dlg.estado;
+      var datos = [];
+      for (var fila = 0; fila < filas; fila++) {
+        var valores = [];
+        for (var columna = 0; columna < columnas; columna++) {
+          valores.push((estado.datos[fila] && estado.datos[fila][columna]) || "");
+        }
+        datos.push(valores);
+      }
+      estado.filas = filas;
+      estado.columnas = columnas;
+      estado.datos = datos;
+      pintar();
+    }
+    dlg.cambiarTamano = cambiarTamano;
+
+    function pintar() {
+      var estado = dlg.estado;
+      cuadricula.innerHTML = "";
+      cuadricula.style.setProperty("--columnas", estado.columnas);
+      for (var fila = 0; fila < estado.filas; fila++) {
+        for (var columna = 0; columna < estado.columnas; columna++) {
+          var entrada = doc.createElement("input");
+          entrada.type = "text";
+          entrada.className = "editor-tabla-celda" + (fila === 0 ? " editor-tabla-celda-cabecera" : "");
+          entrada.value = estado.datos[fila][columna] || "";
+          entrada.placeholder = fila === 0 ? "Encabezado " + (columna + 1) : "";
+          entrada.dataset.fila = fila;
+          entrada.dataset.columna = columna;
+          entrada.setAttribute("aria-label", "Fila " + (fila + 1) + ", columna " + (columna + 1));
+          cuadricula.appendChild(entrada);
+        }
+      }
+      grupoColumnas.querySelector(".editor-tabla-cuenta").textContent = estado.columnas;
+      grupoFilas.querySelector(".editor-tabla-cuenta").textContent = estado.filas;
+      actualizarMedida();
+    }
+    dlg.pintar = pintar;
+
+    cuadricula.addEventListener("input", function (evento) {
+      var entrada = evento.target;
+      if (!entrada.dataset || entrada.dataset.fila === undefined) {
+        return;
+      }
+      dlg.estado.datos[+entrada.dataset.fila][+entrada.dataset.columna] = entrada.value;
+    });
+
+    // Enter pasa a la celda siguiente, como en una hoja de cálculo.
+    cuadricula.addEventListener("keydown", function (evento) {
+      if (evento.key !== "Enter") {
+        return;
+      }
+      evento.preventDefault();
+      var entradas = Array.prototype.slice.call(cuadricula.querySelectorAll(".editor-tabla-celda"));
+      var siguiente = entradas[entradas.indexOf(evento.target) + 1];
+      if (siguiente) {
+        siguiente.focus();
+        siguiente.select();
+      }
+    });
+
+    var pegar = doc.createElement("details");
+    pegar.className = "editor-tabla-pegar";
+    var resumen = doc.createElement("summary");
+    resumen.textContent = "Ya la tengo en Excel o en una lista";
+    pegar.appendChild(resumen);
+    var nota = doc.createElement("p");
+    nota.className = "editor-tabla-nota";
+    nota.textContent = "Copie las celdas en Excel y péguelas aquí, o escriba una línea por fila separando con punto y coma.";
+    pegar.appendChild(nota);
+    var area = doc.createElement("textarea");
+    area.rows = 4;
+    area.placeholder = "Pegue aquí…";
+    area.className = "editor-tabla-pegado";
+    pegar.appendChild(area);
+    var usar = doc.createElement("button");
+    usar.type = "button";
+    usar.className = "editor-tabla-usar";
+    usar.textContent = "Usar estos datos";
+    usar.addEventListener("click", function () {
+      var datos = datosPegados(area.value);
+      if (!datos.length) {
+        area.focus();
+        return;
+      }
+      var columnas = 1;
+      datos.forEach(function (fila) { columnas = Math.max(columnas, fila.length); });
+      dlg.estado.datos = datos;
+      cambiarTamano(Math.max(datos.length, 1), columnas);
+      pegar.open = false;
+      var primera = cuadricula.querySelector(".editor-tabla-celda");
+      if (primera) {
+        primera.focus();
+      }
+    });
+    pegar.appendChild(usar);
+    caja.appendChild(pegar);
+
+    var acciones = doc.createElement("div");
+    acciones.className = "editor-tabla-acciones";
+    var cancelar = doc.createElement("button");
+    cancelar.type = "button";
+    cancelar.className = "editor-tabla-cancelar";
+    cancelar.textContent = "Cancelar";
+    cancelar.addEventListener("click", function () { dlg.close(); });
+    acciones.appendChild(cancelar);
+    var aceptar = doc.createElement("button");
+    aceptar.type = "button";
+    aceptar.className = "editor-tabla-aceptar";
+    acciones.appendChild(aceptar);
+    aceptar.addEventListener("click", function () {
+      var estado = dlg.estado;
+      var markdown = aMarkdown(estado.datos);
+      if (estado.editar) {
+        escribir(campo, markdown, estado.desde, estado.hasta);
+      } else {
+        insertarTabla(campo, markdown, estado.desde, estado.hasta);
+      }
+      dlg.close();
+    });
+    caja.appendChild(acciones);
+
+    dlg.aceptar = aceptar;
+    dlg.titulo = titulo;
+    dlg.area = area;
+    dlg.cuadricula = cuadricula;
+    dlg.estado = { editar: false, datos: [["", ""], ["", ""]], filas: 2, columnas: 2, desde: 0, hasta: 0 };
+    return dlg;
+  }
+
+  function abrirTabla(campo) {
+    var dlg = campo.editorTabla;
+    if (!dlg) {
+      return;
+    }
+    var parte = seleccion(campo);
+    var hallada = tablaEnCursor(campo);
+    if (hallada) {
+      dlg.estado = {
+        editar: true,
+        datos: hallada.datos,
+        filas: hallada.datos.length,
+        columnas: hallada.datos[0].length,
+        desde: hallada.desde,
+        hasta: hallada.hasta
+      };
+      dlg.titulo.textContent = "Editar la tabla";
+      dlg.aceptar.textContent = "Aplicar los cambios";
+    } else {
+      dlg.estado = {
+        editar: false,
+        datos: [["", ""], ["", ""], ["", ""]],
+        filas: 3,
+        columnas: 2,
+        desde: parte.inicio,
+        hasta: parte.fin
+      };
+      dlg.titulo.textContent = "Nueva tabla";
+      dlg.aceptar.textContent = "Insertar la tabla";
+    }
+    dlg.area.value = "";
+    dlg.pintar();
+    if (typeof dlg.showModal === "function") {
+      dlg.showModal();
+    } else {
+      dlg.setAttribute("open", "open");
+    }
+    var primera = dlg.cuadricula.querySelector(".editor-tabla-celda");
+    if (primera) {
+      primera.focus();
+      primera.select();
+    }
+  }
+
   function accion(campo, boton) {
-    if (boton.plantilla) {
+    if (boton.tabla) {
+      abrirTabla(campo);
+    } else if (boton.plantilla) {
       insertarPlantilla(campo, boton);
     } else if (boton.linea) {
       porLineas(campo, boton);
@@ -106,7 +548,6 @@
       envolver(campo, boton);
     }
   }
-
   function crearBoton(doc, boton, campo) {
     var elemento = doc.createElement("button");
     elemento.type = "button";
@@ -173,6 +614,12 @@
     ancla.parentNode.insertBefore(caja, ancla);
     caja.appendChild(ancla);
     caja.appendChild(crearGuia(doc));
+
+    // El constructor de tablas va al final del documento: dentro del formulario
+    // estorbaría y cualquier contenedor con overflow lo recortaría.
+    var dialogo = crearDialogoTabla(doc, campo);
+    campo.editorTabla = dialogo;
+    (doc.body || caja).appendChild(dialogo);
   }
 
   function arrancar() {

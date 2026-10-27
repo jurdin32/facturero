@@ -103,6 +103,9 @@ SECCIONES: tuple[dict[str, Any], ...] = (
             "En el producto se fija el precio, la tarifa de IVA y el mínimo de existencias.",
             "Al final de esa misma ficha, «En la tienda» decide si el producto sale a la "
             "web, con su nombre, su categoría, su precio de venta, su oferta y sus fotos.",
+            "La descripción larga se escribe con los botones de la barra. La tabla no se "
+            "escribe a mano: el botón de la tabla abre una cuadrícula donde se rellenan las "
+            "celdas, o se pega lo copiado de Excel, y él pone las barras.",
             "En el cliente se guardan la identificación, la dirección y el correo para el "
             "envío del comprobante.",
         ),
