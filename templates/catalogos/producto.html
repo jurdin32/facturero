@@ -60,14 +60,14 @@
               <p class="ayuda">Es el texto que sale en la factura: escríbalo como quiere que lo lea el cliente.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-3">
+          <div class="cell-12 cell-md-4">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
               {{ formulario.unidad_medida }}
               <p class="ayuda">Si la deja vacía se usa UNIDAD o SERVICIO.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-9">
+          <div class="cell-12 cell-md-8">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario.datos_adicionales.id_for_label }}">Detalles adicionales</label>
               {{ formulario.datos_adicionales }}
@@ -95,7 +95,7 @@
               {{ formulario.minimo }}
             </div>
           </div>
-          <div class="cell-12 cell-md-4">
+          <div class="cell-12 {% if es_nuevo %}cell-md-4{% else %}cell-md-8{% endif %}">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
               {{ formulario.ubicacion }}
@@ -114,14 +114,20 @@
     <aside class="columna-lateral">
       <div class="resumen">
         <h2 class="bloque-titulo">A cómo se factura</h2>
-        <div class="campo-caja">
-          <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
-          {{ formulario.precio_unitario }}
-          {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
-        </div>
-        <div class="campo-caja">
-          <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
-          {{ formulario.codigo_porcentaje_iva }}
+        <div class="row">
+          <div class="cell-5">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
+              {{ formulario.precio_unitario }}
+              {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
+          <div class="cell-7">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
+              {{ formulario.codigo_porcentaje_iva }}
+            </div>
+          </div>
         </div>
         <div class="campo-caja">
           <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
@@ -153,6 +159,7 @@
           <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
         {% endif %}
 
+        <h3 class="bloque-subtitulo">Publicación</h3>
         <div class="row">
           <div class="cell-12 cell-md-4">
             <div class="campo-caja">
@@ -180,6 +187,7 @@
           </div>
         </div>
 
+        <h3 class="bloque-subtitulo">Cómo se presenta</h3>
         <div class="row">
           <div class="cell-12 cell-md-6">
             <div class="campo-caja">
@@ -197,7 +205,7 @@
               <p class="ayuda">Si se deja vacío se usa la descripción del producto.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-12">
+          <div class="cell-12">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario_tienda.resumen.id_for_label }}">Resumen</label>
               {{ formulario_tienda.resumen }}
@@ -205,7 +213,7 @@
               <p class="ayuda">Una o dos líneas para el listado y el buscador.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-12">
+          <div class="cell-12">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario_tienda.descripcion_larga.id_for_label }}">Descripción larga</label>
               {{ formulario_tienda.descripcion_larga }}
@@ -214,8 +222,9 @@
           </div>
         </div>
 
+        <h3 class="bloque-subtitulo">Precios y envío</h3>
         <div class="row">
-          <div class="cell-12 cell-md-3">
+          <div class="cell-12 cell-md-4">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario_tienda.precio_web.id_for_label }}">Precio en la web</label>
               {{ formulario_tienda.precio_web }}
@@ -223,7 +232,7 @@
               <p class="ayuda">Sin IVA. Vacío: el del producto.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-3">
+          <div class="cell-12 cell-md-4">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario_tienda.precio_oferta.id_for_label }}">Precio de oferta</label>
               {{ formulario_tienda.precio_oferta }}
@@ -231,21 +240,7 @@
               <p class="ayuda">Sin IVA; tiene que ser menor.</p>
             </div>
           </div>
-          <div class="cell-12 cell-md-3">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
-              {{ formulario_tienda.oferta_desde }}
-              {% if formulario_tienda.oferta_desde.errors %}<p class="error">{{ formulario_tienda.oferta_desde.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-          <div class="cell-12 cell-md-3">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
-              {{ formulario_tienda.oferta_hasta }}
-              {% if formulario_tienda.oferta_hasta.errors %}<p class="error">{{ formulario_tienda.oferta_hasta.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-          <div class="cell-12 cell-md-3" id="bloque-envio">
+          <div class="cell-12 cell-md-4" id="bloque-envio">
             <div class="campo-caja">
               <label class="etiqueta" for="{{ formulario_tienda.peso.id_for_label }}">Peso (kg)</label>
               {{ formulario_tienda.peso }}
@@ -253,9 +248,24 @@
               <p class="ayuda">Opcional: para calcular el envío.</p>
             </div>
           </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
+              {{ formulario_tienda.oferta_desde }}
+              {% if formulario_tienda.oferta_desde.errors %}<p class="error">{{ formulario_tienda.oferta_desde.errors.0 }}</p>{% endif %}
+              <p class="ayuda">Si se deja vacío, la oferta no caduca.</p>
+            </div>
+          </div>
+          <div class="cell-12 cell-md-6">
+            <div class="campo-caja">
+              <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
+              {{ formulario_tienda.oferta_hasta }}
+              {% if formulario_tienda.oferta_hasta.errors %}<p class="error">{{ formulario_tienda.oferta_hasta.errors.0 }}</p>{% endif %}
+            </div>
+          </div>
         </div>
 
-        <h3 class="etiqueta">Fotos</h3>
+        <h3 class="bloque-subtitulo">Fotos</h3>
         <p class="ayuda">
           Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
           principal. Se reducen solas al subirlas: se ven igual de bien y pesan mucho

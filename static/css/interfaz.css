@@ -128,6 +128,9 @@
   --button-font-size: var(--texto-s);
 
   --input-height: 40px;
+  /* Metro trae 4 px y los campos de la casa 6: con los dos números en la misma
+   * pantalla se notaba. */
+  --input-border-radius: var(--radio-s);
   --input-font-size: var(--texto-m);
   --input-border-color: var(--borde-campo);
   --input-border-color-hover: var(--tinta-4);
@@ -819,7 +822,7 @@ select { padding-right: var(--e6); }
 
 /* Las secciones son tarjetas: fondo blanco, borde y nada más. */
 .bloque {
-  margin-bottom: var(--e6);
+  margin-bottom: var(--e7);
   padding: var(--e5);
   background: var(--hoja);
   border: 1px solid var(--linea);
@@ -843,6 +846,21 @@ select { padding-right: var(--e6); }
   color: var(--tinta-3);
 }
 
+/* Los apartados de una tarjeta larga: un renglón con su línea encima, sin abrir
+ * otra tarjeta. El primero va pegado al título de la sección. */
+.bloque-subtitulo {
+  margin: var(--e6) 0 var(--e3);
+  padding-top: var(--e4);
+  border-top: 1px solid var(--linea);
+  font-size: var(--texto-xs);
+  font-weight: 600;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--tinta-3);
+}
+
+.bloque-subtitulo:first-of-type { margin-top: var(--e5); padding-top: 0; border-top: 0; }
+
 .bloque-suave { border: 0; padding: 0; background: transparent; }
 
 /* La hoja va en dos columnas: lo que se factura a la izquierda y, a la derecha,
@@ -851,7 +869,8 @@ select { padding-right: var(--e6); }
 .columnas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 32%, 460px);
-  gap: var(--e5);
+  gap: var(--e7) var(--e6);
+  margin-bottom: var(--e7);
   align-items: start;
 }
 
@@ -1046,7 +1065,9 @@ select { padding-right: var(--e6); }
 .row > .cell { flex: 1 1 0; min-width: 0; }
 
 .row > .cell-12 { flex: 0 0 calc(100% - var(--e4)); max-width: calc(100% - var(--e4)); }
+.row > .cell-5 { flex: 0 0 calc(41.6667% - var(--e4)); max-width: calc(41.6667% - var(--e4)); }
 .row > .cell-6 { flex: 0 0 calc(50% - var(--e4)); max-width: calc(50% - var(--e4)); }
+.row > .cell-7 { flex: 0 0 calc(58.3333% - var(--e4)); max-width: calc(58.3333% - var(--e4)); }
 
 @media (min-width: 768px) {
   .row > .cell-md-3 { flex: 0 0 calc(25% - var(--e4)); max-width: calc(25% - var(--e4)); }
@@ -1453,6 +1474,8 @@ table[data-tabla] th:not([class*="col-"]):not([class*="sortable"]) {
   background: var(--hoja);
   box-shadow: var(--sombra-1);
 }
+
+.resumen + .resumen { margin-top: var(--e7); }
 
 .pega { position: sticky; top: calc(var(--barra) + var(--e4)); }
 
@@ -4148,6 +4171,7 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 /* El aire entre campos va aquí y no dentro de cada control: los campos quedan
  * alineados, con una separación pareja y sin agrandar las cajas. */
 .resumen .campo-caja + .campo-caja { margin-top: var(--e3); }
+.resumen .row + .campo-caja { margin-top: var(--e3); }
 .resumen .campo-caja .ayuda { margin-top: 4px; }
 .resumen .acciones-fila { margin-top: var(--e4); }
 .resumen .bloque-titulo { margin-bottom: var(--e3); }
@@ -5319,3 +5343,432 @@ td.col-clave {
 .acciones-bloque { margin-top: .9rem; display: flex; gap: .5rem; flex-wrap: wrap; }
 
 .acciones-bloque .button { width: auto; }
+
+/* ------------------------------------------- el editor de la descripción larga */
+
+.editor-markdown {
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  background: #fff;
+  overflow: hidden;
+}
+
+.editor-barra {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px;
+  padding: 4px;
+  background: #f9fafb;
+  border-bottom: 1px solid var(--linea);
+}
+
+.editor-boton {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 6px;
+  border: 0;
+  border-radius: var(--radio-s);
+  background: transparent;
+  color: var(--tinta-3);
+  font-size: .82rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor-boton:hover { background: #eef2f6; color: var(--marca-osc); }
+
+.editor-boton.fuerte { font-weight: 800; }
+
+.editor-boton.cursiva { font-family: Georgia, "Times New Roman", serif; font-style: italic; }
+
+.editor-boton.titulo { font-weight: 800; letter-spacing: -.02em; }
+
+.editor-boton.tabla { padding: 0 8px; font-weight: 600; }
+
+.editor-markdown .textarea,
+.editor-markdown > textarea {
+  border: 0 !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.editor-markdown > textarea {
+  display: block;
+  width: 100%;
+  padding: .8rem .9rem;
+  resize: vertical;
+  min-height: 360px;
+  border: 0;
+  outline: none;
+  background: #fff;
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  font-size: .88rem;
+  line-height: 1.6;
+}
+
+.editor-markdown .textarea {
+  min-height: 360px;
+}
+
+.editor-markdown .textarea textarea {
+  min-height: 340px;
+}
+
+/* Metro pone una ✕ para vaciar el campo; aquí estorba al lado del editor. */
+.editor-markdown .textarea > .button { display: none; }
+
+.editor-guia {
+  border-top: 1px solid var(--linea);
+  padding: .5rem .7rem;
+  background: #fdfdfe;
+  font-size: .78rem;
+}
+
+.editor-guia summary {
+  cursor: pointer;
+  color: var(--marca-osc);
+  font-weight: 600;
+}
+
+.editor-guia dl {
+  display: grid;
+  grid-template-columns: minmax(90px, auto) 1fr;
+  gap: .2rem .8rem;
+  margin: .5rem 0 0;
+}
+
+.editor-guia dt {
+  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+  color: var(--tinta);
+}
+
+.editor-guia dd { margin: 0; color: var(--tinta-3); }
+
+.editor-guia .editor-nota { margin: .5rem 0 0; color: var(--tinta-3); }
+
+/* ------------------------------------------------ el constructor de tablas */
+
+.editor-tabla {
+  width: min(920px, 94vw);
+  max-height: 92vh;
+  /* El restablecimiento de la aplicación ponía `margin: 0` a todo, y el diálogo
+   * se plantaba en la esquina en vez de centrarse. */
+  margin: auto;
+  padding: 0;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-m);
+  background: var(--hoja);
+  color: var(--tinta);
+  box-shadow: 0 24px 60px rgba(16, 24, 40, .22);
+  overflow: hidden;
+}
+
+.editor-tabla::backdrop { background: rgba(16, 24, 40, .4); }
+
+.editor-tabla-caja {
+  max-height: 92vh;
+  overflow: auto;
+  padding: var(--e3) var(--e4) var(--e4);
+}
+
+.editor-tabla-cabecera {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--e2);
+  margin-bottom: var(--e1);
+}
+
+.editor-tabla-titulo {
+  margin: 0;
+  font-size: var(--texto-titulo);
+  font-weight: 800;
+}
+
+.editor-tabla-cerrar {
+  padding: 0 var(--e2);
+  border: 0;
+  border-radius: var(--radio-s);
+  background: none;
+  box-shadow: none;
+  color: var(--tinta-3);
+  font-size: 22px;
+  line-height: 1.4;
+  cursor: pointer;
+}
+
+.editor-tabla-cerrar:hover { background: #eef2f6; color: var(--marca-osc); }
+
+.editor-tabla-cuerpo {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: var(--e4);
+  align-items: start;
+}
+
+.editor-tabla-lateral,
+.editor-tabla-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .editor-tabla-cuerpo { grid-template-columns: 1fr; }
+}
+
+.editor-tabla-ayuda {
+  margin: 0 0 var(--e2);
+  color: var(--tinta-3);
+  font-size: .82rem;
+}
+
+.editor-tabla-rapida {
+  display: grid;
+  width: fit-content;
+  grid-template-columns: repeat(8, 24px);
+  gap: 3px;
+  padding: var(--e1);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--fondo);
+}
+
+.editor-tabla-rapida-celda {
+  width: 24px;
+  height: 20px;
+  padding: 0;
+  border: 1px solid var(--linea-2);
+  border-radius: 3px;
+  background: var(--hoja);
+  cursor: pointer;
+}
+
+.editor-tabla-rapida-celda.activa {
+  border-color: var(--marca);
+  background: var(--marca-tinte);
+}
+
+.editor-tabla-medida {
+  margin: var(--e1) 0 var(--e2);
+  color: var(--marca-osc);
+  font-size: .8rem;
+  font-weight: 700;
+}
+
+.editor-tabla-tamano {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e3);
+  align-items: center;
+  margin-bottom: var(--e2);
+}
+
+.editor-tabla-paso {
+  display: flex;
+  align-items: center;
+  gap: var(--e1);
+  font-size: .82rem;
+  color: var(--tinta-2);
+}
+
+.editor-tabla-paso-boton {
+  width: 30px;
+  height: 28px;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  font-size: 15px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.editor-tabla-paso-boton:hover { border-color: var(--marca); color: var(--marca-osc); }
+
+.editor-tabla-paso-boton:disabled {
+  border-color: var(--linea);
+  background: var(--fondo);
+  color: var(--tinta-4);
+  cursor: not-allowed;
+}
+
+.editor-tabla-cuenta {
+  min-width: 22px;
+  text-align: center;
+  font-weight: 700;
+  color: var(--tinta);
+}
+
+.editor-tabla-cuadricula {
+  display: grid;
+  grid-template-columns: repeat(var(--columnas, 2), minmax(92px, 1fr));
+  gap: 3px;
+  max-height: 46vh;
+  overflow: auto;
+  padding: var(--e2);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--fondo);
+}
+
+/* Metro fija el alto de los campos con más peso; aquí la celda es una tabla. */
+.editor-tabla .editor-tabla-celda {
+  width: 100%;
+  min-width: 0;
+  height: 32px;
+  min-height: 32px;
+  padding: 0 var(--e2);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  box-shadow: none;
+  color: var(--tinta);
+  font: inherit;
+  font-size: .84rem;
+}
+
+.editor-tabla .editor-tabla-celda:focus,
+.editor-tabla .editor-tabla-celda:focus-visible {
+  outline: 0;
+  border-color: var(--marca);
+  box-shadow: var(--anillo);
+}
+
+.editor-tabla .editor-tabla-celda-cabecera { background: #eff4fb; font-weight: 700; }
+
+.editor-tabla-formato {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: .76rem;
+}
+
+.editor-tabla-formato code {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: #eef2f6;
+  color: var(--tinta-2);
+  font-family: inherit;
+}
+
+.editor-tabla-pegar {
+  margin-top: 0;
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  padding: var(--e2) var(--e3);
+  background: var(--hoja-2);
+}
+
+.editor-tabla-pegar summary {
+  color: var(--marca-osc);
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tabla-nota {
+  margin: var(--e2) 0;
+  color: var(--tinta-3);
+  font-size: .78rem;
+}
+
+.editor-tabla-pegado {
+  display: block;
+  width: 100%;
+  min-height: 76px;
+  padding: var(--e2);
+  border: 1px solid var(--borde-campo);
+  border-radius: var(--radio-s);
+  font: inherit;
+  font-size: .82rem;
+  resize: vertical;
+}
+
+.editor-tabla-usar {
+  margin-top: var(--e2);
+  padding: 0 var(--e3);
+  height: 30px;
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--marca-osc);
+  font: inherit;
+  font-size: .82rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tabla-usar:hover { border-color: var(--marca); }
+
+.editor-tabla-aviso {
+  margin: var(--e1) 0 0;
+  color: var(--rojo);
+  font-size: .76rem;
+}
+
+.editor-tabla-aviso:empty { display: none; }
+
+.editor-tabla-anadir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.editor-tabla-anadir-boton {
+  height: 30px;
+  padding: 0 var(--e3);
+  border: 1px dashed var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--marca-osc);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tabla-anadir-boton:hover { border-color: var(--marca); background: var(--marca-tinte); }
+
+.editor-tabla-anadir-boton:disabled {
+  border-color: var(--linea);
+  color: var(--tinta-4);
+  background: var(--fondo);
+  cursor: not-allowed;
+}
+
+.editor-tabla-acciones {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--e2);
+  margin-top: var(--e3);
+}
+
+.editor-tabla-cancelar,
+.editor-tabla-aceptar {
+  height: 34px;
+  padding: 0 var(--e4);
+  border: 1px solid var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--tinta-2);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tabla-aceptar {
+  border-color: var(--marca);
+  background: var(--marca);
+  color: #fff;
+}
+
+.editor-tabla-aceptar:hover { background: var(--marca-osc); border-color: var(--marca-osc); }
+
+.editor-tabla-cancelar:hover { background: #eef2f6; }
+
+@media (max-width: 560px) {
+  .editor-tabla-rapida { grid-template-columns: repeat(8, 20px); }
+  .editor-tabla-rapida-celda { width: 20px; height: 18px; }
+  .editor-tabla { width: 96vw; }
+}
