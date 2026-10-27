@@ -29,6 +29,99 @@
     }
   }
 
+  /* El escaparate de la portada: pasa solo cada cinco segundos y se detiene
+   * mientras el ratón está encima o algo de dentro tiene el foco, que si no se
+   * mueve justo cuando se va a pulsar. Respeta a quien pidió menos movimiento. */
+  function escaparate() {
+    var caja = document.querySelector("[data-slider]");
+    if (!caja) {
+      return;
+    }
+    var slides = Array.prototype.slice.call(caja.querySelectorAll("[data-slide]"));
+    var puntos = Array.prototype.slice.call(caja.querySelectorAll("[data-punto]"));
+    if (slides.length < 2) {
+      return;
+    }
+    var CADA = 5000;
+    var actual = 0;
+    var reloj = null;
+    var quieto =
+      window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    function mostrar(indice) {
+      actual = (indice + slides.length) % slides.length;
+      slides.forEach(function (slide, i) {
+        var activa = i === actual;
+        slide.classList.toggle("activa", activa);
+        if (activa) {
+          slide.setAttribute("aria-current", "true");
+        } else {
+          slide.removeAttribute("aria-current");
+        }
+      });
+      puntos.forEach(function (punto, i) {
+        punto.classList.toggle("activo", i === actual);
+        punto.setAttribute("aria-selected", i === actual ? "true" : "false");
+      });
+    }
+
+    function parar() {
+      if (reloj) {
+        window.clearInterval(reloj);
+        reloj = null;
+      }
+    }
+
+    function andar() {
+      parar();
+      if (quieto) {
+        return;
+      }
+      reloj = window.setInterval(function () {
+        mostrar(actual + 1);
+      }, CADA);
+    }
+
+    caja.addEventListener("mouseenter", parar);
+    caja.addEventListener("mouseleave", andar);
+    caja.addEventListener("focusin", parar);
+    caja.addEventListener("focusout", andar);
+
+    var antes = caja.querySelector("[data-antes]");
+    var despues = caja.querySelector("[data-despues]");
+    if (antes) {
+      antes.addEventListener("click", function () {
+        mostrar(actual - 1);
+        andar();
+      });
+    }
+    if (despues) {
+      despues.addEventListener("click", function () {
+        mostrar(actual + 1);
+        andar();
+      });
+    }
+    puntos.forEach(function (punto, i) {
+      punto.addEventListener("click", function () {
+        mostrar(i);
+        andar();
+      });
+    });
+
+    // Con el teclado, las flechas mueven el escaparate cuando tiene el foco.
+    caja.addEventListener("keydown", function (evento) {
+      if (evento.key === "ArrowLeft") {
+        mostrar(actual - 1);
+        andar();
+      } else if (evento.key === "ArrowRight") {
+        mostrar(actual + 1);
+        andar();
+      }
+    });
+
+    andar();
+  }
+
   function galeria() {
     var miniaturas = document.querySelectorAll("[data-foto]");
     var caja = document.getElementById("foto-principal-caja");
@@ -212,6 +305,7 @@
   }
 
   function arrancar() {
+    escaparate();
     galeria();
     compartir();
     estrellas();

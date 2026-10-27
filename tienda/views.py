@@ -94,16 +94,28 @@ def portada(request: HttpRequest) -> HttpResponse:
         .order_by("-ventas")[:6]
     )
 
+    # El slider de la portada: primero lo destacado, y si no hay bastante, el
+    # resto del catálogo. Solo entran los que tienen foto, que es lo que se ve.
+    con_foto = [
+        producto for producto in destacados + publicados if producto.imagen_principal
+    ]
+    diapositivas = []
+    vistos_en_el_slider = set()
+    for producto in con_foto:
+        if producto.pk in vistos_en_el_slider:
+            continue
+        vistos_en_el_slider.add(producto.pk)
+        diapositivas.append(producto)
+        if len(diapositivas) == 6:
+            break
+
     contexto = {
         **_publico(),
         "categorias": Categoria.objects.filter(activa=True, padre__isnull=True),
         "ofertas": ofertas,
         "destacados": destacados,
         "vendidos": list(vendidos),
-        # El banner enseña la primera foto que haya, aunque no sea del primero.
-        "banner": next(
-            (producto for producto in destacados if producto.imagen_principal), None
-        ),
+        "diapositivas": diapositivas,
         "son_destacados": son_destacados,
         "vistos": _ultimos_vistos(request),
         "total": len(publicados),

@@ -215,6 +215,7 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
 .banner p { color: var(--tinta-2); max-width: 46ch; margin: 0 0 1.1rem; }
 
 .banner-foto {
+  position: relative;
   background: var(--blanco);
   border-radius: 10px;
   box-shadow: var(--sombra);
@@ -227,6 +228,106 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
 .banner-foto img { width: 100%; height: 100%; object-fit: cover; }
 
 .banner-foto .sin-foto { color: var(--tinta-3); font-size: .85rem; }
+
+/* El escaparate de la portada: las fotos de los productos pasando solas. Se
+ * cambia con `display`, así que sin JavaScript se ve la primera y nada más. */
+/* Fuera del flujo: la caja es una rejilla que centra su contenido, y si el
+ * slider entra en ella crece con la foto y se sale por abajo. */
+.slider {
+  position: absolute;
+  inset: 0;
+}
+
+.slide {
+  display: none;
+  position: relative;
+  width: 100%;
+  height: 100%;
+  color: inherit;
+  text-decoration: none;
+}
+
+.slide.activa {
+  display: block;
+  animation: aparece-slide .45s ease both;
+}
+
+@keyframes aparece-slide {
+  from { opacity: 0; transform: scale(1.02); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .slide.activa { animation: none; }
+}
+
+.slide-pie {
+  position: absolute;
+  inset: auto 0 0 0;
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: .75rem;
+  padding: 1.4rem .9rem .7rem;
+  background: linear-gradient(to top, rgba(16, 24, 40, .72), transparent);
+  color: #fff;
+}
+
+.slide-nombre {
+  font-weight: 600;
+  font-size: .92rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.slide-precio { font-weight: 700; white-space: nowrap; }
+
+.slider-flecha {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 32px;
+  height: 32px;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .92);
+  color: var(--tinta);
+  font-size: 1.1rem;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(16, 24, 40, .25);
+  transition: background-color .15s ease, transform .15s ease;
+}
+
+.slider-flecha:hover { background: #fff; transform: translateY(-50%) scale(1.06); }
+
+.slider-flecha.antes { left: .5rem; }
+.slider-flecha.despues { right: .5rem; }
+
+/* Sobre una foto clara los puntos blancos no se veían: van en una pastilla. */
+.slider-puntos {
+  position: absolute;
+  top: .5rem;
+  right: .6rem;
+  display: flex;
+  gap: .3rem;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: rgba(16, 24, 40, .38);
+}
+
+.slider-punto {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, .55);
+  cursor: pointer;
+}
+
+.slider-punto.activo { background: #fff; }
 
 /* ------------------------------------------------------------------ secciones */
 

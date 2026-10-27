@@ -694,6 +694,24 @@ class PruebasDeLaTiendaPublica(TestCase):
         self.assertContains(respuesta, self.producto.nombre)
         self.assertNotContains(respuesta, "Lo que no se publicó")
 
+    def test_la_portada_arma_el_escaparate_con_las_fotos(self):
+        """El slider de arriba se llena con las fotos de lo publicado."""
+        carpeta = tempfile.mkdtemp()
+        self.addCleanup(shutil.rmtree, carpeta, True)
+        foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        with override_settings(MEDIA_ROOT=carpeta):
+            ImagenProducto.objects.create(
+                producto=self.producto, imagen=foto, alt="La camiseta de frente", orden=0
+            )
+            respuesta = self.client.get("/tienda/")
+
+        self.assertEqual(respuesta.status_code, 200)
+        self.assertIn(self.producto, respuesta.context["diapositivas"])
+        self.assertContains(respuesta, "data-slider")
+        self.assertContains(respuesta, "data-slide")
+        self.assertContains(respuesta, "class=\"slide-pie\"")
+        self.assertContains(respuesta, "frente.png")
+
     def test_la_categoria_enseña_sus_productos(self):
         respuesta = self.client.get(f"/tienda/c/{self.categoria.slug}/")
         self.assertEqual(respuesta.status_code, 200)

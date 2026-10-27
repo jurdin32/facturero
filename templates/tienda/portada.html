@@ -15,9 +15,42 @@
       <a class="boton grande" href="{% url 'tienda:ofertas' %}">Ver las ofertas</a>
     </div>
     <div class="banner-foto">
-      {% if banner %}
-        <img src="{{ banner.imagen_principal.imagen.url }}"
-             alt="{{ banner.imagen_principal.alt|default:banner.nombre }}">
+      {% if diapositivas %}
+        {% comment %}
+        El slider pasa solo cada cinco segundos y se detiene mientras el ratón está
+        encima. Sin JavaScript se queda en la primera, que sigue siendo un enlace.
+        {% endcomment %}
+        <div class="slider" data-slider>
+          {% for producto in diapositivas %}
+            {% with foto=producto.imagen_principal %}
+              <a class="slide{% if forloop.first %} activa{% endif %}"
+                 href="{% url 'tienda:producto' producto.slug %}"
+                 data-slide{% if forloop.first %} aria-current="true"{% endif %}>
+                <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}"
+                     {% if not forloop.first %}loading="lazy"{% endif %}>
+                <span class="slide-pie">
+                  <span class="slide-nombre">{{ producto.nombre }}</span>
+                  <span class="slide-precio">$ {{ producto.precio|floatformat:2 }}</span>
+                </span>
+              </a>
+            {% endwith %}
+          {% endfor %}
+
+          {% if diapositivas|length > 1 %}
+            <button type="button" class="slider-flecha antes" data-antes
+                    aria-label="Anterior">‹</button>
+            <button type="button" class="slider-flecha despues" data-despues
+                    aria-label="Siguiente">›</button>
+            <div class="slider-puntos" role="tablist" aria-label="Productos del escaparate">
+              {% for producto in diapositivas %}
+                <button type="button" class="slider-punto{% if forloop.first %} activo{% endif %}"
+                        data-punto="{{ forloop.counter0 }}" role="tab"
+                        aria-label="{{ producto.nombre }}"
+                        aria-selected="{% if forloop.first %}true{% else %}false{% endif %}"></button>
+              {% endfor %}
+            </div>
+          {% endif %}
+        </div>
       {% else %}
         <span class="sin-foto">Catálogo en línea</span>
       {% endif %}
