@@ -273,20 +273,6 @@
 
         <div class="fotos" data-fotos
              data-nombre="{% if formulario_tienda.titulo.value %}{{ formulario_tienda.titulo.value }}{% else %}{{ producto.descripcion|default:'Producto' }}{% endif %}">
-          <div class="fotos-soltar" data-soltar>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
-                 stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-              <path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path>
-              <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
-            </svg>
-            <p class="fotos-titulo">Arrastre las fotos aquí</p>
-            <p class="fotos-o">o</p>
-            <button type="button" class="boton claro" data-elegir>Elegir fotos</button>
-            <p class="fotos-nota">JPG, PNG o WEBP · varias a la vez</p>
-            <input class="fotos-archivo" type="file" accept="image/*" multiple data-archivo
-                   aria-label="Elegir las fotos del producto">
-          </div>
-
           <div class="fotos-rejilla" data-rejilla>
             {% for foto in formset_imagenes %}
               <figure class="foto" data-foto-tarjeta>
@@ -315,6 +301,20 @@
                 {% if foto.imagen.errors %}<p class="error">{{ foto.imagen.errors.0 }}</p>{% endif %}
               </figure>
             {% endfor %}
+
+            {# La última celda de la rejilla: se suelta aquí o se elige. #}
+            <div class="fotos-soltar" data-soltar>
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"
+                   stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path>
+                <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
+              </svg>
+              <p class="fotos-titulo">Añadir fotos</p>
+              <p class="fotos-nota">Arrastre o elija</p>
+              <button type="button" class="boton claro" data-elegir>Elegir</button>
+              <input class="fotos-archivo" type="file" accept="image/*" multiple data-archivo
+                     aria-label="Elegir las fotos del producto">
+            </div>
           </div>
 
           <p class="foto-aviso" data-aviso aria-live="polite"></p>

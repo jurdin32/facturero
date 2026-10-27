@@ -323,18 +323,20 @@
     }
 
     // --- el arrastre -------------------------------------------------------
+    // Se puede soltar en cualquier parte del bloque: la celda de añadir es
+    // pequeña y apuntarle con el ratón, incómodo.
     ["dragenter", "dragover"].forEach(function (evento) {
-      zona.addEventListener(evento, function (e) {
+      caja.addEventListener(evento, function (e) {
         e.preventDefault();
         zona.classList.add("encima");
       });
     });
     ["dragleave", "dragend", "drop"].forEach(function (evento) {
-      zona.addEventListener(evento, function () {
+      caja.addEventListener(evento, function () {
         zona.classList.remove("encima");
       });
     });
-    zona.addEventListener("drop", function (e) {
+    caja.addEventListener("drop", function (e) {
       e.preventDefault();
       recibir(e.dataTransfer && e.dataTransfer.files);
     });
@@ -346,7 +348,11 @@
       }
     });
 
-    zona.querySelector("[data-elegir]").addEventListener("click", function () {
+    zona.addEventListener("click", function (evento) {
+      if (evento.target.closest("input[type=file]")) {
+        return;
+      }
+      evento.preventDefault();
       entrada.click();
     });
     entrada.addEventListener("change", function () {
@@ -385,7 +391,8 @@
       }
       if (evento.target.closest("[data-derecha]")) {
         var siguiente = tarjeta.nextElementSibling;
-        if (siguiente) {
+        // La celda de «Añadir fotos» no es una foto: no se mueve.
+        if (siguiente && siguiente.matches("[data-foto-tarjeta]")) {
           rejilla.insertBefore(siguiente, tarjeta);
           reordenar();
         }
