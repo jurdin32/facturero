@@ -36,6 +36,74 @@
       campo.value = html === "<p><br></p>" ? "" : html;
     }
 
+    /* ---------------------------------------------------------- el historial
+     *
+     * Lo que el navegador deshace solo son las teclas; las filas, columnas y
+     * uniones se tocan a mano y no entrarían. Así que el editor se guarda sus
+     * propias instantáneas y Ctrl+Z / Ctrl+Mayúsculas+Z van por ahí.
+     */
+    var HISTORIAL_MAXIMO = 80;
+    var historial = { estados: [], indice: -1, callado: false };
+    var temporizador = null;
+
+    function anotar() {
+      if (historial.callado) {
+        return;
+      }
+      var actual = area.innerHTML;
+      if (historial.estados[historial.indice] === actual) {
+        return;
+      }
+      historial.estados = historial.estados.slice(0, historial.indice + 1);
+      historial.estados.push(actual);
+      if (historial.estados.length > HISTORIAL_MAXIMO) {
+        historial.estados.shift();
+      }
+      historial.indice = historial.estados.length - 1;
+    }
+
+    // Al teclear se espera un poco: una instantánea por palabra, no por letra.
+    function anotarPronto() {
+      window.clearTimeout(temporizador);
+      temporizador = window.setTimeout(anotar, 400);
+    }
+
+    function anotarYa() {
+      window.clearTimeout(temporizador);
+      anotar();
+    }
+
+    function volverA(html) {
+      historial.callado = true;
+      area.innerHTML = html;
+      historial.callado = false;
+      guardar();
+      ajustar();
+      mirarTabla();
+      area.focus();
+    }
+
+    function deshacer() {
+      if (historial.indice <= 0) {
+        return false;
+      }
+      historial.indice -= 1;
+      volverA(historial.estados[historial.indice]);
+      return true;
+    }
+
+    function rehacer() {
+      if (historial.indice >= historial.estados.length - 1) {
+        return false;
+      }
+      historial.indice += 1;
+      volverA(historial.estados[historial.indice]);
+      return true;
+    }
+
+    historial.estados = [area.innerHTML];
+    historial.indice = 0;
+
     function ajustar() {
       if (area.offsetParent === null) {
         return;
@@ -59,6 +127,7 @@
       }
       guardar();
       ajustar();
+      anotarYa();
     }
 
     /* ------------------------------------------------------------- la barra */
@@ -187,6 +256,64 @@
       return null;
     }
 
+    /** Las celdas con su sitio, sin repetir las que ocupan varias. */
+    function sitiosDe(tabla) {
+      var mapa = rejilla(tabla);
+      var salida = [];
+      var vistos = [];
+      for (var clave in mapa) {
+        var celda = mapa[clave];
+        if (vistos.indexOf(celda) !== -1) {
+          continue;
+        }
+        vistos.push(celda);
+        var partes = clave.split(":");
+        salida.push({
+          celda: celda,
+          fila: parseInt(partes[0], 10),
+          columna: parseInt(partes[1], 10),
+        });
+      }
+      return salida;
+    }
+
+    /** El ancho de cada columna, en porcentaje de la tabla. */
+    function anchosDe(tabla) {
+      var total = tabla.getBoundingClientRect().width || 1;
+      var mapa = rejilla(tabla);
+      var ultima = 0;
+      for (var clave in mapa) {
+        var columna = parseInt(clave.split(":")[1], 10);
+        if (columna > ultima) {
+          ultima = columna;
+        }
+      }
+      var anchos = [];
+      for (var i = 0; i <= ultima; i++) {
+        var celda = mapa["0:" + i];
+        anchos.push(
+          celda ? (celda.getBoundingClientRect().width / total) * 100 : 100 / (ultima + 1)
+        );
+      }
+      return anchos;
+    }
+
+    /** El ancho se guarda en cada celda de la columna, en porcentaje. */
+    function fijarAnchos(tabla, anchos) {
+      sitiosDe(tabla).forEach(function (sitio) {
+        var celda = sitio.celda;
+        if ((celda.colSpan || 1) > 1) {
+          celda.removeAttribute("width");
+          return;
+        }
+        var ancho = anchos[sitio.columna];
+        if (ancho) {
+          celda.setAttribute("width", Math.round(ancho) + "%");
+        }
+      });
+      ajustar();
+    }
+
     function limpiarMarcas() {
       Array.prototype.forEach.call(
         area.querySelectorAll(".celda-elegida"),
@@ -241,6 +368,7 @@
       }
       var unir = barraTabla.querySelector('[data-tabla="unir"]');
       var dividir = barraTabla.querySelector('[data-tabla="dividir"]');
+      var campoAncho = barraTabla.querySelector("[data-ancho]");
       var cuantas = barraTabla.querySelector("[data-cuenta-celdas]");
       var marcadas = tabla ? tabla.querySelectorAll(".celda-elegida").length : 0;
       if (unir) {
@@ -250,11 +378,21 @@
         cuantas.hidden = marcadas < 1;
         cuantas.textContent = marcadas === 1 ? "1 celda" : marcadas + " celdas";
       }
+      var celda = tabla ? celdaActual(tabla) : null;
       if (dividir) {
-        var celda = tabla ? celdaActual(tabla) : null;
         var partida =
           celda && ((celda.rowSpan || 1) > 1 || (celda.colSpan || 1) > 1);
         dividir.disabled = !partida;
+      }
+      if (campoAncho) {
+        var sitio = tabla && celda ? coordenadasDe(tabla, celda) : null;
+        campoAncho.disabled = !sitio;
+        if (sitio) {
+          campoAncho.value = Math.round(anchosDe(tabla)[sitio.columna]);
+          campoAncho.setAttribute("data-columna", sitio.columna);
+        } else {
+          campoAncho.value = "";
+        }
       }
     }
 
@@ -404,6 +542,7 @@
       guardar();
       ajustar();
       mirarTabla();
+      anotarYa();
     }
 
     /** Parte una celda unida y devuelve el hueco que ocupaba. */
@@ -444,6 +583,7 @@
       guardar();
       ajustar();
       mirarTabla();
+      anotarYa();
     }
 
     function quitarTabla(tabla) {
@@ -479,8 +619,35 @@
     if (barraTabla) {
       // Sin esto, pulsar un botón se lleva la selección y se pierde la celda.
       barraTabla.addEventListener("mousedown", function (evento) {
+        if (evento.target.closest("[data-ancho]")) {
+          return;
+        }
         evento.preventDefault();
       });
+
+      var campoAncho = barraTabla.querySelector("[data-ancho]");
+      if (campoAncho) {
+        campoAncho.addEventListener("change", function () {
+          var tabla = tablaActual() || tablaDeLasMarcas();
+          var celda = tabla ? celdaActual(tabla) : null;
+          var sitio = tabla && celda ? coordenadasDe(tabla, celda) : null;
+          var valor = parseFloat(campoAncho.value);
+          if (!sitio || !valor) {
+            return;
+          }
+          var anchos = anchosDe(tabla);
+          var nuevos = anchos.slice();
+          var deseado = Math.min(90, Math.max(5, valor));
+          var delta = deseado - anchos[sitio.columna];
+          nuevos[sitio.columna] = deseado;
+          if (sitio.columna + 1 < nuevos.length) {
+            nuevos[sitio.columna + 1] = Math.max(5, anchos[sitio.columna + 1] - delta);
+          }
+          fijarAnchos(tabla, nuevos);
+          guardar();
+          anotarYa();
+        });
+      }
       barraTabla.addEventListener("click", function (evento) {
         var boton = evento.target.closest("[data-tabla]");
         if (!boton) {
@@ -512,6 +679,7 @@
         guardar();
         ajustar();
         mirarTabla();
+        anotarYa();
       });
     }
 
@@ -520,6 +688,7 @@
       guardar();
       ajustar();
       mirarTabla();
+      anotarPronto();
     });
     area.addEventListener("blur", guardar);
     area.addEventListener("keyup", mirarTabla);
@@ -536,7 +705,75 @@
       return celda && area.contains(celda) ? celda : null;
     }
 
+    //: Cuando se está estirando una columna, para no mirar el cursor.
+    var estirando = false;
+
+    function bordeDeColumna(evento) {
+      var celda = celdaDelEvento(evento);
+      if (!celda) {
+        return null;
+      }
+      var caja = celda.getBoundingClientRect();
+      if (evento.clientX < caja.right - 6) {
+        return null;
+      }
+      var tabla = celda.closest("table");
+      var sitio = coordenadasDe(tabla, celda);
+      return sitio ? { tabla: tabla, columna: sitio.columna } : null;
+    }
+
+    function estirarColumna(borde, evento) {
+      var base = anchosDe(borde.tabla);
+      var anchoTabla = borde.tabla.getBoundingClientRect().width || 1;
+      var inicioX = evento.clientX;
+      var columna = borde.columna;
+      var vecina = columna + 1 < base.length ? columna + 1 : -1;
+
+      function mover(desplazamiento) {
+        var delta = ((desplazamiento.clientX - inicioX) / anchoTabla) * 100;
+        var deseado = Math.min(90, Math.max(5, base[columna] + delta));
+        var nuevos = base.slice();
+        if (vecina >= 0) {
+          var resto = base[vecina] - (deseado - base[columna]);
+          if (resto < 5) {
+            deseado = base[columna] + (base[vecina] - 5);
+            resto = 5;
+          }
+          nuevos[vecina] = resto;
+        }
+        nuevos[columna] = deseado;
+        fijarAnchos(borde.tabla, nuevos);
+      }
+
+      function soltar() {
+        document.removeEventListener("mousemove", mover);
+        document.removeEventListener("mouseup", soltar);
+        estirando = false;
+        area.style.cursor = "";
+        guardar();
+        anotarYa();
+      }
+
+      estirando = true;
+      area.style.cursor = "col-resize";
+      document.addEventListener("mousemove", mover);
+      document.addEventListener("mouseup", soltar);
+    }
+
+    area.addEventListener("mousemove", function (evento) {
+      if (estirando) {
+        return;
+      }
+      area.style.cursor = bordeDeColumna(evento) ? "col-resize" : "";
+    });
+
     area.addEventListener("mousedown", function (evento) {
+      var borde = bordeDeColumna(evento);
+      if (borde) {
+        evento.preventDefault();
+        estirarColumna(borde, evento);
+        return;
+      }
       var celda = celdaDelEvento(evento);
       if (!celda) {
         marcando = null;
@@ -657,6 +894,7 @@
         guardar();
         ajustar();
         mirarTabla();
+        anotarYa();
       }
     }
 
@@ -785,6 +1023,7 @@
       guardar();
       ajustar();
       mirarTabla();
+      anotarYa();
     }
 
     // Pegar desde una web trae estilos y guiones: se queda el texto con su
@@ -818,9 +1057,23 @@
     // Con una tabla dentro, el tabulador pasa a la celda siguiente: escribir una
     // tabla deja de ser pelear con el ratón.
     area.addEventListener("keydown", function (evento) {
-      // Copiar o cortar lo marcado para llevarlo a otra tabla.
+      // Los atajos de siempre: deshacer, rehacer y copiar o cortar lo marcado.
       if ((evento.ctrlKey || evento.metaKey) && !evento.altKey) {
         var tecla = (evento.key || "").toLowerCase();
+        if (tecla === "z") {
+          evento.preventDefault();
+          if (evento.shiftKey) {
+            rehacer();
+          } else {
+            deshacer();
+          }
+          return;
+        }
+        if (tecla === "y") {
+          evento.preventDefault();
+          rehacer();
+          return;
+        }
         if (tecla === "c" || tecla === "x") {
           var conMarcas = tablaDeLasMarcas();
           var region = conMarcas ? regionMarcada(conMarcas) : null;

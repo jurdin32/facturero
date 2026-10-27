@@ -356,6 +356,11 @@
             <button type="button" data-tabla="fila-menos">− Fila</button>
             <button type="button" data-tabla="columna-mas">+ Columna</button>
             <button type="button" data-tabla="columna-menos">− Columna</button>
+            <label class="editor-rico-tabla-ancho" title="Ancho de la columna donde está el cursor">
+              Ancho
+              <input type="number" min="5" max="90" step="5" data-ancho aria-label="Ancho de la columna">
+              %
+            </label>
             <span class="editor-rico-tabla-cuenta" data-cuenta-celdas hidden></span>
             <span class="editor-rico-tabla-separador" aria-hidden="true"></span>
             <button type="button" data-tabla="unir" disabled
@@ -369,7 +374,7 @@
                  value="{{ formulario_tienda.descripcion_larga.value|default_if_none:'' }}"
                  data-campo>
         </div>
-        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones: el tabulador pasa de celda en celda y lo que se pega —una tabla o una lista de Excel— se reparte por las celdas, creciendo si no cabe. Con Mayúsculas y clic se marcan varias celdas: para unirlas, o para copiarlas con Ctrl+C y llevarlas a otro sitio de la tabla o a otra tabla.</p>
+        <p class="ayuda">Se ve tal como quedará en la web. Con el cursor dentro de una tabla salen sus botones: el tabulador pasa de celda en celda y lo que se pega —una tabla o una lista de Excel— se reparte por las celdas, creciendo si no cabe. Con Mayúsculas y clic se marcan varias celdas, para unirlas o para copiarlas con Ctrl+C. El ancho de una columna se cambia arrastrando su borde o escribiéndolo en «Ancho». Ctrl+Z deshace y Ctrl+Mayúsculas+Z rehace.</p>
       </div>
     </section>
 

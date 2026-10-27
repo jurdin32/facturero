@@ -31,8 +31,8 @@ ETIQUETAS = (
 #: ``colspan`` van porque el editor deja unir celdas.
 ATRIBUTOS = {
     "a": ["href", "title", "rel", "target"],
-    "th": ["align", "rowspan", "colspan"],
-    "td": ["align", "rowspan", "colspan"],
+    "th": ["align", "rowspan", "colspan", "width"],
+    "td": ["align", "rowspan", "colspan", "width"],
 }
 
 #: Lo más que puede abarcar una celda unida: más que eso solo puede venir de un
@@ -91,10 +91,15 @@ ES_HTML = re.compile(r"<\s*(p|div|br|table|h[2-6]|ul|ol|li|strong|em|blockquote|
 
 
 def _atributo_permitido(etiqueta: str, nombre: str, valor: str) -> bool:
-    """Los atributos de la lista blanca, y los spans solo con un número cuerdo."""
+    """Los atributos de la lista blanca, y los números de la tabla con sus topes."""
+    limpio = (valor or "").strip()
     if nombre in ("rowspan", "colspan"):
-        limpio = (valor or "").strip()
         return limpio.isdigit() and 1 <= int(limpio) <= UNION_MAXIMA
+    if nombre == "width":
+        # El ancho de una columna, en porcentaje: 25% (o 25, que es lo mismo).
+        if limpio.endswith("%"):
+            limpio = limpio[:-1]
+        return limpio.isdigit() and 1 <= int(limpio) <= 100
     return nombre in ATRIBUTOS.get(etiqueta, ())
 
 

@@ -1143,6 +1143,23 @@ class PruebasDelTextoEnriquecido(TestCase):
         self.assertIn('colspan="2"', html)
         self.assertIn('rowspan="3"', html)
 
+    def test_el_ancho_de_una_columna_se_conserva(self):
+        """El editor deja estirar las columnas; la ficha tiene que respetarlo."""
+        from .texto import a_html
+
+        html = a_html('<table><tr><td width="30%">A</td><td width="70%">B</td></tr></table>')
+
+        self.assertIn('width="30%"', html)
+        self.assertIn('width="70%"', html)
+
+    def test_un_ancho_imposible_se_queda_fuera(self):
+        from .texto import a_html
+
+        self.assertNotIn("width", a_html('<table><tr><td width="300%">A</td></tr></table>'))
+        self.assertNotIn(
+            "width", a_html('<table><tr><td width="javascript:x">A</td></tr></table>')
+        )
+
     def test_una_union_absurda_se_queda_fuera(self):
         from .texto import a_html
 
@@ -1458,6 +1475,7 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
         self.assertContains(respuesta, 'data-tabla="unir"')
         self.assertContains(respuesta, 'data-tabla="dividir"')
         self.assertContains(respuesta, "data-cuenta-celdas")
+        self.assertContains(respuesta, "data-ancho")
 
 
 class PruebasDeLasFotos(TestCase):
