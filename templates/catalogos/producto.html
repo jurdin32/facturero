@@ -32,240 +32,262 @@
 </div>
 
 <form method="post" enctype="multipart/form-data" id="formulario-producto" novalidate>{% csrf_token %}
-  <div class="columnas">
-    <div class="columna-principal">
 
-      <section class="bloque">
-        <h2 class="bloque-titulo">Lo que es</h2>
-        <div class="row">
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
-              {{ formulario.tipo }}
-              <p class="ayuda">Un bien lleva inventario; un servicio no se agota.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.codigo_principal.id_for_label }}">{{ formulario.codigo_principal.label }}</label>
-              {{ formulario.codigo_principal }}
-              {% if formulario.codigo_principal.errors %}<p class="error">{{ formulario.codigo_principal.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-          <div class="cell-12 cell-md-12">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
-              {{ formulario.descripcion }}
-              {% if formulario.descripcion.errors %}<p class="error">{{ formulario.descripcion.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Es el texto que sale en la factura: escríbalo como quiere que lo lea el cliente.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
-              {{ formulario.unidad_medida }}
-              <p class="ayuda">Si la deja vacía se usa UNIDAD o SERVICIO.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-8">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.datos_adicionales.id_for_label }}">Detalles adicionales</label>
-              {{ formulario.datos_adicionales }}
-              <p class="ayuda">Se copian en cada línea (hasta 3 campos): MARCA=ACME; GARANTIA=12 MESES</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="bloque" id="bloque-inventario">
-        <h2 class="bloque-titulo">Inventario</h2>
-        <div class="row">
-          {% if es_nuevo %}
-            <div class="cell-12 cell-md-4">
-              <div class="campo-caja">
-                <label class="etiqueta" for="{{ formulario.stock_inicial.id_for_label }}">Con cuánto empieza</label>
-                {{ formulario.stock_inicial }}
-                <p class="ayuda">Queda como el primer movimiento del libro.</p>
-              </div>
-            </div>
-          {% endif %}
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.minimo.id_for_label }}">Mínimo para reponer</label>
-              {{ formulario.minimo }}
-            </div>
-          </div>
-          <div class="cell-12 {% if es_nuevo %}cell-md-4{% else %}cell-md-8{% endif %}">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
-              {{ formulario.ubicacion }}
-            </div>
-          </div>
-        </div>
-        {% if not es_nuevo %}
-          <p class="ayuda">
-            La existencia no se cambia aquí: se mueve con entradas, salidas y ajustes, para que
-            el libro cuadre. <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">Mover el inventario</a>.
-          </p>
-        {% endif %}
-      </section>
+  {# 1 · Lo que el producto necesita para facturarse. Nada de esto es de la tienda. #}
+  <section class="paso">
+    <div class="paso-cabecera">
+      <span class="paso-numero">1</span>
+      <div>
+        <h2 class="paso-titulo">Lo básico</h2>
+        <p class="paso-nota">Con esto ya se factura. Nada de aquí depende de la tienda.</p>
+      </div>
     </div>
 
-    <aside class="columna-lateral">
-      <div class="resumen">
-        <h2 class="bloque-titulo">A cómo se factura</h2>
-        <div class="row">
-          <div class="cell-5">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
-              {{ formulario.precio_unitario }}
-              {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
+    <div class="columnas columnas-paso">
+      <div class="columna-principal">
+
+        <div class="bloque">
+          <h3 class="bloque-titulo">Lo que es</h3>
+          <div class="row">
+            <div class="cell-12 cell-md-6">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.tipo.id_for_label }}">{{ formulario.tipo.label }}</label>
+                {{ formulario.tipo }}
+                <p class="ayuda">Un bien lleva inventario; un servicio no se agota.</p>
+              </div>
             </div>
-          </div>
-          <div class="cell-7">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
-              {{ formulario.codigo_porcentaje_iva }}
+            <div class="cell-12 cell-md-6">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.codigo_principal.id_for_label }}">{{ formulario.codigo_principal.label }}</label>
+                {{ formulario.codigo_principal }}
+                {% if formulario.codigo_principal.errors %}<p class="error">{{ formulario.codigo_principal.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <div class="cell-12">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.descripcion.id_for_label }}">{{ formulario.descripcion.label }}</label>
+                {{ formulario.descripcion }}
+                {% if formulario.descripcion.errors %}<p class="error">{{ formulario.descripcion.errors.0 }}</p>{% endif %}
+                <p class="ayuda">Es el texto que sale en la factura: escríbalo como quiere que lo lea el cliente.</p>
+              </div>
+            </div>
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.unidad_medida.id_for_label }}">{{ formulario.unidad_medida.label }}</label>
+                {{ formulario.unidad_medida }}
+                <p class="ayuda">Si la deja vacía se usa UNIDAD o SERVICIO.</p>
+              </div>
+            </div>
+            <div class="cell-12 cell-md-8">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.datos_adicionales.id_for_label }}">Detalles adicionales</label>
+                {{ formulario.datos_adicionales }}
+                <p class="ayuda">Se copian en cada línea (hasta 3 campos): MARCA=ACME; GARANTIA=12 MESES</p>
+              </div>
             </div>
           </div>
         </div>
-        <div class="campo-caja">
-          <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
-          {{ formulario.codigo_auxiliar }}
-          <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
-        </div>
+
+        <section class="bloque" id="bloque-inventario">
+          <h3 class="bloque-titulo">Inventario</h3>
+          <div class="row">
+            {% if es_nuevo %}
+              <div class="cell-12 cell-md-4">
+                <div class="campo-caja">
+                  <label class="etiqueta" for="{{ formulario.stock_inicial.id_for_label }}">Con cuánto empieza</label>
+                  {{ formulario.stock_inicial }}
+                  <p class="ayuda">Queda como el primer movimiento del libro.</p>
+                </div>
+              </div>
+            {% endif %}
+            <div class="cell-12 cell-md-4">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.minimo.id_for_label }}">Mínimo para reponer</label>
+                {{ formulario.minimo }}
+              </div>
+            </div>
+            <div class="cell-12 {% if es_nuevo %}cell-md-4{% else %}cell-md-8{% endif %}">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.ubicacion.id_for_label }}">Ubicación</label>
+                {{ formulario.ubicacion }}
+              </div>
+            </div>
+          </div>
+          {% if not es_nuevo %}
+            <p class="ayuda">
+              La existencia no se cambia aquí: se mueve con entradas, salidas y ajustes, para que
+              el libro cuadre. <a class="enlace" href="{% url 'inventario:kardex' producto.pk %}">Mover el inventario</a>
+            </p>
+          {% endif %}
+        </section>
       </div>
 
-      <div class="resumen">
-        <h2 class="bloque-titulo">Estado</h2>
+      <aside class="columna-lateral">
+        <div class="resumen">
+          <h3 class="bloque-titulo">A cómo se factura</h3>
+          <div class="row">
+            <div class="cell-5">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
+                {{ formulario.precio_unitario }}
+                {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
+              </div>
+            </div>
+            <div class="cell-7">
+              <div class="campo-caja">
+                <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
+                {{ formulario.codigo_porcentaje_iva }}
+              </div>
+            </div>
+          </div>
+          <div class="campo-caja">
+            <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
+            {{ formulario.codigo_auxiliar }}
+            <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
+          </div>
+        </div>
+
+        <div class="resumen">
+          <h3 class="bloque-titulo">Estado</h3>
+          <div class="campo-caja">
+            <label class="switch">
+              {{ formulario.activo }}
+              <span class="caption-append">Ofrecerlo en las facturas nuevas</span>
+            </label>
+          </div>
+        </div>
+      </aside>
+    </div>
+  </section>
+
+  {# 2 · Cómo se publica y a qué precio en la web. #}
+  <section class="paso" id="bloque-tienda">
+    <div class="paso-cabecera">
+      <span class="paso-numero">2</span>
+      <div>
+        <h2 class="paso-titulo">En la tienda</h2>
+        <p class="paso-nota">Si no se publica, se sigue facturando igual y no aparece en la web.</p>
+      </div>
+    </div>
+
+    {% if formulario_tienda.non_field_errors %}
+      <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
+    {% endif %}
+
+    <div class="row">
+      <div class="cell-12 cell-md-4">
         <div class="campo-caja">
           <label class="switch">
-            {{ formulario.activo }}
-            <span class="caption-append">Ofrecerlo en las facturas nuevas</span>
+            {{ formulario_tienda.publicado }}
+            <span class="caption-append">Publicado en la tienda</span>
           </label>
         </div>
       </div>
-    </aside>
-  </div>
-
-      <section class="bloque" id="bloque-tienda">
-        <h2 class="bloque-titulo">En la tienda</h2>
-        <p class="ayuda">
-          Es el mismo producto: aquí solo se decide cómo se ve en la web. Si no se
-          publica, se sigue facturando igual y no aparece en la tienda.
-        </p>
-
-        {% if formulario_tienda.non_field_errors %}
-          <p class="error">{{ formulario_tienda.non_field_errors.0 }}</p>
-        {% endif %}
-
-        <h3 class="bloque-subtitulo">Publicación</h3>
-        <div class="row">
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="switch">
-                {{ formulario_tienda.publicado }}
-                <span class="caption-append">Publicado en la tienda</span>
-              </label>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="switch">
-                {{ formulario_tienda.destacado }}
-                <span class="caption-append">Destacado en la portada</span>
-              </label>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.orden.id_for_label }}">Orden</label>
-              {{ formulario_tienda.orden }}
-              {% if formulario_tienda.orden.errors %}<p class="error">{{ formulario_tienda.orden.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Dentro de su categoría, los de número menor salen primero.</p>
-            </div>
-          </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="switch">
+            {{ formulario_tienda.destacado }}
+            <span class="caption-append">Destacado en la portada</span>
+          </label>
         </div>
-
-        <h3 class="bloque-subtitulo">Cómo se presenta</h3>
-        <div class="row">
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.categoria.id_for_label }}">Categoría</label>
-              {{ formulario_tienda.categoria }}
-              {% if formulario_tienda.categoria.errors %}<p class="error">{{ formulario_tienda.categoria.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a>.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.titulo.id_for_label }}">Nombre en la web</label>
-              {{ formulario_tienda.titulo }}
-              {% if formulario_tienda.titulo.errors %}<p class="error">{{ formulario_tienda.titulo.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Si se deja vacío se usa la descripción del producto.</p>
-            </div>
-          </div>
-          <div class="cell-12">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.resumen.id_for_label }}">Resumen</label>
-              {{ formulario_tienda.resumen }}
-              {% if formulario_tienda.resumen.errors %}<p class="error">{{ formulario_tienda.resumen.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Una o dos líneas para el listado y el buscador.</p>
-            </div>
-          </div>
-          <div class="cell-12">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.descripcion_larga.id_for_label }}">Descripción larga</label>
-              {{ formulario_tienda.descripcion_larga }}
-              <p class="ayuda">Materiales, medidas, qué incluye…</p>
-            </div>
-          </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.orden.id_for_label }}">Orden</label>
+          {{ formulario_tienda.orden }}
+          {% if formulario_tienda.orden.errors %}<p class="error">{{ formulario_tienda.orden.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Dentro de su categoría, los de número menor salen primero.</p>
         </div>
+      </div>
 
-        <h3 class="bloque-subtitulo">Precios y envío</h3>
-        <div class="row">
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.precio_web.id_for_label }}">Precio en la web</label>
-              {{ formulario_tienda.precio_web }}
-              {% if formulario_tienda.precio_web.errors %}<p class="error">{{ formulario_tienda.precio_web.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Sin IVA. Vacío: el del producto.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.precio_oferta.id_for_label }}">Precio de oferta</label>
-              {{ formulario_tienda.precio_oferta }}
-              {% if formulario_tienda.precio_oferta.errors %}<p class="error">{{ formulario_tienda.precio_oferta.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Sin IVA; tiene que ser menor.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4" id="bloque-envio">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.peso.id_for_label }}">Peso (kg)</label>
-              {{ formulario_tienda.peso }}
-              {% if formulario_tienda.peso.errors %}<p class="error">{{ formulario_tienda.peso.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Opcional: para calcular el envío.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
-              {{ formulario_tienda.oferta_desde }}
-              {% if formulario_tienda.oferta_desde.errors %}<p class="error">{{ formulario_tienda.oferta_desde.errors.0 }}</p>{% endif %}
-              <p class="ayuda">Si se deja vacío, la oferta no caduca.</p>
-            </div>
-          </div>
-          <div class="cell-12 cell-md-6">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
-              {{ formulario_tienda.oferta_hasta }}
-              {% if formulario_tienda.oferta_hasta.errors %}<p class="error">{{ formulario_tienda.oferta_hasta.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.categoria.id_for_label }}">Categoría</label>
+          {{ formulario_tienda.categoria }}
+          {% if formulario_tienda.categoria.errors %}<p class="error">{{ formulario_tienda.categoria.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Dónde se encuentra en el menú de la tienda. <a class="enlace" href="{% url 'tienda:categorias' %}" target="_blank" rel="noopener">administrar las categorías</a></p>
         </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.titulo.id_for_label }}">Nombre en la web</label>
+          {{ formulario_tienda.titulo }}
+          {% if formulario_tienda.titulo.errors %}<p class="error">{{ formulario_tienda.titulo.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Si se deja vacío se usa la descripción del producto.</p>
+        </div>
+      </div>
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.resumen.id_for_label }}">Resumen</label>
+          {{ formulario_tienda.resumen }}
+          {% if formulario_tienda.resumen.errors %}<p class="error">{{ formulario_tienda.resumen.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Una o dos líneas para el listado y el buscador.</p>
+        </div>
+      </div>
 
-        <h3 class="bloque-subtitulo">Fotos</h3>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.precio_web.id_for_label }}">Precio en la web</label>
+          {{ formulario_tienda.precio_web }}
+          {% if formulario_tienda.precio_web.errors %}<p class="error">{{ formulario_tienda.precio_web.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Sin IVA. Vacío: el del producto.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.precio_oferta.id_for_label }}">Precio de oferta</label>
+          {{ formulario_tienda.precio_oferta }}
+          {% if formulario_tienda.precio_oferta.errors %}<p class="error">{{ formulario_tienda.precio_oferta.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Sin IVA; tiene que ser menor.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-4" id="bloque-envio">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.peso.id_for_label }}">Peso (kg)</label>
+          {{ formulario_tienda.peso }}
+          {% if formulario_tienda.peso.errors %}<p class="error">{{ formulario_tienda.peso.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Opcional: para calcular el envío.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.oferta_desde.id_for_label }}">Oferta desde</label>
+          {{ formulario_tienda.oferta_desde }}
+          {% if formulario_tienda.oferta_desde.errors %}<p class="error">{{ formulario_tienda.oferta_desde.errors.0 }}</p>{% endif %}
+          <p class="ayuda">Si se deja vacío, la oferta no caduca.</p>
+        </div>
+      </div>
+      <div class="cell-12 cell-md-6">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.oferta_hasta.id_for_label }}">Oferta hasta</label>
+          {{ formulario_tienda.oferta_hasta }}
+          {% if formulario_tienda.oferta_hasta.errors %}<p class="error">{{ formulario_tienda.oferta_hasta.errors.0 }}</p>{% endif %}
+        </div>
+      </div>
+    </div>
+  </section>
+
+  {# 3 · Lo que se ve en la ficha del producto en la web. #}
+  <section class="paso" id="paso-ficha">
+    <div class="paso-cabecera">
+      <span class="paso-numero">3</span>
+      <div>
+        <h2 class="paso-titulo">Fotos y descripción</h2>
+        <p class="paso-nota">Lo que se ve en la ficha del producto en la web.</p>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="cell-12">
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario_tienda.descripcion_larga.id_for_label }}">Descripción larga</label>
+          {{ formulario_tienda.descripcion_larga }}
+          <p class="ayuda">Materiales, medidas, qué incluye…</p>
+        </div>
+      </div>
+
+      <div class="cell-12">
+        <h3 class="bloque-titulo">Fotos</h3>
         <p class="ayuda">
           Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
           principal. Se reducen solas al subirlas: se ven igual de bien y pesan mucho
@@ -351,7 +373,9 @@
         {% if formset_imagenes.non_form_errors %}
           <p class="error">{{ formset_imagenes.non_form_errors.0 }}</p>
         {% endif %}
-      </section>
+      </div>
+    </div>
+  </section>
 
 </form>
 
