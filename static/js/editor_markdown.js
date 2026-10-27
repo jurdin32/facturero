@@ -104,8 +104,10 @@
    * el cursor estaba dentro de una tabla, la carga para retocarla.
    */
 
-  var TABLA_COLUMNAS = 8;
+  var TABLA_COLUMNAS = 8;   // la rejilla de tamaños que se ve al pasar el ratón
   var TABLA_FILAS = 6;
+  var MAX_COLUMNAS = 12;    // lo que aguanta la tabla de verdad
+  var MAX_FILAS = 100;
   var SEPARADORA = /^\s*\|?\s*:?-{1,}:?\s*(\|\s*:?-{1,}:?\s*)*\|?\s*$/;
   var HUECO = "\u0000";
 
@@ -139,9 +141,14 @@
     if (!normal.length) {
       normal = [[""]];
     }
+    var cuerpo = normal.slice(1);
+    // Las filas de relleno que quedan vacías al final no se escriben.
+    while (cuerpo.length && cuerpo[cuerpo.length - 1].every(function (celda) { return celda === ""; })) {
+      cuerpo.pop();
+    }
     var salida = ["| " + normal[0].join(" | ") + " |"];
     salida.push("| " + normal[0].map(function () { return "---"; }).join(" | ") + " |");
-    normal.slice(1).forEach(function (fila) {
+    cuerpo.forEach(function (fila) {
       salida.push("| " + fila.join(" | ") + " |");
     });
     return salida.join("\n") + "\n";
@@ -254,8 +261,22 @@
 
     var ayuda = doc.createElement("p");
     ayuda.className = "editor-tabla-ayuda";
-    ayuda.textContent = "Elija el tamaño y escriba dentro de las celdas. La primera fila es el encabezado.";
+    ayuda.textContent = "Elija el tamaño y escriba en las celdas. La primera fila es el encabezado.";
     caja.appendChild(ayuda);
+
+    // Dos columnas: el tamaño a la izquierda, la tabla a la derecha. Si no, con
+    // dos columnas de datos todo quedaba apilado a un lado del diálogo.
+    var cuerpo = doc.createElement("div");
+    cuerpo.className = "editor-tabla-cuerpo";
+    caja.appendChild(cuerpo);
+
+    var lateral = doc.createElement("div");
+    lateral.className = "editor-tabla-lateral";
+    cuerpo.appendChild(lateral);
+
+    var principal = doc.createElement("div");
+    principal.className = "editor-tabla-principal";
+    cuerpo.appendChild(principal);
 
     var rapida = doc.createElement("div");
     rapida.className = "editor-tabla-rapida";
@@ -274,12 +295,12 @@
         celdas.push(celda);
       }
     }
-    caja.appendChild(rapida);
+    lateral.appendChild(rapida);
 
     var medida = doc.createElement("p");
     medida.className = "editor-tabla-medida";
     medida.setAttribute("aria-live", "polite");
-    caja.appendChild(medida);
+    lateral.appendChild(medida);
 
     function marcarRapida(filas, columnas) {
       celdas.forEach(function (una) {
@@ -312,7 +333,6 @@
       var primera = caja.querySelector(".editor-tabla-celda");
       if (primera) {
         primera.focus();
-        primera.select();
       }
     });
 
@@ -325,44 +345,49 @@
       var etiqueta = doc.createElement("span");
       etiqueta.textContent = rotulo;
       grupoCaja.appendChild(etiqueta);
-      [["−", -1], ["+", 1]].forEach(function (par, indice) {
-        if (indice === 1) {
-          var cuenta = doc.createElement("output");
-          cuenta.className = "editor-tabla-cuenta";
-          cuenta.textContent = "2";
-          grupoCaja.appendChild(cuenta);
-        }
+
+      function paso(texto, delta, nombre) {
         var boton = doc.createElement("button");
         boton.type = "button";
         boton.className = "editor-tabla-paso-boton";
-        boton.textContent = par[0];
-        boton.setAttribute("aria-label", (par[1] < 0 ? "Quitar una " : "Añadir una ") + singular);
+        boton.textContent = texto;
+        boton.setAttribute("aria-label", nombre);
         boton.addEventListener("click", function () {
           if (eje === "filas") {
-            cambiarTamano(dlg.estado.filas + par[1], dlg.estado.columnas);
+            cambiarTamano(dlg.estado.filas + delta, dlg.estado.columnas);
           } else {
-            cambiarTamano(dlg.estado.filas, dlg.estado.columnas + par[1]);
+            cambiarTamano(dlg.estado.filas, dlg.estado.columnas + delta);
           }
         });
         grupoCaja.appendChild(boton);
-      });
+        return boton;
+      }
+
+      var menos = paso("−", -1, "Quitar una " + singular);
+      var cuenta = doc.createElement("output");
+      cuenta.className = "editor-tabla-cuenta";
+      cuenta.textContent = "2";
+      grupoCaja.appendChild(cuenta);
+      var mas = paso("+", 1, "Añadir una " + singular);
       tamano.appendChild(grupoCaja);
-      return grupoCaja;
+      return { menos: menos, cuenta: cuenta, mas: mas };
     }
 
-    var grupoColumnas = grupo("Columnas", "columna", "columnas");
-    var grupoFilas = grupo("Filas", "fila", "filas");
-    caja.appendChild(tamano);
+    var pasos = {
+      columnas: grupo("Columnas", "columna", "columnas"),
+      filas: grupo("Filas", "fila", "filas")
+    };
+    lateral.appendChild(tamano);
 
     var cuadricula = doc.createElement("div");
     cuadricula.className = "editor-tabla-cuadricula";
     cuadricula.setAttribute("role", "group");
     cuadricula.setAttribute("aria-label", "Celdas de la tabla");
-    caja.appendChild(cuadricula);
+    principal.appendChild(cuadricula);
 
     function cambiarTamano(filas, columnas) {
-      filas = Math.min(TABLA_FILAS, Math.max(1, filas));
-      columnas = Math.min(TABLA_COLUMNAS, Math.max(1, columnas));
+      filas = Math.min(MAX_FILAS, Math.max(1, filas));
+      columnas = Math.min(MAX_COLUMNAS, Math.max(1, columnas));
       var estado = dlg.estado;
       var datos = [];
       for (var fila = 0; fila < filas; fila++) {
@@ -396,11 +421,24 @@
           cuadricula.appendChild(entrada);
         }
       }
-      grupoColumnas.querySelector(".editor-tabla-cuenta").textContent = estado.columnas;
-      grupoFilas.querySelector(".editor-tabla-cuenta").textContent = estado.filas;
+      pasos.columnas.cuenta.textContent = estado.columnas;
+      pasos.filas.cuenta.textContent = estado.filas;
+      pasos.columnas.menos.disabled = estado.columnas <= 1;
+      pasos.columnas.mas.disabled = estado.columnas >= MAX_COLUMNAS;
+      pasos.filas.menos.disabled = estado.filas <= 1;
+      pasos.filas.mas.disabled = estado.filas >= MAX_FILAS;
+      dlg.anadir.filas.disabled = estado.filas >= MAX_FILAS;
+      dlg.anadir.columnas.disabled = estado.columnas >= MAX_COLUMNAS;
       actualizarMedida();
     }
     dlg.pintar = pintar;
+
+    // Los asteriscos de la negrita se ven tal cual dentro de la celda: se avisa
+    // de que son formato, para que no parezcan un error.
+    var formato = doc.createElement("p");
+    formato.className = "editor-tabla-formato";
+    formato.innerHTML = "Dentro de una celda valen <code>**negrita**</code>, <code>*cursiva*</code> y <code>[enlace](https://…)</code>.";
+    principal.appendChild(formato);
 
     cuadricula.addEventListener("input", function (evento) {
       var entrada = evento.target;
@@ -420,7 +458,17 @@
       var siguiente = entradas[entradas.indexOf(evento.target) + 1];
       if (siguiente) {
         siguiente.focus();
-        siguiente.select();
+        return;
+      }
+      // En la última celda, Enter añade una fila más.
+      if (evento.target.value.trim() !== "") {
+        var filas = dlg.estado.filas;
+        cambiarTamano(filas + 1, dlg.estado.columnas);
+        var nuevas = cuadricula.querySelectorAll(".editor-tabla-celda");
+        var destino = nuevas[filas * dlg.estado.columnas];
+        if (destino) {
+          destino.focus();
+        }
       }
     });
 
@@ -438,13 +486,18 @@
     area.placeholder = "Pegue aquí…";
     area.className = "editor-tabla-pegado";
     pegar.appendChild(area);
-    var usar = doc.createElement("button");
-    usar.type = "button";
-    usar.className = "editor-tabla-usar";
-    usar.textContent = "Usar estos datos";
-    usar.addEventListener("click", function () {
+
+    var aviso = doc.createElement("p");
+    aviso.className = "editor-tabla-aviso";
+    aviso.setAttribute("aria-live", "polite");
+    pegar.appendChild(aviso);
+
+    // Lo pegado se carga solo en la cuadrícula: si hay que pulsar además un
+    // botón, parece que no ha hecho nada.
+    function aplicarPegado(opciones) {
       var datos = datosPegados(area.value);
       if (!datos.length) {
+        aviso.textContent = "No se encontraron celdas: copie las celdas en la hoja de cálculo y péguelas aquí.";
         area.focus();
         return;
       }
@@ -452,14 +505,64 @@
       datos.forEach(function (fila) { columnas = Math.max(columnas, fila.length); });
       dlg.estado.datos = datos;
       cambiarTamano(Math.max(datos.length, 1), columnas);
-      pegar.open = false;
-      var primera = cuadricula.querySelector(".editor-tabla-celda");
-      if (primera) {
-        primera.focus();
+      aviso.textContent = "";
+      if (opciones && opciones.cerrar) {
+        pegar.open = false;
+      }
+      cuadricula.scrollIntoView({ block: "nearest" });
+      if (!opciones || opciones.enfocar) {
+        var primera = cuadricula.querySelector(".editor-tabla-celda");
+        if (primera) {
+          primera.focus();
+        }
+      }
+    }
+    dlg.aplicarPegado = aplicarPegado;
+
+    area.addEventListener("paste", function () {
+      window.setTimeout(function () { aplicarPegado({ cerrar: false, enfocar: false }); }, 30);
+    });
+    area.addEventListener("change", function () { aplicarPegado({ cerrar: false, enfocar: false }); });
+
+    var usar = doc.createElement("button");
+    usar.type = "button";
+    usar.className = "editor-tabla-usar";
+    usar.textContent = "Usar estos datos";
+    usar.addEventListener("click", function () { aplicarPegado({ cerrar: true, enfocar: true }); });
+    pegar.appendChild(usar);
+    lateral.appendChild(pegar);
+
+    // Añadir filas y columnas, con un botón que se vea: los «+» pequeños
+    // pasaban desapercibidos.
+    var anadir = doc.createElement("div");
+    anadir.className = "editor-tabla-anadir";
+
+    function botonAnadir(texto) {
+      var boton = doc.createElement("button");
+      boton.type = "button";
+      boton.className = "editor-tabla-anadir-boton";
+      boton.textContent = texto;
+      anadir.appendChild(boton);
+      return boton;
+    }
+
+    var masFilas = botonAnadir("+ Añadir fila");
+    masFilas.addEventListener("click", function () {
+      cambiarTamano(dlg.estado.filas + 1, dlg.estado.columnas);
+      var entradas = cuadricula.querySelectorAll(".editor-tabla-celda");
+      var destino = entradas[(dlg.estado.filas - 1) * dlg.estado.columnas];
+      if (destino) {
+        destino.focus();
       }
     });
-    pegar.appendChild(usar);
-    caja.appendChild(pegar);
+
+    var masColumnas = botonAnadir("+ Añadir columna");
+    masColumnas.addEventListener("click", function () {
+      cambiarTamano(dlg.estado.filas, dlg.estado.columnas + 1);
+    });
+
+    principal.appendChild(anadir);
+    dlg.anadir = { filas: masFilas, columnas: masColumnas };
 
     var acciones = doc.createElement("div");
     acciones.className = "editor-tabla-acciones";
@@ -476,12 +579,14 @@
     aceptar.addEventListener("click", function () {
       var estado = dlg.estado;
       var markdown = aMarkdown(estado.datos);
+      // Se cierra antes de escribir: con el diálogo modal abierto el foco no
+      // puede irse al campo, y el texto se quedaba insertado sin que se viera.
+      dlg.close();
       if (estado.editar) {
         escribir(campo, markdown, estado.desde, estado.hasta);
       } else {
         insertarTabla(campo, markdown, estado.desde, estado.hasta);
       }
-      dlg.close();
     });
     caja.appendChild(acciones);
 
@@ -498,8 +603,12 @@
     if (!dlg) {
       return;
     }
-    var parte = seleccion(campo);
-    var hallada = tablaEnCursor(campo);
+    // Si el campo no se ha tocado nunca no hay cursor donde poner la tabla: se
+    // añade al final, que es lo que se espera al pulsar el botón directamente.
+    var parte = campo.ultimaSeleccion
+      ? { inicio: campo.ultimaSeleccion[0], fin: campo.ultimaSeleccion[1] }
+      : { inicio: campo.value.length, fin: campo.value.length };
+    var hallada = campo.ultimaSeleccion ? tablaEnCursor(campo) : null;
     if (hallada) {
       dlg.estado = {
         editar: true,
@@ -533,7 +642,6 @@
     var primera = dlg.cuadricula.querySelector(".editor-tabla-celda");
     if (primera) {
       primera.focus();
-      primera.select();
     }
   }
 
@@ -614,6 +722,14 @@
     ancla.parentNode.insertBefore(caja, ancla);
     caja.appendChild(ancla);
     caja.appendChild(crearGuia(doc));
+
+    // La última posición del cursor, para saber dónde va una tabla cuando el
+    // botón se pulsa sin haber vuelto a tocar el campo.
+    ["keyup", "mouseup", "focus", "select"].forEach(function (evento) {
+      campo.addEventListener(evento, function () {
+        campo.ultimaSeleccion = [campo.selectionStart, campo.selectionEnd];
+      });
+    });
 
     // El constructor de tablas va al final del documento: dentro del formulario
     // estorbaría y cualquier contenedor con overflow lo recortaría.

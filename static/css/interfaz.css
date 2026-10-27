@@ -5206,8 +5206,11 @@ td.col-clave {
 /* ------------------------------------------------ el constructor de tablas */
 
 .editor-tabla {
-  width: min(720px, 94vw);
+  width: min(920px, 94vw);
   max-height: 92vh;
+  /* El restablecimiento de la aplicación ponía `margin: 0` a todo, y el diálogo
+   * se plantaba en la esquina en vez de centrarse. */
+  margin: auto;
   padding: 0;
   border: 1px solid var(--linea-2);
   border-radius: var(--radio-m);
@@ -5253,6 +5256,25 @@ td.col-clave {
 
 .editor-tabla-cerrar:hover { background: #eef2f6; color: var(--marca-osc); }
 
+.editor-tabla-cuerpo {
+  display: grid;
+  grid-template-columns: 236px minmax(0, 1fr);
+  gap: var(--e4);
+  align-items: start;
+}
+
+.editor-tabla-lateral,
+.editor-tabla-principal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--e2);
+  min-width: 0;
+}
+
+@media (max-width: 760px) {
+  .editor-tabla-cuerpo { grid-template-columns: 1fr; }
+}
+
 .editor-tabla-ayuda {
   margin: 0 0 var(--e2);
   color: var(--tinta-3);
@@ -5260,7 +5282,8 @@ td.col-clave {
 }
 
 .editor-tabla-rapida {
-  display: inline-grid;
+  display: grid;
+  width: fit-content;
   grid-template-columns: repeat(8, 24px);
   gap: 3px;
   padding: var(--e1);
@@ -5321,6 +5344,13 @@ td.col-clave {
 
 .editor-tabla-paso-boton:hover { border-color: var(--marca); color: var(--marca-osc); }
 
+.editor-tabla-paso-boton:disabled {
+  border-color: var(--linea);
+  background: var(--fondo);
+  color: var(--tinta-4);
+  cursor: not-allowed;
+}
+
 .editor-tabla-cuenta {
   min-width: 22px;
   text-align: center;
@@ -5330,7 +5360,7 @@ td.col-clave {
 
 .editor-tabla-cuadricula {
   display: grid;
-  grid-template-columns: repeat(var(--columnas, 2), minmax(84px, 1fr));
+  grid-template-columns: repeat(var(--columnas, 2), minmax(92px, 1fr));
   gap: 3px;
   max-height: 46vh;
   overflow: auto;
@@ -5340,29 +5370,47 @@ td.col-clave {
   background: var(--fondo);
 }
 
-.editor-tabla-celda {
+/* Metro fija el alto de los campos con más peso; aquí la celda es una tabla. */
+.editor-tabla .editor-tabla-celda {
   width: 100%;
   min-width: 0;
   height: 32px;
+  min-height: 32px;
   padding: 0 var(--e2);
   border: 1px solid var(--linea-2);
   border-radius: var(--radio-s);
   background: var(--hoja);
+  box-shadow: none;
   color: var(--tinta);
   font: inherit;
   font-size: .84rem;
 }
 
-.editor-tabla-celda:focus {
+.editor-tabla .editor-tabla-celda:focus,
+.editor-tabla .editor-tabla-celda:focus-visible {
   outline: 0;
   border-color: var(--marca);
   box-shadow: var(--anillo);
 }
 
-.editor-tabla-celda-cabecera { background: #eff4fb; font-weight: 700; }
+.editor-tabla .editor-tabla-celda-cabecera { background: #eff4fb; font-weight: 700; }
+
+.editor-tabla-formato {
+  margin: 0;
+  color: var(--tinta-3);
+  font-size: .76rem;
+}
+
+.editor-tabla-formato code {
+  padding: 0 3px;
+  border-radius: 3px;
+  background: #eef2f6;
+  color: var(--tinta-2);
+  font-family: inherit;
+}
 
 .editor-tabla-pegar {
-  margin-top: var(--e3);
+  margin-top: 0;
   border: 1px solid var(--linea);
   border-radius: var(--radio-s);
   padding: var(--e2) var(--e3);
@@ -5409,6 +5457,42 @@ td.col-clave {
 }
 
 .editor-tabla-usar:hover { border-color: var(--marca); }
+
+.editor-tabla-aviso {
+  margin: var(--e1) 0 0;
+  color: var(--rojo);
+  font-size: .76rem;
+}
+
+.editor-tabla-aviso:empty { display: none; }
+
+.editor-tabla-anadir {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--e2);
+}
+
+.editor-tabla-anadir-boton {
+  height: 30px;
+  padding: 0 var(--e3);
+  border: 1px dashed var(--linea-2);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--marca-osc);
+  font: inherit;
+  font-size: .8rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor-tabla-anadir-boton:hover { border-color: var(--marca); background: var(--marca-tinte); }
+
+.editor-tabla-anadir-boton:disabled {
+  border-color: var(--linea);
+  color: var(--tinta-4);
+  background: var(--fondo);
+  cursor: not-allowed;
+}
 
 .editor-tabla-acciones {
   display: flex;
