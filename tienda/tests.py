@@ -1015,6 +1015,16 @@ class PruebasDelTextoEnriquecido(TestCase):
         self.assertIn("<table>", html)
         self.assertIn("<th>Talla</th>", html)
 
+    def test_una_tabla_de_una_columna_se_lee_como_lista(self):
+        """Pegada de una ficha, la tabla llega con una columna y Markdown no la
+        reconoce: antes el comprador leía las barras."""
+        from .texto import markdown_a_html
+
+        html = markdown_a_html("| Directa |\n| --- |\n| 300 ppm |")
+        self.assertIn("<ul>", html)
+        self.assertIn("<li>Directa</li>", html)
+        self.assertNotIn("|", html)
+
     def test_lo_que_no_es_texto_se_quita(self):
         from .texto import markdown_a_html
 

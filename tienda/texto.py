@@ -41,6 +41,39 @@ ESQUEMAS = ("http", "https", "mailto")
 #: deja el texto, y el comprador acabaría leyendo el guion del que lo escribió.
 BLOQUES = re.compile(r"(?is)<(script|style|iframe|object)\b.*?</\1\s*>")
 
+#: Una línea de una tabla escrita a mano con una sola columna: ``| Directa |``.
+FILA_UNICA = re.compile(r"^\s*\|\s*([^|\n]+?)\s*\|\s*$")
+SEPARADORA_UNICA = re.compile(r"^\s*\|\s*:?-{1,}:?\s*\|\s*$")
+
+
+def _tablas_de_una_columna_como_lista(texto: str) -> str:
+    """Una tabla de una sola columna no es una tabla para Markdown.
+
+    Al pegar la ficha de un producto se cuela así —la etiqueta en un renglón y el
+    valor en el siguiente—, y Markdown la dejaba tal cual: el comprador acababa
+    leyendo las barras. Se pasa a una lista, que es como se lee.
+    """
+    lineas = texto.split("\n")
+    salida: list[str] = []
+    i = 0
+    while i < len(lineas):
+        fila = FILA_UNICA.match(lineas[i])
+        siguiente = lineas[i + 1] if i + 1 < len(lineas) else ""
+        if not (fila and SEPARADORA_UNICA.match(siguiente)):
+            salida.append(lineas[i])
+            i += 1
+            continue
+        # Un bloque de una columna: la cabecera y sus filas, todas con dos barras.
+        salida.append("- " + fila.group(1))
+        i += 2
+        while i < len(lineas):
+            otra = FILA_UNICA.match(lineas[i])
+            if not otra:
+                break
+            salida.append("- " + otra.group(1))
+            i += 1
+    return "\n".join(salida)
+
 
 def markdown_a_html(texto: str) -> SafeString:
     """Convierte Markdown en HTML y lo entrega listo para la plantilla.
@@ -51,7 +84,7 @@ def markdown_a_html(texto: str) -> SafeString:
     if not (texto or "").strip():
         return mark_safe("")
     html = markdown.markdown(
-        texto,
+        _tablas_de_una_columna_como_lista(texto),
         extensions=["tables", "sane_lists", "nl2br"],
         output_format="html",
     )

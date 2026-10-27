@@ -222,7 +222,7 @@
     if (lineas[0].indexOf("\t") === -1) {
       separador = lineas[0].indexOf(";") !== -1 ? ";" : (lineas[0].indexOf(",") !== -1 ? "," : null);
     }
-    return lineas.map(function (linea) {
+    var filas = lineas.map(function (linea) {
       if (separador === null) {
         return [linea.trim()];
       }
@@ -230,6 +230,19 @@
         return celda.trim();
       });
     });
+    // Sin separador y con un número par de renglones, lo pegado es una ficha con
+    // la etiqueta en un renglón y el valor en el siguiente: se emparejan.
+    var sueltas = filas.every(function (fila) {
+      return fila.length === 1;
+    });
+    if (separador === null && sueltas && filas.length >= 4 && filas.length % 2 === 0) {
+      var parejas = [];
+      for (var i = 0; i < filas.length; i += 2) {
+        parejas.push([filas[i][0], filas[i + 1][0]]);
+      }
+      return parejas;
+    }
+    return filas;
   }
 
   function plural(cantidad, uno, varios) {
@@ -387,7 +400,9 @@
 
     function cambiarTamano(filas, columnas) {
       filas = Math.min(MAX_FILAS, Math.max(1, filas));
-      columnas = Math.min(MAX_COLUMNAS, Math.max(1, columnas));
+      // Con una sola columna el Markdown que se escribe no es una tabla y luego
+      // no hay quien lo lea: se queda en dos.
+      columnas = Math.min(MAX_COLUMNAS, Math.max(2, columnas));
       var estado = dlg.estado;
       var datos = [];
       for (var fila = 0; fila < filas; fila++) {
