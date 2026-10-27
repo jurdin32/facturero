@@ -5104,8 +5104,9 @@ td.col-clave {
 /* ------------------------------------------------- las fotos, para soltarlas
  *
  * Sin JavaScript se ve el campo de archivo de siempre (la rejilla está, pero sin
- * la clase `con-arrastre` no se esconde nada). Con JavaScript, el recuadro de
- * arriba es la zona de soltar y abajo van las miniaturas.
+ * la clase `con-arrastre` no se esconde nada). Con JavaScript, las miniaturas
+ * van a la izquierda y el recuadro de soltar a la derecha, en una columna
+ * estrecha: así el bloque no crece de alto.
  */
 
 .fotos-soltar {
@@ -5114,11 +5115,39 @@ td.col-clave {
   margin-bottom: var(--e3);
 }
 
+/* Las miniaturas manda; el recuadro de soltar se queda con lo justo. */
+.fotos.con-arrastre {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 210px;
+  grid-template-rows: auto auto;
+  gap: var(--e3);
+  align-items: start;
+}
+
+.fotos.con-arrastre .fotos-rejilla { grid-column: 1; grid-row: 1; }
+
+.fotos.con-arrastre .fotos-soltar { grid-column: 2; grid-row: 1; }
+
+.fotos.con-arrastre .foto-aviso { grid-column: 1 / -1; grid-row: 2; }
+
+/* Sin fotos todavía, el recuadro ocupa todo el ancho: no hay nada al lado. */
+.fotos.con-arrastre.sin-fotos { grid-template-columns: minmax(0, 1fr); }
+
+.fotos.con-arrastre.sin-fotos .fotos-soltar { grid-column: 1; }
+
+@media (max-width: 820px) {
+  .fotos.con-arrastre { grid-template-columns: minmax(0, 1fr); }
+  .fotos.con-arrastre .fotos-rejilla,
+  .fotos.con-arrastre .fotos-soltar { grid-column: 1; }
+  .fotos.con-arrastre .fotos-rejilla { grid-row: 2; }
+  .fotos.con-arrastre .fotos-soltar { grid-row: 1; }
+}
+
 .fotos.con-arrastre .fotos-soltar {
   display: grid;
   justify-items: center;
   gap: var(--e1);
-  padding: var(--e5) var(--e4);
+  padding: var(--e4) var(--e3);
   border: 2px dashed var(--borde-campo);
   border-radius: var(--radio-m);
   background: var(--hoja-2);
@@ -5134,8 +5163,8 @@ td.col-clave {
 }
 
 .fotos-soltar svg {
-  width: 34px;
-  height: 34px;
+  width: 30px;
+  height: 30px;
   color: var(--tinta-4);
 }
 

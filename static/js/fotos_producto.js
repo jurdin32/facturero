@@ -221,6 +221,8 @@
         }
         puestas += 1;
       });
+      // Sin miniaturas, el recuadro de soltar ocupa todo el ancho.
+      caja.classList.toggle("sin-fotos", puestas === 0);
     }
 
     /** Una tarjeta nueva, tomando el formulario vacío del formset. */
