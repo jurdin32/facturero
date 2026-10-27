@@ -5651,6 +5651,16 @@ td.col-clave {
   cursor: default;
 }
 
+/* Cuántas celdas van marcadas. */
+.editor-rico-tabla-cuenta {
+  color: var(--marca-osc);
+  font-size: .72rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.editor-rico-tabla-cuenta[hidden] { display: none; }
+
 /* Un separador fino entre las filas y las columnas y lo de unir celdas. */
 .editor-rico-tabla-separador {
   width: 1px;

@@ -223,6 +223,7 @@
       if (seleccion && seleccion.removeAllRanges) {
         seleccion.removeAllRanges();
       }
+      area.focus();
       actualizarBotones(tabla);
     }
 
@@ -240,9 +241,14 @@
       }
       var unir = barraTabla.querySelector('[data-tabla="unir"]');
       var dividir = barraTabla.querySelector('[data-tabla="dividir"]');
+      var cuantas = barraTabla.querySelector("[data-cuenta-celdas]");
       var marcadas = tabla ? tabla.querySelectorAll(".celda-elegida").length : 0;
       if (unir) {
         unir.disabled = marcadas < 2;
+      }
+      if (cuantas) {
+        cuantas.hidden = marcadas < 1;
+        cuantas.textContent = marcadas === 1 ? "1 celda" : marcadas + " celdas";
       }
       if (dividir) {
         var celda = tabla ? celdaActual(tabla) : null;
@@ -549,21 +555,6 @@
       limpiarMarcas();
     });
 
-    area.addEventListener("mousemove", function (evento) {
-      if (!marcando || evento.buttons !== 1) {
-        return;
-      }
-      var celda = celdaDelEvento(evento);
-      if (!celda || celda === marcando) {
-        return;
-      }
-      var tabla = marcando.closest("table");
-      if (celda.closest("table") !== tabla) {
-        return;
-      }
-      marcarHasta(tabla, marcando, celda);
-    });
-
     area.addEventListener("mouseup", function () {
       marcando = null;
       mirarTabla();
@@ -595,6 +586,109 @@
       });
       return documento.body.innerHTML;
     }
+
+    /** Las celdas marcadas, como una tabla aparte lista para copiar. */
+    function regionMarcada(tabla) {
+      var marcadas = Array.prototype.slice.call(
+        tabla.querySelectorAll(".celda-elegida")
+      );
+      if (!marcadas.length) {
+        return null;
+      }
+      var mapa = rejilla(tabla);
+      var filas = [];
+      var columnas = [];
+      marcadas.forEach(function (celda) {
+        var sitio = coordenadasDe(tabla, celda);
+        if (sitio) {
+          filas.push(sitio.fila);
+          columnas.push(sitio.columna);
+        }
+      });
+      if (!filas.length) {
+        return null;
+      }
+      var f1 = Math.min.apply(null, filas);
+      var f2 = Math.max.apply(null, filas);
+      var c1 = Math.min.apply(null, columnas);
+      var c2 = Math.max.apply(null, columnas);
+      var salida = document.createElement("table");
+      var cuerpo = document.createElement("tbody");
+      var plano = [];
+      for (var f = f1; f <= f2; f++) {
+        var fila = document.createElement("tr");
+        var linea = [];
+        for (var c = c1; c <= c2; c++) {
+          var celda = mapa[f + ":" + c];
+          var nueva = document.createElement("td");
+          nueva.innerHTML = celda ? celda.innerHTML : "<br>";
+          fila.appendChild(nueva);
+          linea.push((celda ? celda.textContent : "").replace(/\s+/g, " ").trim());
+        }
+        cuerpo.appendChild(fila);
+        plano.push(linea.join("\t"));
+      }
+      salida.appendChild(cuerpo);
+      return { html: salida.outerHTML, texto: plano.join("\n"), celdas: marcadas };
+    }
+
+    function ponerEnElPortapapeles(region, cortar) {
+      var alCopiar = function (evento) {
+        if (!evento.clipboardData) {
+          return;
+        }
+        evento.clipboardData.setData("text/html", region.html);
+        evento.clipboardData.setData("text/plain", region.texto);
+        evento.preventDefault();
+      };
+      document.addEventListener("copy", alCopiar, true);
+      try {
+        document.execCommand("copy");
+      } catch (fallo) {
+        // Un navegador que no deje copiar: el usuario siempre puede seleccionar
+        // el texto y usar su menú.
+      }
+      document.removeEventListener("copy", alCopiar, true);
+      if (cortar) {
+        region.celdas.forEach(function (celda) {
+          celda.innerHTML = "<br>";
+        });
+        limpiarMarcas();
+        guardar();
+        ajustar();
+        mirarTabla();
+      }
+    }
+
+    area.addEventListener("copy", function (evento) {
+      var tabla = tablaDeLasMarcas();
+      var region = tabla ? regionMarcada(tabla) : null;
+      if (!region || !evento.clipboardData) {
+        return;
+      }
+      evento.clipboardData.setData("text/html", region.html);
+      evento.clipboardData.setData("text/plain", region.texto);
+      evento.preventDefault();
+    });
+
+    area.addEventListener("cut", function (evento) {
+      var tabla = tablaDeLasMarcas();
+      var region = tabla ? regionMarcada(tabla) : null;
+      if (!region || !evento.clipboardData) {
+        return;
+      }
+      evento.clipboardData.setData("text/html", region.html);
+      evento.clipboardData.setData("text/plain", region.texto);
+      evento.preventDefault();
+      // Lo cortado se va de la tabla, que es lo que se espera de un cortar.
+      region.celdas.forEach(function (celda) {
+        celda.innerHTML = "<br>";
+      });
+      limpiarMarcas();
+      guardar();
+      ajustar();
+      mirarTabla();
+    });
 
     /* Pegar una tabla —o una lista copiada de Excel— con el cursor en una celda
        la reparte por las celdas, como en una hoja de cálculo. Si lo pegado no
@@ -724,6 +818,19 @@
     // Con una tabla dentro, el tabulador pasa a la celda siguiente: escribir una
     // tabla deja de ser pelear con el ratón.
     area.addEventListener("keydown", function (evento) {
+      // Copiar o cortar lo marcado para llevarlo a otra tabla.
+      if ((evento.ctrlKey || evento.metaKey) && !evento.altKey) {
+        var tecla = (evento.key || "").toLowerCase();
+        if (tecla === "c" || tecla === "x") {
+          var conMarcas = tablaDeLasMarcas();
+          var region = conMarcas ? regionMarcada(conMarcas) : null;
+          if (region) {
+            evento.preventDefault();
+            ponerEnElPortapapeles(region, tecla === "x");
+            return;
+          }
+        }
+      }
       if (evento.key !== "Tab") {
         return;
       }

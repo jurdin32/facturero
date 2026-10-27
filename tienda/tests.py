@@ -1451,6 +1451,14 @@ class PruebasDelEditorDeLaDescripcion(TestCase):
         respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
         self.assertContains(respuesta, "js/editor_rico.js")
 
+    def test_la_barra_de_la_tabla_trae_unir_y_dividir(self):
+        producto = crear_producto()
+        respuesta = self.client.get(f"/wadmin/catalogos/productos/{producto.pk}/")
+
+        self.assertContains(respuesta, 'data-tabla="unir"')
+        self.assertContains(respuesta, 'data-tabla="dividir"')
+        self.assertContains(respuesta, "data-cuenta-celdas")
+
 
 class PruebasDeLasFotos(TestCase):
     """Las fotos se sueltan en un recuadro, sin perder el formulario de siempre."""
