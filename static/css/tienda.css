@@ -993,15 +993,19 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
      miniaturas de una galería larga empujan la página a lo ancho. */
   .ficha, .dos-columnas { grid-template-columns: minmax(0, 1fr); gap: 1.2rem; }
   .galeria { grid-template-columns: minmax(0, 1fr); }
+  /* La foto grande primero y la tira de miniaturas debajo, que es como se mira
+     una ficha en el teléfono. */
+  .galeria-principal { order: 1; }
   .miniaturas {
+    order: 2;
     flex-direction: row;
     max-width: 100%;
     overflow-x: auto;
     overscroll-behavior-x: contain;
     scroll-snap-type: x proximity;
-    padding-bottom: .25rem;
-    scrollbar-width: thin;
+    scrollbar-width: none;
   }
+  .miniaturas::-webkit-scrollbar { display: none; }
   .miniaturas img,
   .miniaturas .miniatura-video {
     flex: none;
