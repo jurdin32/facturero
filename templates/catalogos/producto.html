@@ -77,32 +77,6 @@
         </div>
       </section>
 
-      <section class="bloque">
-        <h2 class="bloque-titulo">A cómo se factura</h2>
-        <div class="row">
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
-              {{ formulario.precio_unitario }}
-              {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
-              {{ formulario.codigo_porcentaje_iva }}
-            </div>
-          </div>
-          <div class="cell-12 cell-md-4">
-            <div class="campo-caja">
-              <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
-              {{ formulario.codigo_auxiliar }}
-              <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
       <section class="bloque" id="bloque-inventario">
         <h2 class="bloque-titulo">Inventario</h2>
         <div class="row">
@@ -138,6 +112,24 @@
     </div>
 
     <aside class="columna-lateral">
+      <div class="resumen">
+        <h2 class="bloque-titulo">A cómo se factura</h2>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.precio_unitario.id_for_label }}">Precio sin IVA</label>
+          {{ formulario.precio_unitario }}
+          {% if formulario.precio_unitario.errors %}<p class="error">{{ formulario.precio_unitario.errors.0 }}</p>{% endif %}
+        </div>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.codigo_porcentaje_iva.id_for_label }}">IVA que aplica</label>
+          {{ formulario.codigo_porcentaje_iva }}
+        </div>
+        <div class="campo-caja">
+          <label class="etiqueta" for="{{ formulario.codigo_auxiliar.id_for_label }}">Código auxiliar</label>
+          {{ formulario.codigo_auxiliar }}
+          <p class="ayuda">Código de barras o del fabricante, si lo tiene.</p>
+        </div>
+      </div>
+
       <div class="resumen">
         <h2 class="bloque-titulo">Estado</h2>
         <div class="campo-caja">
@@ -279,32 +271,42 @@
               <path d="M12 16V4"></path><path d="m7 9 5-5 5 5"></path>
               <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
             </svg>
-            <p class="fotos-titulo">Arrastre las fotos aquí</p>
-            <p class="fotos-o">o</p>
-            <button type="button" class="boton claro" data-elegir>Elegir fotos</button>
-            <p class="fotos-nota">JPG, PNG o WEBP · varias a la vez</p>
+            <div class="fotos-soltar-texto">
+              <p class="fotos-titulo">Arrastre las fotos aquí</p>
+              <p class="fotos-nota">JPG, PNG o WEBP · puede soltar varias a la vez</p>
+            </div>
+            <button type="button" class="boton" data-elegir>Añadir fotos</button>
             <input class="fotos-archivo" type="file" accept="image/*" multiple data-archivo
                    aria-label="Elegir las fotos del producto">
           </div>
 
-          <div class="fotos-rejilla" data-rejilla>
+          <ul class="fotos-lista" data-rejilla>
             {% for foto in formset_imagenes %}
-              <figure class="foto" data-foto-tarjeta>
+              <li class="foto" data-foto-tarjeta>
                 {{ foto.id }}
-                <div class="foto-marco">
+                <div class="foto-mini">
                   {% if foto.instance.pk %}
                     <img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}" data-vista>
                   {% else %}
                     <img alt="" data-vista hidden>
-                    <span class="foto-vacia" data-vacia>Sin foto</span>
+                    <span class="foto-vacia" data-vacia>·</span>
                   {% endif %}
-                  <span class="foto-principal">Principal</span>
+                </div>
+                <div class="foto-datos">
+                  <span class="foto-nombre" data-nombre-foto>
+                    {% if foto.instance.pk %}{{ foto.instance.nombre_archivo }}{% else %}Foto nueva{% endif %}
+                  </span>
+                  <span class="foto-peso" data-peso>
+                    {% if foto.instance.peso %}{{ foto.instance.peso|filesizeformat }}{% endif %}
+                  </span>
+                  <span class="foto-barra"><span></span></span>
+                </div>
+                <span class="foto-principal">Principal</span>
+                <div class="foto-acciones">
+                  <button type="button" data-izquierda aria-label="Moverla arriba">↑</button>
+                  <button type="button" data-derecha aria-label="Moverla abajo">↓</button>
                   <button type="button" class="foto-quitar" data-quitar
                           aria-label="Quitar la foto">×</button>
-                  <div class="foto-mover">
-                    <button type="button" data-izquierda aria-label="Moverla antes">‹</button>
-                    <button type="button" data-derecha aria-label="Moverla después">›</button>
-                  </div>
                 </div>
                 <div class="foto-campos">
                   {{ foto.imagen }}
@@ -313,28 +315,33 @@
                   {{ foto.alt }}
                 </div>
                 {% if foto.imagen.errors %}<p class="error">{{ foto.imagen.errors.0 }}</p>{% endif %}
-              </figure>
+              </li>
             {% endfor %}
-          </div>
+          </ul>
 
           <p class="foto-aviso" data-aviso aria-live="polite"></p>
         </div>
 
         <template data-plantilla-foto>
-          <figure class="foto" data-foto-tarjeta>
-            <div class="foto-marco">
+          <li class="foto" data-foto-tarjeta>
+            <div class="foto-mini">
               <img alt="" data-vista hidden>
-              <span class="foto-vacia" data-vacia>Sin foto</span>
-              <span class="foto-principal">Principal</span>
+              <span class="foto-vacia" data-vacia>·</span>
+            </div>
+            <div class="foto-datos">
+              <span class="foto-nombre" data-nombre-foto>Foto nueva</span>
+              <span class="foto-peso" data-peso></span>
+              <span class="foto-barra"><span></span></span>
+            </div>
+            <span class="foto-principal">Principal</span>
+            <div class="foto-acciones">
+              <button type="button" data-izquierda aria-label="Moverla arriba">↑</button>
+              <button type="button" data-derecha aria-label="Moverla abajo">↓</button>
               <button type="button" class="foto-quitar" data-quitar
                       aria-label="Quitar la foto">×</button>
-              <div class="foto-mover">
-                <button type="button" data-izquierda aria-label="Moverla antes">‹</button>
-                <button type="button" data-derecha aria-label="Moverla después">›</button>
-              </div>
             </div>
             <div class="foto-campos">{{ formset_imagenes.empty_form }}</div>
-          </figure>
+          </li>
         </template>
 
         {% if formset_imagenes.non_form_errors %}

@@ -529,6 +529,21 @@ class ImagenProducto(models.Model):
     def __str__(self) -> str:
         return self.alt or f"Imagen de {self.producto_id}"
 
+    @property
+    def peso(self) -> Optional[int]:
+        """Cuánto ocupa el archivo, en bytes; ``None`` si ya no está en disco."""
+        if not self.imagen:
+            return None
+        try:
+            return self.imagen.size
+        except (OSError, ValueError):
+            return None
+
+    @property
+    def nombre_archivo(self) -> str:
+        """El nombre del archivo, sin la carpeta donde se guardó."""
+        return (self.imagen.name or "").rsplit("/", 1)[-1]
+
 
 # ------------------------------------------------------------------- los pedidos
 

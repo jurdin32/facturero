@@ -151,10 +151,11 @@
   }
 
   function pesoLegible(bytes) {
+    // Con un decimal, como lo escribe Django en las fotos ya guardadas.
     if (bytes >= 1024 * 1024) {
       return (bytes / (1024 * 1024)).toFixed(1).replace(".", ",") + " MB";
     }
-    return Math.max(1, Math.round(bytes / 1024)) + " KB";
+    return (Math.max(1, bytes / 1024)).toFixed(1).replace(".", ",") + " KB";
   }
 
   function montar(caja) {
@@ -269,6 +270,14 @@
       var vacia = tarjeta.querySelector("[data-vacia]");
       if (vacia) {
         vacia.hidden = true;
+      }
+      var nombre = tarjeta.querySelector("[data-nombre-foto]");
+      if (nombre) {
+        nombre.textContent = archivo.name;
+      }
+      var peso = tarjeta.querySelector("[data-peso]");
+      if (peso) {
+        peso.textContent = pesoLegible(archivo.size);
       }
       var alt = ocultarAlternativo(tarjeta);
       if (alt && !alt.value) {
