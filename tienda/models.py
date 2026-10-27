@@ -51,7 +51,9 @@ __all__ = [
     "Pedido",
     "LineaPedido",
     "EXTENSIONES_IMAGEN",
+    "EXTENSIONES_VIDEO",
     "TAMANO_MAXIMO_IMAGEN",
+    "TAMANO_MAXIMO_VIDEO",
     "ids_de_la_rama",
 ]
 
@@ -59,13 +61,30 @@ __all__ = [
 #: guion, y una foto de producto no lo necesita.
 EXTENSIONES_IMAGEN = ("png", "jpg", "jpeg", "webp", "avif")
 
+#: Y lo que se acepta como video del producto.
+EXTENSIONES_VIDEO = ("mp4", "webm", "m4v", "mov")
+
 #: 5 MB: una foto de catálogo cabe de sobra y no hincha la copia de seguridad.
 TAMANO_MAXIMO_IMAGEN = 5 * 1024 * 1024
 
+#: Un video pesa más por naturaleza; el tope es para que la web no se arrastre.
+TAMANO_MAXIMO_VIDEO = 25 * 1024 * 1024
+
+
+def es_video(nombre: str) -> bool:
+    """¿El archivo es un video? Manda la extensión, que es lo que se acepta."""
+    return (nombre or "").rsplit(".", 1)[-1].lower() in EXTENSIONES_VIDEO
+
 
 def validar_tamano(archivo: object) -> None:
-    """Una foto de más de cinco megas es una foto sin recortar."""
-    if archivo and getattr(archivo, "size", 0) > TAMANO_MAXIMO_IMAGEN:
+    """El tope depende de lo que sea: un video de catálogo pesa más que una foto."""
+    if not archivo:
+        return
+    if es_video(getattr(archivo, "name", "")):
+        if getattr(archivo, "size", 0) > TAMANO_MAXIMO_VIDEO:
+            raise ValidationError("El video no puede pasar de 25 MB.")
+        return
+    if getattr(archivo, "size", 0) > TAMANO_MAXIMO_IMAGEN:
         raise ValidationError("La imagen no puede pasar de 5 MB. Redúzcala un poco.")
 
 
@@ -457,8 +476,17 @@ class ProductoTienda(Producto):
 
     @property
     def imagen_principal(self) -> Optional["ImagenProducto"]:
-        """La primera foto, que es la que sale en el listado."""
-        return self.imagenes.first()
+        """La primera foto, que es la que sale en el listado.
+
+        Los videos no valen de miniatura —en una tarjeta se pintan con `<img>`—,
+        así que se saltan: si el producto solo tiene videos, no hay principal.
+        """
+        return self.imagenes.filter(es_video=False).first()
+
+    @property
+    def videos(self) -> Any:
+        """Los videos del producto, en su orden."""
+        return self.imagenes.filter(es_video=True)
 
     @property
     def publicado_en_la_web(self) -> bool:
@@ -501,15 +529,21 @@ class ImagenProducto(models.Model):
         related_name="imagenes",
     )
     imagen = models.FileField(
-        "imagen",
+        "archivo",
         upload_to="tienda/productos/",
         validators=[
             FileExtensionValidator(
-                EXTENSIONES_IMAGEN, "La imagen tiene que ser PNG, JPG, WEBP o AVIF."
+                EXTENSIONES_IMAGEN + EXTENSIONES_VIDEO,
+                "Tiene que ser una imagen PNG, JPG, WEBP o AVIF, o un video MP4 o WEBM.",
             ),
             validar_tamano,
         ],
-        help_text="PNG, JPG, WEBP o AVIF, hasta 5 MB.",
+        help_text="PNG, JPG, WEBP o AVIF hasta 5 MB; MP4 o WEBM hasta 25 MB.",
+    )
+    es_video = models.BooleanField(
+        "es un video",
+        default=False,
+        help_text="Se marca solo al subirlo, por la extensión del archivo.",
     )
     alt = models.CharField(
         "texto alternativo",
@@ -528,6 +562,10 @@ class ImagenProducto(models.Model):
 
     def __str__(self) -> str:
         return self.alt or f"Imagen de {self.producto_id}"
+
+    @property
+    def extension(self) -> str:
+        return (self.imagen.name or "").rsplit(".", 1)[-1].lower()
 
     @property
     def peso(self) -> Optional[int]:

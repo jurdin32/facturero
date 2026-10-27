@@ -418,6 +418,44 @@ class PruebasDeLaTiendaEnElCatalogo(TestCase):
         self.assertEqual(respuesta.status_code, 302)
         self.assertEqual(Producto.objects.count(), 1)
 
+    def test_un_video_se_guarda_como_video_y_la_principal_sigue_siendo_la_foto(self) -> None:
+        """En «Fotos y videos» caben los dos, y el video no le quita la portada a la foto."""
+        from tienda.models import ImagenProducto
+
+        foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")
+        video = SimpleUploadedFile(
+            "demo.mp4", b"\x00\x00\x00\x18ftypmp42", content_type="video/mp4"
+        )
+        datos = self.datos()
+        datos.update(self.datos_de_tienda(publicado="", titulo="", precio_web=""))
+        datos.update({
+            "imagenes-TOTAL_FORMS": "2",
+            "imagenes-INITIAL_FORMS": "0",
+            "imagenes-MIN_NUM_FORMS": "0",
+            "imagenes-MAX_NUM_FORMS": "1000",
+            "imagenes-0-id": "",
+            "imagenes-0-imagen": foto,
+            "imagenes-0-alt": "Caja de frente",
+            "imagenes-0-orden": "0",
+            "imagenes-1-id": "",
+            "imagenes-1-imagen": video,
+            "imagenes-1-alt": "Caja en movimiento",
+            "imagenes-1-orden": "1",
+        })
+
+        respuesta = self.client.post("/catalogos/productos/nuevo/", datos)
+
+        self.assertEqual(respuesta.status_code, 302)
+        guardadas = list(ImagenProducto.objects.order_by("orden"))
+        self.assertEqual(len(guardadas), 2)
+        self.assertFalse(guardadas[0].es_video)
+        self.assertTrue(guardadas[1].es_video)
+        self.assertEqual(guardadas[1].extension, "mp4")
+
+        tienda = ProductoTienda.de(Producto.objects.get())
+        self.assertIsNotNone(tienda)
+        self.assertEqual(tienda.imagen_principal, guardadas[0])
+
     def test_una_foto_mal_puesta_se_queda_en_la_pantalla(self) -> None:
         """Con un error de verdad se ve en la pantalla, no en un aviso que se va."""
         foto = SimpleUploadedFile("frente.png", b"\x89PNG\r\n\x1a\n", content_type="image/png")

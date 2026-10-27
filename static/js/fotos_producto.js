@@ -150,6 +150,19 @@
     });
   }
 
+  //: Los videos no se recomprimen en el navegador: se suben tal cual, con su tope.
+  var EXTENSIONES_VIDEO = ["mp4", "webm", "m4v", "mov"];
+  var PESO_MAXIMO_VIDEO = 25 * 1024 * 1024;
+
+  function esVideo(archivo) {
+    var nombre = (archivo && archivo.name) || "";
+    var extension = nombre.indexOf(".") === -1 ? "" : nombre.split(".").pop().toLowerCase();
+    if (EXTENSIONES_VIDEO.indexOf(extension) !== -1) {
+      return true;
+    }
+    return !!archivo && /^video\//.test(archivo.type || "");
+  }
+
   function pesoLegible(bytes) {
     // Con un decimal, como lo escribe Django en las fotos ya guardadas.
     if (bytes >= 1024 * 1024) {
@@ -205,9 +218,16 @@
       return nombre.slice(0, 160);
     }
 
+    /** ¿Esta tarjeta es un video? */
+    function esVideoPuesto(tarjeta) {
+      var pelicula = tarjeta.querySelector("video[data-vista], [data-vista-video]");
+      return !!pelicula && !pelicula.hidden;
+    }
+
     /** Numera el orden por la posición y marca cuál es la principal. */
     function reordenar() {
       var puestas = 0;
+      var conPrincipal = false;
       tarjetas().forEach(function (tarjeta) {
         if (tarjeta.hidden) {
           return;
@@ -216,9 +236,12 @@
         if (orden) {
           orden.value = puestas;
         }
+        // La principal es la primera foto: un video no sirve de miniatura.
         var etiqueta = tarjeta.querySelector(".foto-principal");
         if (etiqueta) {
-          etiqueta.classList.toggle("visible", puestas === 0);
+          var esLaPrincipal = !conPrincipal && !esVideoPuesto(tarjeta);
+          etiqueta.classList.toggle("visible", esLaPrincipal);
+          conPrincipal = conPrincipal || esLaPrincipal;
         }
         puestas += 1;
       });
@@ -262,10 +285,49 @@
       var cesto = new DataTransfer();
       cesto.items.add(archivo);
       campo.files = cesto.files;
-      var vista = tarjeta.querySelector("[data-vista]");
-      if (vista) {
-        vista.src = URL.createObjectURL(archivo);
-        vista.hidden = false;
+      var video = esVideo(archivo);
+      var direccion = URL.createObjectURL(archivo);
+      var imagen = tarjeta.querySelector("img[data-vista]");
+      var pelicula = tarjeta.querySelector("[data-vista-video]");
+      var distintivo = tarjeta.querySelector("[data-tipo]");
+      var marco = tarjeta.querySelector(".foto-mini");
+      // La tarjeta que trae el formset de más no tiene estos huecos: se crean.
+      if (video && !pelicula && marco) {
+        pelicula = document.createElement("video");
+        pelicula.setAttribute("data-vista-video", "");
+        pelicula.muted = true;
+        pelicula.playsInline = true;
+        pelicula.preload = "metadata";
+        pelicula.hidden = true;
+        marco.appendChild(pelicula);
+      }
+      if (video && !distintivo && marco) {
+        distintivo = document.createElement("span");
+        distintivo.className = "foto-tipo";
+        distintivo.setAttribute("data-tipo", "");
+        distintivo.setAttribute("aria-hidden", "true");
+        distintivo.textContent = "▶";
+        marco.appendChild(distintivo);
+      }
+      if (video && pelicula) {
+        // `#t=0.1` pide el primer fotograma: sin él, la miniatura sale en negro.
+        pelicula.src = direccion + "#t=0.1";
+        pelicula.hidden = false;
+        if (imagen) {
+          imagen.hidden = true;
+        }
+        if (distintivo) {
+          distintivo.hidden = false;
+        }
+      } else if (imagen) {
+        imagen.src = direccion;
+        imagen.hidden = false;
+        if (pelicula) {
+          pelicula.hidden = true;
+        }
+        if (distintivo) {
+          distintivo.hidden = true;
+        }
       }
       var vacia = tarjeta.querySelector("[data-vacia]");
       if (vacia) {
@@ -296,8 +358,19 @@
 
       archivos.reduce(function (cadena, archivo) {
         return cadena.then(function () {
+          if (esVideo(archivo)) {
+            // Un video no se recomprime aquí: se sube como está, con su tope.
+            if (archivo.size > PESO_MAXIMO_VIDEO) {
+              decir("«" + archivo.name + "» pasa de 25 MB. Recórtelo un poco.", true);
+              return null;
+            }
+            ponerArchivo(tarjetaLibre(), archivo);
+            hechas += 1;
+            peso += archivo.size;
+            return null;
+          }
           if (archivo.type && archivo.type.indexOf("image/") !== 0) {
-            decir("«" + archivo.name + "» no es una imagen.", true);
+            decir("«" + archivo.name + "» no es una imagen ni un video.", true);
             return null;
           }
           return comprimir(archivo)
@@ -324,7 +397,7 @@
         reordenar();
         if (hechas) {
           decir(
-            (hechas === 1 ? "Foto lista" : hechas + " fotos listas") +
+            (hechas === 1 ? "Archivo listo" : hechas + " archivos listos") +
               " para guardar · " + pesoLegible(peso)
           );
         }

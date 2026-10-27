@@ -319,11 +319,11 @@
     </section>
 
     <section class="tarjeta-ficha">
-      <h3 class="tarjeta-ficha-titulo">Fotos</h3>
+      <h3 class="tarjeta-ficha-titulo">Fotos y videos</h3>
         <p class="ayuda">
-          Arrastre las fotos al recuadro o elíjalas con el botón. La primera es la
-          principal. Se reducen solas al subirlas: se ven igual de bien y pesan mucho
-          menos.
+          Arrastre las fotos o los videos al recuadro, o elíjalos con el botón. La
+          primera foto es la principal. Las fotos se reducen solas al subirlas: se ven
+          igual de bien y pesan mucho menos.
         </p>
         {{ formset_imagenes.management_form }}
 
@@ -336,12 +336,13 @@
               <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"></path>
             </svg>
             <div class="fotos-soltar-texto">
-              <p class="fotos-titulo">Arrastre las fotos aquí</p>
-              <p class="fotos-nota">JPG, PNG o WEBP · puede soltar varias a la vez</p>
+              <p class="fotos-titulo">Arrastre las fotos o los videos aquí</p>
+              <p class="fotos-nota">JPG, PNG o WEBP · MP4 o WEBM · puede soltar varios a la vez</p>
             </div>
-            <button type="button" class="boton" data-elegir>Añadir fotos</button>
-            <input class="fotos-archivo" type="file" accept="image/*" multiple data-archivo
-                   aria-label="Elegir las fotos del producto">
+            <button type="button" class="boton" data-elegir>Añadir archivos</button>
+            <input class="fotos-archivo" type="file" accept="image/*,video/mp4,video/webm,video/quicktime"
+                   multiple data-archivo
+                   aria-label="Elegir las fotos y los videos del producto">
           </div>
 
           <ul class="fotos-lista" data-rejilla>
@@ -350,10 +351,19 @@
                 {{ foto.id }}
                 <div class="foto-mini">
                   {% if foto.instance.pk %}
-                    <img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}" data-vista>
+                    {% if foto.instance.es_video %}
+                      <video src="{{ foto.instance.imagen.url }}#t=0.1" data-vista
+                             muted playsinline preload="metadata"
+                             aria-label="{{ foto.instance.alt }}"></video>
+                      <span class="foto-tipo" aria-hidden="true">▶</span>
+                    {% else %}
+                      <img src="{{ foto.instance.imagen.url }}" alt="{{ foto.instance.alt }}" data-vista>
+                    {% endif %}
                   {% else %}
                     <img alt="" data-vista hidden>
+                    <video data-vista-video hidden muted playsinline preload="metadata"></video>
                     <span class="foto-vacia" data-vacia>·</span>
+                    <span class="foto-tipo" data-tipo hidden aria-hidden="true">▶</span>
                   {% endif %}
                 </div>
                 <span class="foto-nombre" data-nombre-foto>
@@ -387,7 +397,9 @@
           <li class="foto" data-foto-tarjeta>
             <div class="foto-mini">
               <img alt="" data-vista hidden>
+              <video data-vista-video hidden muted playsinline preload="metadata"></video>
               <span class="foto-vacia" data-vacia>·</span>
+              <span class="foto-tipo" data-tipo hidden aria-hidden="true">▶</span>
             </div>
             <span class="foto-nombre" data-nombre-foto>Foto nueva</span>
             <span class="foto-peso" data-peso></span>

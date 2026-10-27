@@ -571,6 +571,9 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
 
 .miniaturas img:hover { border-color: var(--marca); }
 
+.miniaturas .miniatura-video { width: 64px; height: 64px; flex: none; }
+.miniaturas .miniatura-video.activa { border-color: var(--marca); }
+
 .galeria.sin-miniaturas { grid-template-columns: 1fr; }
 
 .galeria-principal {
@@ -583,7 +586,37 @@ h1, h2, h3 { line-height: 1.22; margin: 0 0 .5rem; letter-spacing: -.01em; }
   background: #fff;
 }
 
-.galeria-principal img { width: 100%; height: 100%; object-fit: contain; }
+.galeria-principal img,
+.galeria-principal video { width: 100%; height: 100%; object-fit: contain; }
+
+/* Una miniatura de video: el primer fotograma con la marca de reproducción. */
+.miniatura-video {
+  position: relative;
+  padding: 0;
+  border: 1px solid var(--linea);
+  border-radius: 6px;
+  background: #000;
+  overflow: hidden;
+  cursor: pointer;
+  aspect-ratio: 1 / 1;
+}
+
+.miniatura-video video { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.marca-video {
+  position: absolute;
+  right: 3px;
+  bottom: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: rgba(16, 24, 40, .72);
+  color: #fff;
+  font-size: 8px;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+}
 
 .galeria-principal .sin-foto { color: var(--tinta-3); font-size: .85rem; }
 

@@ -5,15 +5,43 @@
 (function () {
   "use strict";
 
+  /* La foto grande cambia de `<img>` a `<video>` según lo que se pulse: un video
+   * necesita sus controles y no se puede pintar con un `src` de imagen. */
+  function ponerEnLaGaleria(caja, direccion, video) {
+    var actual = caja.querySelector("img, video");
+    var nuevo;
+    if (video) {
+      nuevo = document.createElement("video");
+      nuevo.src = direccion;
+      nuevo.controls = true;
+      nuevo.autoplay = true;
+      nuevo.playsInline = true;
+    } else {
+      nuevo = document.createElement("img");
+      nuevo.src = direccion;
+      nuevo.alt = actual ? actual.getAttribute("alt") || "" : "";
+    }
+    nuevo.id = "foto-principal";
+    if (actual) {
+      actual.parentNode.replaceChild(nuevo, actual);
+    } else {
+      caja.appendChild(nuevo);
+    }
+  }
+
   function galeria() {
     var miniaturas = document.querySelectorAll("[data-foto]");
-    var principal = document.getElementById("foto-principal");
-    if (!principal) {
+    var caja = document.getElementById("foto-principal-caja");
+    if (!caja) {
       return;
     }
     Array.prototype.forEach.call(miniaturas, function (miniatura) {
       miniatura.addEventListener("click", function () {
-        principal.src = miniatura.getAttribute("data-foto");
+        ponerEnLaGaleria(
+          caja,
+          miniatura.getAttribute("data-foto"),
+          miniatura.getAttribute("data-video") === "1"
+        );
         Array.prototype.forEach.call(miniaturas, function (otra) {
           otra.classList.remove("activa");
         });

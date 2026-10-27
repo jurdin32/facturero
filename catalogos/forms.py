@@ -228,9 +228,25 @@ class FormularioImagen(forms.ModelForm):
         model = ImagenProducto
         fields = ["imagen", "alt", "orden"]
         labels = {"imagen": "Foto", "alt": "Texto alternativo", "orden": "Orden"}
+
+    def clean_imagen(self) -> Any:
+        """Marca si lo que se subió es un video, para pintarlo como tal.
+
+        Se mira la extensión y no el tipo que declara el navegador, que no siempre
+        viene. Solo se toca cuando hay archivo: al corregir una fila sin volver a
+        subirla, lo que ya estaba guardado se queda como estaba.
+        """
+        archivo = self.cleaned_data.get("imagen")
+        if archivo and getattr(archivo, "name", ""):
+            from tienda.models import es_video
+
+            self.instance.es_video = es_video(archivo.name)
+        return archivo
         widgets = {
             # Sin el «Actualmente: …» de Django: la foto ya se ve en la miniatura.
-            "imagen": forms.FileInput(attrs={"accept": ".png,.jpg,.jpeg,.webp,.avif"}),
+            "imagen": forms.FileInput(
+                attrs={"accept": ".png,.jpg,.jpeg,.webp,.avif,.mp4,.webm,.m4v,.mov"}
+            ),
             "alt": forms.TextInput(attrs=caja(placeholder="Qué se ve en la foto")),
             "orden": forms.NumberInput(attrs=numero()),
         }

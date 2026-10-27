@@ -19,16 +19,30 @@
         {% if producto.imagenes.all|length > 1 %}
           <div class="miniaturas">
             {% for foto in producto.imagenes.all %}
-              <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}"
-                   data-foto="{{ foto.imagen.url }}" loading="lazy">
+              {% if foto.es_video %}
+                <button type="button" class="miniatura-video" data-foto="{{ foto.imagen.url }}"
+                        data-video="1" aria-label="Ver el video: {{ foto.alt|default:producto.nombre }}">
+                  <video src="{{ foto.imagen.url }}#t=0.1" muted playsinline preload="metadata"
+                         aria-hidden="true"></video>
+                  <span class="marca-video" aria-hidden="true">▶</span>
+                </button>
+              {% else %}
+                <img src="{{ foto.imagen.url }}" alt="{{ foto.alt|default:producto.nombre }}"
+                     data-foto="{{ foto.imagen.url }}" loading="lazy">
+              {% endif %}
             {% endfor %}
           </div>
         {% endif %}
-        <div class="galeria-principal">
-          {% with principal=producto.imagen_principal %}
+        <div class="galeria-principal" id="foto-principal-caja">
+          {% with principal=producto.imagen_principal|default:producto.videos.first %}
             {% if principal %}
-              <img id="foto-principal" src="{{ principal.imagen.url }}"
-                   alt="{{ principal.alt|default:producto.nombre }}">
+              {% if principal.es_video %}
+                <video id="foto-principal" src="{{ principal.imagen.url }}" controls playsinline
+                       preload="metadata" aria-label="{{ principal.alt|default:producto.nombre }}"></video>
+              {% else %}
+                <img id="foto-principal" src="{{ principal.imagen.url }}"
+                     alt="{{ principal.alt|default:producto.nombre }}">
+              {% endif %}
             {% else %}
               <span class="sin-foto">Sin foto</span>
             {% endif %}

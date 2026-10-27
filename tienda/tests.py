@@ -1345,8 +1345,27 @@ class PruebasDeLasFotos(TestCase):
         respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
 
         self.assertContains(respuesta, "data-fotos")
-        self.assertContains(respuesta, "Arrastre las fotos aquí")
+        self.assertContains(respuesta, "Arrastre las fotos o los videos aquí")
         self.assertContains(respuesta, "data-archivo")
+
+    def test_la_ficha_de_la_tienda_pinta_el_video(self):
+        """Un video del producto se ve en la galería, con controles para reproducirlo."""
+        tienda = ProductoTienda.extender(self.producto)
+        tienda.publicado = True
+        tienda.save()
+        ImagenProducto.objects.create(
+            producto=tienda,
+            imagen=SimpleUploadedFile("demo.mp4", b"\x00\x00\x00\x18ftypmp42", content_type="video/mp4"),
+            alt="El producto en movimiento",
+            orden=0,
+            es_video=True,
+        )
+
+        respuesta = self.client.get(f"/tienda/p/{tienda.slug}/")
+
+        self.assertContains(respuesta, '<video id="foto-principal"')
+        self.assertContains(respuesta, "demo.mp4")
+        self.assertNotContains(respuesta, "Sin foto")
 
     def test_la_pantalla_carga_el_guion_de_las_fotos(self):
         respuesta = self.client.get(f"/catalogos/productos/{self.producto.pk}/")
