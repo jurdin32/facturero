@@ -822,7 +822,7 @@ select { padding-right: var(--e6); }
 
 /* Las secciones son tarjetas: fondo blanco, borde y nada más. */
 .bloque {
-  margin-bottom: var(--e7);
+  margin-bottom: var(--e6);
   padding: var(--e5);
   background: var(--hoja);
   border: 1px solid var(--linea);
@@ -869,8 +869,8 @@ select { padding-right: var(--e6); }
 .columnas {
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(340px, 32%, 460px);
-  gap: var(--e7) var(--e6);
-  margin-bottom: var(--e7);
+  gap: var(--e6) var(--e5);
+  margin-bottom: var(--e6);
   align-items: start;
 }
 
@@ -1475,7 +1475,7 @@ table[data-tabla] th:not([class*="col-"]):not([class*="sortable"]) {
   box-shadow: var(--sombra-1);
 }
 
-.resumen + .resumen { margin-top: var(--e7); }
+.resumen + .resumen { margin-top: var(--e6); }
 
 .pega { position: sticky; top: calc(var(--barra) + var(--e4)); }
 
