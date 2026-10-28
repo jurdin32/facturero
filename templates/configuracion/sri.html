@@ -45,14 +45,37 @@ se elige cuál toca, para no tener un fichero de mil líneas.
   </div>
 </div>
 
+{% comment %}
+Las configuraciones del emisor. Solo una está en uso: la que firma y la que dice
+el ambiente. Cada ficha deja verla y, si no es la que se usa, un botón para
+pasarse a ella. Antes se podían tener las dos activas y no había forma de elegir
+desde la pantalla.
+{% endcomment %}
 {% if configuraciones|length > 1 or configuracion %}
   <div class="fichas-configuracion">
     {% for ficha in configuraciones %}
-      <a class="chip {% if configuracion and ficha.pk == configuracion.pk %}primary{% else %}soft{% endif %}"
-         href="{% url 'configuracion:sri' %}?paso=1&c={{ ficha.pk }}">
-        <span class="mif-cog icon" aria-hidden="true"></span>
-        <span class="label">{{ ficha.nombre }} · {% if ficha.ambiente == 2 %}producción{% else %}pruebas{% endif %}</span>
-      </a>
+      <div class="ficha-configuracion{% if ficha.activo %} ficha-en-uso{% endif %}">
+        <a class="ficha-configuracion-nombre"
+           href="{% url 'configuracion:sri' %}?paso=1&c={{ ficha.pk }}">
+          <span class="mif-cog icon" aria-hidden="true"></span>
+          <span class="label">{{ ficha.nombre }}</span>
+          <span class="ambiente{% if ficha.ambiente == 2 %} ambiente-produccion{% endif %}">
+            {% if ficha.ambiente == 2 %}Producción{% else %}Pruebas{% endif %}
+          </span>
+        </a>
+        {% if ficha.activo %}
+          <span class="ficha-en-uso-etiqueta" title="Es la que firma y la que fija el ambiente">
+            <span class="mif-checkmark" aria-hidden="true"></span> En uso
+          </span>
+        {% elif puede_configurar %}
+          <form method="post" action="{% url 'configuracion:activar' ficha.pk %}">{% csrf_token %}
+            <button type="submit" class="button outline dark boton-usar-configuracion">
+              <span class="mif-checkmark" aria-hidden="true"></span>
+              Usar {% if ficha.ambiente == 2 %}en producción{% else %}esta configuración{% endif %}
+            </button>
+          </form>
+        {% endif %}
+      </div>
     {% endfor %}
     <form method="post" action="{% url 'configuracion:otra' %}">{% csrf_token %}
       <button type="submit" class="boton-plano">
@@ -60,6 +83,14 @@ se elige cuál toca, para no tener un fichero de mil líneas.
       </button>
     </form>
   </div>
+
+  {% if en_uso and configuracion and en_uso.pk != configuracion.pk %}
+    <p class="aviso aviso-warning">
+      Está viendo «{{ configuracion.nombre }}», pero la que se usa para facturar es
+      «{{ en_uso.nombre }}» ({% if en_uso.ambiente == 2 %}producción{% else %}pruebas{% endif %}).
+      {% if puede_configurar %}Para cambiarla, use el botón de esa ficha.{% endif %}
+    </p>
+  {% endif %}
 {% endif %}
 
 <div class="bloque asistente">

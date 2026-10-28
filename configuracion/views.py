@@ -22,7 +22,7 @@ from django.shortcuts import redirect, render
 from django.urls import reverse
 from django.views.decorators.http import require_POST
 from factec.catalogos import Ambiente
-from factec.django import conf, sri_datos
+from factec.django import ajustes as ajustes_sri, conf, sri_datos
 from factec.django.models import ConfiguracionEmisor, Secuencial, TipoComprobante
 from factec.excepciones import ErrorFacturacion
 
@@ -90,12 +90,47 @@ def sri(request: HttpRequest) -> HttpResponse:
 @login_required
 @require_POST
 @requiere_escritura("configuracion")
+def activar(request: HttpRequest, pk: int) -> HttpResponse:
+    """Deja esta configuración como la que se usa y apaga las demás.
+
+    Es el interruptor de pruebas/producción: la configuración activa es la que
+    firma y la que fija el ambiente, y el ajuste ``sri_ambiente`` se mueve con
+    ella para que las dos cosas no puedan quedar en desacuerdo.
+    """
+    from django.shortcuts import get_object_or_404
+
+    configuracion = get_object_or_404(ConfiguracionEmisor, pk=pk)
+    configuracion.activo = True
+    configuracion.save()
+    en_produccion = int(configuracion.ambiente) == int(Ambiente.PRODUCCION)
+    ajustes_sri.poner("sri_ambiente", "produccion" if en_produccion else "pruebas")
+    conf.limpiar_cache()
+
+    if en_produccion:
+        messages.warning(
+            request,
+            f"Ahora se usa «{configuracion.nombre}»: los comprobantes que se emitan "
+            "tendrán validez legal ante el SRI.",
+        )
+    else:
+        messages.success(
+            request,
+            f"Ahora se usa «{configuracion.nombre}»: los comprobantes son de pruebas, "
+            "sin validez fiscal.",
+        )
+    return redirect(_url(1, configuracion))
+
+
+@login_required
+@require_POST
+@requiere_escritura("configuracion")
 def otra(request: HttpRequest) -> HttpResponse:
     """Añade una segunda configuración: la de producción, o la de pruebas.
 
     Se copia la que se estaba viendo (mismo emisor y misma firma) y se le cambia
-    el ambiente, que es para lo que se quiere otra ficha. La nueva queda activa
-    en su ambiente; la del otro ambiente no se toca.
+    el ambiente, que es para lo que se quiere otra ficha. La nueva queda **sin
+    activar**: la que se usa se elige después, con un botón, para que no cambie
+    el ambiente de facturación sin querer.
     """
     original = _la_configuracion(request)
     en_produccion = original is not None and int(original.ambiente) == int(Ambiente.PRODUCCION)
@@ -104,7 +139,7 @@ def otra(request: HttpRequest) -> HttpResponse:
     copia = ConfiguracionEmisor(
         nombre="Pruebas" if ambiente == int(Ambiente.PRUEBAS) else "Producción",
         ambiente=ambiente,
-        activo=True,
+        activo=False,
     )
     if original is not None:
         for campo in CAMPOS_QUE_SE_COPIAN:
@@ -114,10 +149,12 @@ def otra(request: HttpRequest) -> HttpResponse:
     copia.save()
 
     conf.limpiar_cache()
+    donde = "producción" if ambiente == int(Ambiente.PRODUCCION) else "pruebas"
     messages.success(
         request,
-        f"«{copia.nombre}» queda lista para el ambiente {copia.get_ambiente_display().lower()}. "
-        "Repase sus datos: el RUC y la serie se han copiado.",
+        f"«{copia.nombre}» queda lista para {donde}, sin activar. Repase sus datos "
+        "—el RUC y la serie se han copiado— y, cuando esté conforme, use su botón "
+        "«Usar…» en la lista de configuraciones.",
     )
     return redirect(_url(1, copia))
 
@@ -304,6 +341,8 @@ def _pintar(
         "porcentaje": round(100 * hechos / len(PASOS)),
         "configuracion": configuracion,
         "configuraciones": ConfiguracionEmisor.objects.all().order_by("-activo", "nombre"),
+        # La que de verdad se usa, para poder decir si se está mirando otra.
+        "en_uso": ConfiguracionEmisor.objects.filter(activo=True).first(),
         "firma": firma,
         "firma_titular": _nombre_comun(firma.titular) if firma else "",
         "firma_emisor": _nombre_comun(firma.emisor) if firma else "",

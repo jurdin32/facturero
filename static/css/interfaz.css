@@ -3317,6 +3317,45 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
 .fichas-configuracion form { margin: 0; }
 
+/* Cada configuración del emisor, con su ambiente y si es la que se usa. Solo hay
+ * una en uso: la que firma y la que decide pruebas o producción. */
+.ficha-configuracion {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  padding: var(--e1) var(--e2) var(--e1) var(--e3);
+  border: 1px solid var(--linea);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+}
+.ficha-configuracion.ficha-en-uso {
+  border-color: var(--verde);
+  background: var(--verde-tinte, var(--fondo));
+}
+.ficha-configuracion-nombre {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  color: inherit;
+  text-decoration: none;
+}
+.ficha-configuracion-nombre:hover .label { text-decoration: underline; }
+.ficha-configuracion-nombre .label { font-weight: 600; }
+.ficha-configuracion-nombre .ambiente { font-size: var(--texto-s); }
+.ficha-en-uso-etiqueta {
+  display: inline-flex;
+  align-items: center;
+  gap: .25rem;
+  padding: .1rem .45rem;
+  border-radius: var(--radio-s);
+  background: var(--verde);
+  color: #fff;
+  font-size: var(--texto-s);
+  font-weight: 600;
+  white-space: nowrap;
+}
+.boton-usar-configuracion { padding: .25rem .6rem; font-size: var(--texto-s); }
+
 .asistente { padding: var(--e4) var(--e5); }
 
 .asistente-barra { display: flex; align-items: center; gap: var(--e3); }

@@ -401,10 +401,51 @@ class AsistenteTests(TestCase):
         self.assertRedirects(respuesta, f"{reverse('configuracion:sri')}?paso=1&c={nueva.pk}")
         self.assertEqual(nueva.ruc, self.configuracion.ruc)
         self.assertEqual(nueva.razon_social, self.configuracion.razon_social)
-        self.assertTrue(nueva.activo)
-        # La de pruebas sigue activa en su ambiente: una por ambiente.
+        # La copia nace sin activar: la que se usa se elige con un botón.
+        self.assertFalse(nueva.activo)
         self.configuracion.refresh_from_db()
         self.assertTrue(self.configuracion.activo)
+        self.assertEqual(ConfiguracionEmisor.objects.filter(activo=True).count(), 1)
+
+    def test_se_puede_elegir_cual_esta_en_uso(self):
+        """El interruptor de pruebas/producción: una sola activa y el ambiente la sigue."""
+        from factec.django import conf
+
+        self.client.post(reverse("configuracion:otra"))
+        nueva = ConfiguracionEmisor.objects.get(ambiente=2)
+
+        respuesta = self.client.post(reverse("configuracion:activar", args=[nueva.pk]))
+
+        self.assertRedirects(
+            respuesta,
+            f"{reverse('configuracion:sri')}?paso=1&c={nueva.pk}",
+            fetch_redirect_response=False,
+        )
+        nueva.refresh_from_db()
+        self.configuracion.refresh_from_db()
+        self.assertTrue(nueva.activo)
+        self.assertFalse(self.configuracion.activo)
+        self.assertEqual(ConfiguracionEmisor.objects.filter(activo=True).count(), 1)
+        self.assertEqual(int(conf.ambiente()), 2)
+
+        # Y se puede volver a la de pruebas.
+        self.client.post(reverse("configuracion:activar", args=[self.configuracion.pk]))
+        self.configuracion.refresh_from_db()
+        nueva.refresh_from_db()
+        self.assertTrue(self.configuracion.activo)
+        self.assertFalse(nueva.activo)
+        self.assertEqual(int(conf.ambiente()), 1)
+
+    def test_la_pantalla_dice_cual_esta_en_uso(self):
+        self.client.post(reverse("configuracion:otra"))
+        nueva = ConfiguracionEmisor.objects.get(ambiente=2)
+
+        pagina = self.client.get(f"{reverse('configuracion:sri')}?paso=1&c={nueva.pk}")
+        texto = pagina.content.decode()
+
+        self.assertIn("En uso", texto)
+        self.assertIn("Está viendo", texto)  # la que se usa es la de pruebas
+        self.assertIn(f"/wadmin/configuracion/sri/{nueva.pk}/usar/", texto)
 
     def test_el_menu_lleva_al_asistente(self):
         respuesta = self.client.get(reverse("facturacion:tablero"))
