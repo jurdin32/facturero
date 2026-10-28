@@ -4343,6 +4343,11 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 }
 .orden-agarre:hover { background: var(--fondo); color: var(--tinta-2); }
 .orden-agarre:active { cursor: grabbing; }
+.orden-menu,
+.orden-grupo,
+.orden-lista,
+.orden-item,
+.orden-texto { min-width: 0; }
 .orden-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: var(--e2); }
 .orden-item {
   display: flex;
@@ -4377,7 +4382,14 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   gap: var(--e2);
   min-width: 0;
 }
-.orden-texto strong { font-weight: 600; color: var(--tinta); white-space: nowrap; }
+.orden-texto strong {
+  font-weight: 600;
+  color: var(--tinta);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 .orden-texto small {
   color: var(--tinta-3);
   overflow: hidden;
@@ -4403,6 +4415,51 @@ input.campo-fecha::-webkit-calendar-picker-indicator:hover { opacity: 1; }
   margin: 0;
 }
 .orden-agarre .mif-menu { font-size: 1rem; }
+
+/* En esta pantalla la cabecera no se queda pegada: tapaba el principio de la
+ * lista y lo que se soltaba arriba quedaba escondido debajo. */
+.titulo-fila.titulo-fila-suelto { position: static; }
+
+/* La guía de dónde se suelta. Aparece mientras se arrastra una tarjeta o un
+ * apartado: es una línea con su etiqueta, en el sitio exacto donde va a quedar.
+ * Sin ella no había forma de saber dónde soltar. */
+.orden-guia {
+  display: flex;
+  align-items: center;
+  gap: var(--e2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  pointer-events: none;
+}
+.orden-guia::after {
+  content: "";
+  flex: 1;
+  height: 3px;
+  border-radius: 2px;
+  background: var(--marca);
+  box-shadow: 0 0 0 1px var(--hoja);
+}
+.orden-guia span {
+  flex: none;
+  padding: .1rem .45rem;
+  border: 1px solid var(--marca);
+  border-radius: var(--radio-s);
+  background: var(--hoja);
+  color: var(--marca);
+  font-size: var(--texto-s);
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* Mientras se arrastra una opción, los apartados que no la aceptan se apagan:
+ * así se ve de un vistazo dónde sí se puede soltar. */
+.orden-destino-otro { opacity: .4; }
+.orden-destino-otro .orden-item { cursor: no-drop; }
+
+body.orden-arrastrando { cursor: grabbing; user-select: none; }
+body.orden-arrastrando .orden-item,
+body.orden-arrastrando .orden-grupo-cabecera { cursor: grabbing; }
 
 /* ----------------------------------- el orden guardado del menú (flex + order) */
 

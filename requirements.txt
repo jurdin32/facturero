@@ -6,7 +6,7 @@
 #   pip install -r requirements.txt
 #   pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.3" \
 #               "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.3" \
-#               "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.1"
+#               "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.2"
 #
 # Para trabajar sobre ellos, en modo editable desde su clon:
 #
@@ -26,7 +26,7 @@ factec==1.12.3
 personalize_options==1.2.3
 # conta_ec: contabilidad (plan de cuentas, asientos, estados y anexos del SRI),
 # con sus propias tablas y sus ajustes.
-conta_ec==1.0.1
+conta_ec==1.0.2
 
 # ------------------------------------------------- los reportes y los archivos
 # Los PDF (reportes, acta de cierre y vales) se arman con HTML y CSS y los

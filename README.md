@@ -68,7 +68,7 @@ pip install -r requirements.txt
 # Los tres paquetes de la casa, desde sus repositorios:
 pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.3" \
             "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.3" \
-            "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.1"
+            "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.2"
 
 python manage.py migrate
 python manage.py cargar_codigos_retencion     # el catálogo de retenciones del SRI

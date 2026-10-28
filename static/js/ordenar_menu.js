@@ -3,6 +3,11 @@
  * No se usan números: el orden del DOM es el orden del menú. Al soltar se manda
  * una lista plana de opciones; el servidor le pone el orden correlativo y el
  * primer elemento de cada apartado decide también el orden de los apartados.
+ *
+ * Mientras se arrastra **no se mueve nada**: aparece una línea —la guía— donde
+ * va a caer, y el cambio se hace al soltar. Antes la tarjeta se movía sola al
+ * pasar por encima, sin decir dónde quedaba, y al soltar en un hueco no pasaba
+ * nada: no había forma de saber dónde soltar.
  */
 (function () {
   "use strict";
@@ -18,18 +23,45 @@
   var opcionArrastrada = null;
   var temporizador = null;
 
+  //: Una guía para dentro de una lista (tiene que ser un <li>) y otra para
+  //: entre apartados (un <div>).
+  var guiaOpcion = crearGuia("li");
+  var guiaGrupo = crearGuia("div");
+
+  function crearGuia(etiqueta) {
+    var nodo = document.createElement(etiqueta);
+    nodo.className = "orden-guia";
+    nodo.setAttribute("aria-hidden", "true");
+    var texto = document.createElement("span");
+    texto.textContent = "Suelte aquí";
+    nodo.appendChild(texto);
+    return nodo;
+  }
+
   function estado(texto, tipo) {
     if (!aviso) return;
     aviso.textContent = texto;
     aviso.className = "aviso aviso-" + (tipo || "info");
   }
 
+  function quitarGuias() {
+    [guiaOpcion, guiaGrupo].forEach(function (guia) {
+      if (guia.parentNode) guia.parentNode.removeChild(guia);
+    });
+  }
+
   function limpiar() {
     caja.querySelectorAll(".arrastrando").forEach(function (nodo) {
       nodo.classList.remove("arrastrando");
     });
+    caja.querySelectorAll(".orden-destino-otro").forEach(function (nodo) {
+      nodo.classList.remove("orden-destino-otro");
+    });
+    quitarGuias();
+    document.body.classList.remove("orden-arrastrando");
     grupoArrastrado = null;
     opcionArrastrada = null;
+    estado("Las flechas guardan al momento. Lo que se arrastra se guarda al soltar.", "info");
   }
 
   function opcionesEnOrden() {
@@ -74,6 +106,20 @@
       });
   }
 
+  // Al arrastrar cerca del borde, la página se mueve sola: en un apartado largo
+  // no se podía llevar una tarjeta de abajo arriba sin soltarla.
+  var MARGEN = 90;
+  var PASO = 16;
+
+  function autoScroll(evento) {
+    var alto = window.innerHeight || document.documentElement.clientHeight;
+    if (evento.clientY < MARGEN) {
+      window.scrollBy(0, -PASO);
+    } else if (evento.clientY > alto - MARGEN) {
+      window.scrollBy(0, PASO);
+    }
+  }
+
   function programar() {
     estado("Guardando el orden…", "info");
     window.clearTimeout(temporizador);
@@ -87,34 +133,51 @@
       grupoArrastrado = agarre.closest("[data-grupo]");
       if (!grupoArrastrado) return;
       grupoArrastrado.classList.add("arrastrando");
+      document.body.classList.add("orden-arrastrando");
       evento.dataTransfer.effectAllowed = "move";
       evento.dataTransfer.setData("text/plain", "grupo");
+      estado("Suelte el apartado donde esté la línea.", "info");
     });
     agarre.addEventListener("dragend", limpiar);
   });
 
-  caja.querySelectorAll("[data-grupo]").forEach(function (destino) {
-    destino.addEventListener("dragover", function (evento) {
-      if (!grupoArrastrado || grupoArrastrado === destino) return;
-      evento.preventDefault();
-      evento.dataTransfer.dropEffect = "move";
+  caja.addEventListener("dragover", function (evento) {
+    if (!grupoArrastrado) return;
+    autoScroll(evento);
+    var destinos = Array.prototype.filter.call(caja.children, function (hijo) {
+      return hijo.hasAttribute("data-grupo") && hijo !== grupoArrastrado;
     });
+    if (!destinos.length) return;
+    evento.preventDefault();
+    evento.stopPropagation();
+    evento.dataTransfer.dropEffect = "move";
 
-    destino.addEventListener("drop", function (evento) {
-      if (!grupoArrastrado || grupoArrastrado === destino) return;
-      evento.preventDefault();
-      evento.stopPropagation();
-
-      var cajaDestino = destino.getBoundingClientRect();
-      var despues = evento.clientY > cajaDestino.top + cajaDestino.height / 2;
-      if (despues) {
-        destino.parentNode.insertBefore(grupoArrastrado, destino.nextElementSibling);
-      } else {
-        destino.parentNode.insertBefore(grupoArrastrado, destino);
+    var referencia = null;
+    var despues = false;
+    for (var i = 0; i < destinos.length; i += 1) {
+      var cajaDestino = destinos[i].getBoundingClientRect();
+      if (evento.clientY < cajaDestino.top + cajaDestino.height / 2) {
+        referencia = destinos[i];
+        despues = false;
+        break;
       }
-      limpiar();
-      programar();
-    });
+      referencia = destinos[i];
+      despues = true;
+    }
+    if (!referencia) return;
+    if (despues) {
+      referencia.parentNode.insertBefore(guiaGrupo, referencia.nextElementSibling);
+    } else {
+      referencia.parentNode.insertBefore(guiaGrupo, referencia);
+    }
+  });
+
+  caja.addEventListener("drop", function (evento) {
+    if (!grupoArrastrado || !guiaGrupo.parentNode) return;
+    evento.preventDefault();
+    guiaGrupo.parentNode.insertBefore(grupoArrastrado, guiaGrupo);
+    limpiar();
+    programar();
   });
 
   // ----------------------------------------------------------- las opciones
@@ -123,54 +186,63 @@
       grupoArrastrado = null;
       opcionArrastrada = opcion;
       opcion.classList.add("arrastrando");
+      document.body.classList.add("orden-arrastrando");
       evento.stopPropagation();
       evento.dataTransfer.effectAllowed = "move";
       evento.dataTransfer.setData("text/plain", "opcion");
+      // Los demás apartados no aceptan la tarjeta: se ve dónde sí y dónde no.
+      var suyo = opcion.closest("[data-grupo]");
+      caja.querySelectorAll("[data-opciones]").forEach(function (lista) {
+        if (lista.closest("[data-grupo]") !== suyo) {
+          lista.classList.add("orden-destino-otro");
+        }
+      });
+      estado("Suelte la opción donde esté la línea, dentro de su apartado.", "info");
     });
 
     opcion.addEventListener("dragend", limpiar);
-
-    opcion.addEventListener("dragover", function (evento) {
-      if (!opcionArrastrada || opcionArrastrada === opcion) return;
-      if (opcionArrastrada.closest("[data-grupo]") !== opcion.closest("[data-grupo]")) {
-        return;
-      }
-      evento.preventDefault();
-      evento.stopPropagation();
-      var cajaOpcion = opcion.getBoundingClientRect();
-      var despues = evento.clientY > cajaOpcion.top + cajaOpcion.height / 2;
-      opcion.parentNode.insertBefore(
-        opcionArrastrada,
-        despues ? opcion.nextElementSibling : opcion
-      );
-    });
-
-    opcion.addEventListener("drop", function (evento) {
-      if (!opcionArrastrada) return;
-      evento.preventDefault();
-      evento.stopPropagation();
-      programar();
-    });
   });
 
+  // Todo el movimiento se decide con la posición del puntero dentro de la lista:
+  // así vale soltar sobre otra tarjeta, en el hueco entre dos o al final, y la
+  // guía enseña exactamente dónde va a quedar.
   caja.querySelectorAll("[data-opciones]").forEach(function (lista) {
+    function puedeSoltar() {
+      if (!opcionArrastrada) return false;
+      return opcionArrastrada.closest("[data-grupo]") === lista.closest("[data-grupo]");
+    }
+
     lista.addEventListener("dragover", function (evento) {
-      if (!opcionArrastrada) return;
-      if (opcionArrastrada.closest("[data-grupo]") !== lista.closest("[data-grupo]")) {
-        return;
-      }
+      if (!puedeSoltar()) return;
+      autoScroll(evento);
       evento.preventDefault();
       evento.stopPropagation();
+      evento.dataTransfer.dropEffect = "move";
+
+      var hermanas = Array.prototype.filter.call(
+        lista.querySelectorAll("[data-opcion]"),
+        function (otra) {
+          return otra !== opcionArrastrada;
+        }
+      );
+      var puesta = false;
+      for (var i = 0; i < hermanas.length; i += 1) {
+        var cajaOtra = hermanas[i].getBoundingClientRect();
+        if (evento.clientY < cajaOtra.top + cajaOtra.height / 2) {
+          lista.insertBefore(guiaOpcion, hermanas[i]);
+          puesta = true;
+          break;
+        }
+      }
+      if (!puesta) lista.appendChild(guiaOpcion);
     });
 
     lista.addEventListener("drop", function (evento) {
-      if (!opcionArrastrada) return;
-      if (opcionArrastrada.closest("[data-grupo]") !== lista.closest("[data-grupo]")) {
-        return;
-      }
+      if (!puedeSoltar() || !guiaOpcion.parentNode) return;
       evento.preventDefault();
       evento.stopPropagation();
-      lista.appendChild(opcionArrastrada);
+      guiaOpcion.parentNode.insertBefore(opcionArrastrada, guiaOpcion);
+      limpiar();
       programar();
     });
   });
