@@ -19,6 +19,7 @@ from django.core.exceptions import PermissionDenied
 from django.db.models import Q
 from django.http import HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views.decorators.http import require_POST
 
 from factec.catalogos import PORCENTAJE_IVA
@@ -575,7 +576,7 @@ def cliente_nuevo(request: HttpRequest) -> HttpResponse:
     }
     if not datos["razon_social"] or not datos["identificacion"]:
         messages.error(request, "El cliente necesita razón social e identificación.")
-        return redirect("facturar")
+        return redirect("facturacion:facturar")
 
     cliente, creado = Cliente.objects.get_or_create(
         identificacion=datos["identificacion"], defaults=datos
@@ -584,4 +585,16 @@ def cliente_nuevo(request: HttpRequest) -> HttpResponse:
         messages.success(request, f"Cliente «{cliente.razon_social}» creado.")
     else:
         messages.info(request, f"«{cliente.razon_social}» ya estaba en el catálogo.")
-    return redirect(f"{request.POST.get('volver_a') or '/'}?cliente={cliente.pk}")
+    volver = _volver_a(request, request.POST.get("volver_a"))
+    return redirect(f"{volver}?cliente={cliente.pk}")
+
+
+def _volver_a(request: HttpRequest, propuesto: Optional[str]) -> str:
+    """La pantalla a la que se vuelve, si es de este sitio."""
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    if propuesto and url_has_allowed_host_and_scheme(
+        propuesto, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return propuesto
+    return reverse("facturacion:facturar")

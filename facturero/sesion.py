@@ -129,6 +129,21 @@ class BloqueoPorInactividad:
 # --------------------------------------------------------------- las acciones
 
 
+def _destino_seguro(request: HttpRequest, propuesto: Optional[str], por_defecto: str) -> str:
+    """El ``next`` de la petición, solo si es una dirección de este sitio.
+
+    Sin esto, ``next=//otro-sitio`` mandaba a la pantalla de bloqueo a cualquier
+    parte: un enlace preparado servía para pescar la clave de un usuario.
+    """
+    from django.utils.http import url_has_allowed_host_and_scheme
+
+    if propuesto and url_has_allowed_host_and_scheme(
+        propuesto, allowed_hosts={request.get_host()}, require_https=request.is_secure()
+    ):
+        return propuesto
+    return por_defecto
+
+
 @login_required
 @require_POST
 def bloquear(request: HttpRequest) -> HttpResponse:
@@ -140,7 +155,9 @@ def bloquear(request: HttpRequest) -> HttpResponse:
     request.session[BLOQUEADA] = True
     if _es_de_fondo(request):
         return JsonResponse({"bloqueada": True})
-    siguiente = request.POST.get("next") or reverse("facturacion:facturas")
+    siguiente = _destino_seguro(
+        request, request.POST.get("next"), reverse("facturacion:facturas")
+    )
     return render(
         request,
         "bloqueado.html",
@@ -174,7 +191,9 @@ def desbloquear(request: HttpRequest) -> HttpResponse:
     request.session[BLOQUEADA] = False
     request.session[ULTIMA] = timezone.now().isoformat()
 
-    destino = request.POST.get("next") or reverse("facturacion:facturas")
+    destino = _destino_seguro(
+        request, request.POST.get("next"), reverse("facturacion:facturas")
+    )
     if de_fondo:
         return JsonResponse({"ok": True, "siguiente": destino})
     return redirect(destino)

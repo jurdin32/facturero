@@ -11,6 +11,7 @@ from decimal import Decimal
 from typing import Any, Optional
 
 from django.core.exceptions import ValidationError
+from django.db import transaction
 from factec.catalogos import PORCENTAJE_IVA
 from factec.django.documentos import (
     IVA_POR_OMISION,
@@ -29,6 +30,9 @@ def cliente_para(datos: dict) -> Cliente:
 
     Sin identificación se usa el consumidor final, que es lo que el SRI permite a
     quien no quiere dar sus datos; todas esas compras caen en la misma ficha.
+
+    Dos compras a la vez del mismo cliente nuevo no pueden dejar dos fichas: la
+    creación va con ``get_or_create``, que aguanta la carrera.
     """
     identificacion = (datos.get("identificacion") or "").strip()
     nombre = (datos.get("nombre") or "").strip() or "Consumidor Final"
@@ -42,16 +46,23 @@ def cliente_para(datos: dict) -> Cliente:
         )
         return cliente
 
-    cliente = Cliente.objects.filter(identificacion=identificacion).first()
-    if cliente is None:
-        return Cliente.objects.create(
-            razon_social=nombre,
+    try:
+        cliente, creado = Cliente.objects.get_or_create(
             identificacion=identificacion,
-            tipo_identificacion="04" if len(identificacion) == 13 else "05",
-            direccion=datos.get("direccion") or "",
-            email=datos.get("email") or "",
-            telefono=datos.get("telefono") or "",
+            defaults={
+                "razon_social": nombre,
+                "tipo_identificacion": "04" if len(identificacion) == 13 else "05",
+                "direccion": datos.get("direccion") or "",
+                "email": datos.get("email") or "",
+                "telefono": datos.get("telefono") or "",
+            },
         )
+    except Cliente.MultipleObjectsReturned:
+        # El catálogo de antes puede tener la misma identificación dos veces.
+        cliente = Cliente.objects.filter(identificacion=identificacion).order_by("pk").first()
+        creado = False
+    if creado:
+        return cliente
 
     # Al que ya estaba se le completan los datos que falten, sin pisarle los suyos.
     cambios = []
@@ -71,6 +82,9 @@ def crear_pedido(carrito: Any, datos: dict) -> Pedido:
     El pedido guarda una copia de la descripción, el precio y el IVA de cada línea:
     lo que se cobró no cambia porque mañana cambie la ficha. No reserva stock: el
     inventario se mueve cuando la factura se emite, como siempre.
+
+    Todo va en una transacción: un pedido a medias —sin sus líneas o sin totales—
+    no puede quedarse en la base.
     """
     lineas = carrito.lineas()
     if not lineas:
@@ -78,28 +92,29 @@ def crear_pedido(carrito: Any, datos: dict) -> Pedido:
     if any(not linea.producto.publicado_en_la_web for linea in lineas):
         raise ValidationError("Algún producto del carrito ya no está a la venta.")
 
-    pedido = Pedido.objects.create(
-        nombre=datos.get("nombre") or "Consumidor Final",
-        identificacion=datos.get("identificacion") or "",
-        email=datos.get("email") or "",
-        telefono=datos.get("telefono") or "",
-        direccion=datos.get("direccion") or "",
-        nota=datos.get("nota") or "",
-        cliente=cliente_para(datos),
-    )
-    for linea in lineas:
-        producto = linea.producto
-        LineaPedido.objects.create(
-            pedido=pedido,
-            producto=producto,
-            codigo=producto.codigo_principal,
-            descripcion=producto.nombre,
-            cantidad=linea.cantidad,
-            precio_unitario=producto.precio_sin_iva,
-            tarifa_iva=producto.tarifa_iva,
+    with transaction.atomic():
+        pedido = Pedido.objects.create(
+            nombre=datos.get("nombre") or "Consumidor Final",
+            identificacion=datos.get("identificacion") or "",
+            email=datos.get("email") or "",
+            telefono=datos.get("telefono") or "",
+            direccion=datos.get("direccion") or "",
+            nota=datos.get("nota") or "",
+            cliente=cliente_para(datos),
         )
-    pedido.calcular_totales()
-    pedido.save(update_fields=["subtotal", "iva", "total"])
+        for linea in lineas:
+            producto = linea.producto
+            LineaPedido.objects.create(
+                pedido=pedido,
+                producto=producto,
+                codigo=producto.codigo_principal,
+                descripcion=producto.nombre,
+                cantidad=linea.cantidad,
+                precio_unitario=producto.precio_sin_iva,
+                tarifa_iva=producto.tarifa_iva,
+            )
+        pedido.calcular_totales()
+        pedido.save(update_fields=["subtotal", "iva", "total"])
     carrito.vaciar()
     return pedido
 

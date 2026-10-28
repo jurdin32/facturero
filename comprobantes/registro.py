@@ -99,6 +99,16 @@ class Documento:
     #: La plantilla que pinta el cuerpo del RIDE (las líneas, los motivos…).
     cuerpo: str = ""
 
+    @property
+    def opcion(self) -> str:
+        """La opción del menú que gobierna este comprobante.
+
+        La dirección usa guiones (``notas-credito``) y las opciones, guiones bajos:
+        la plantilla pregunta por los permisos con esta y no con ``clave``, que no
+        es ninguna opción y dejaba el botón «Nuevo» a merced de un error de lectura.
+        """
+        return self.clave.replace("-", "_")
+
 
 #: Los seis comprobantes del SRI, por su tipo. El que no lleva líneas no las pide.
 DOCUMENTOS: tuple[Documento, ...] = (

@@ -20,6 +20,7 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.decorators import login_required
 from django.db import transaction
 from django.db.models import Count, OuterRef, Q, Subquery
+from django.core.exceptions import PermissionDenied
 from django.http import Http404, HttpRequest, HttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404, redirect, render
 from django.utils.http import url_has_allowed_host_and_scheme
@@ -720,6 +721,14 @@ def usuario_datos(request: HttpRequest, pk: int) -> HttpResponse:
     """Los datos y la clave de una persona (los roles se cambian en su pantalla)."""
     Persona = get_user_model()
     persona = get_object_or_404(Persona, pk=pk)
+    # La cuenta de servicio del sistema (el superusuario de Django) no se toca
+    # desde aquí: quien lleva «usuarios» podría ponerle su clave y quedarse con
+    # el admin entero.
+    if persona.is_superuser and not request.user.is_superuser:
+        raise PermissionDenied(
+            "La cuenta de administración del sistema solo la puede cambiar otro "
+            "superusuario, desde el admin."
+        )
     if request.method == "POST":
         exigir_escritura(request, "usuarios")
         formulario = FormularioUsuario(request.POST, instance=persona, persona=persona)

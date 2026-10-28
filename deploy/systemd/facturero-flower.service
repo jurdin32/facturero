@@ -21,6 +21,11 @@
 #   ExecStart=… flower --address=0.0.0.0 --port=5555 --basic_auth=usuario:clave
 # y quite la línea FLOWER_UNAUTHENTICATED_API (el panel deja revocar tareas).
 
+# OJO con los ajustes: estos servicios usan facturero.settings_prod, el mismo que
+# la web. Si apuntaran a facturero.settings (el de desarrollo, con DEBUG y SQLite),
+# el worker firmaría y enviaría contra otra base distinta de la que ve la
+# aplicación. En una máquina de desarrollo, cámbielo a facturero.settings.
+
 [Unit]
 Description=Flower (panel de Celery) de facturero
 Documentation=https://github.com/jurdin32/factec
@@ -35,7 +40,7 @@ User=__USUARIO__
 Group=__GRUPO__
 WorkingDirectory=__PROYECTO__
 
-Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
+Environment="DJANGO_SETTINGS_MODULE=facturero.settings_prod"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
 # Permite consultar la API (/api/tasks) sin credenciales. Solo tiene sentido

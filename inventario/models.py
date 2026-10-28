@@ -23,6 +23,7 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Case, DecimalField, F, Sum, When
 from django.db.models.functions import Abs
+from django.utils import timezone
 from factec.django.documentos import Producto
 
 __all__ = ["Existencia", "Movimiento", "TipoMovimiento"]
@@ -172,10 +173,6 @@ class Movimiento(models.Model):
             return cantidad          # el ajuste ya trae el signo
         return abs(cantidad) * signo
 
-    def _existencia(self) -> Existencia:
-        existencia, _ = Existencia.objects.get_or_create(producto=self.producto)
-        return existencia
-
     def save(self, *args, **kwargs) -> None:
         creando = self._state.adding
         super().save(*args, **kwargs)
@@ -189,9 +186,18 @@ class Movimiento(models.Model):
         return super().delete(*args, **kwargs)
 
     def _aplicar(self, delta: Decimal) -> None:
-        existencia = self._existencia()
-        existencia.cantidad = (existencia.cantidad or Decimal("0")) + delta
-        existencia.save(update_fields=["cantidad", "actualizado"])
+        """Suma el movimiento a la existencia, en la propia base.
+
+        Se hace con ``F()`` y no leyendo, sumando y guardando: con dos salidas a la
+        vez —dos facturas, o la factura y un ajuste— la segunda pisaba la primera y
+        el inventario quedaba de más.
+        """
+        existencia, _ = Existencia.objects.get_or_create(producto=self.producto)
+        Existencia.objects.filter(pk=existencia.pk).update(
+            cantidad=F("cantidad") + delta,
+            actualizado=timezone.now(),
+        )
+        existencia.refresh_from_db(fields=["cantidad"])
 
     # ------------------------------------------------------------------ ayudas
 

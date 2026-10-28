@@ -66,9 +66,9 @@ python -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
 # Los tres paquetes de la casa, desde sus repositorios:
-pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.2" \
-            "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.2" \
-            "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.0"
+pip install "factec @ git+https://github.com/jurdin32/factec.git@v1.12.3" \
+            "personalize_options @ git+https://github.com/jurdin32/personalize_options.git@v1.2.3" \
+            "conta_ec @ git+https://github.com/jurdin32/conta_ec.git@v1.0.1"
 
 python manage.py migrate
 python manage.py cargar_codigos_retencion     # el catálogo de retenciones del SRI
@@ -157,8 +157,14 @@ en pantalla se escribe una sola vez.
 
 ## En producción
 
-- `deploy/systemd/` trae los servicios del worker, el reloj de Celery y Flower, con
-  `env.ejemplo` para las variables.
+- `deploy/systemd/` trae los servicios del worker, el reloj de Celery y Flower. Los
+  tres arrancan con `DJANGO_SETTINGS_MODULE=facturero.settings_prod`, el mismo que la
+  web: si apuntaran a `facturero.settings` (el de desarrollo) el worker firmaría
+  contra otra base, la de SQLite. Los secretos del SRI viven en la tabla de ajustes
+  (se cambian desde el admin, cifrados los que lo son), no en un archivo de entorno.
+- `facturero.settings_prod` **no está en el repositorio**: vive en el servidor, con
+  `DEBUG=False`, su `SECRET_KEY`, `ALLOWED_HOSTS`, los orígenes de confianza, las
+  cookies seguras y PostgreSQL. Hay una copia en `~/respaldos/` de la máquina.
 - WeasyPrint necesita las bibliotecas **Pango** del sistema: en macOS
   `brew install pango`, en Debian/Ubuntu `apt install libpango-1.0-0 libpangoft2-1.0-0`.
 - El certificado del emisor y la contraseña se guardan cifrados en la base; el archivo

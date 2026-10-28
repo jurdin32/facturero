@@ -17,6 +17,11 @@
 #   · sri_fe.revisar_certificado    todos los días a las 7:00 (hora de CELERY_TIMEZONE)
 #   · sri_fe.reintentar_pendientes  cada 10 minutos
 
+# OJO con los ajustes: estos servicios usan facturero.settings_prod, el mismo que
+# la web. Si apuntaran a facturero.settings (el de desarrollo, con DEBUG y SQLite),
+# el worker firmaría y enviaría contra otra base distinta de la que ve la
+# aplicación. En una máquina de desarrollo, cámbielo a facturero.settings.
+
 [Unit]
 Description=Celery beat de facturero (revisa la firma y reintenta los pendientes)
 Documentation=https://github.com/jurdin32/factec
@@ -31,7 +36,7 @@ User=__USUARIO__
 Group=__GRUPO__
 WorkingDirectory=__PROYECTO__
 
-Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
+Environment="DJANGO_SETTINGS_MODULE=facturero.settings_prod"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
 

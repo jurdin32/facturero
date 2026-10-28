@@ -83,11 +83,15 @@ def enlace_viejo(request: HttpRequest, resto: str = "") -> HttpResponse:
     La tienda se mudó a la raíz del dominio para que cualquiera pueda entrar sin
     escribir una dirección rara. Los enlaces que ya se habían repartido se quedan
     con la de antes, y esto los manda a su sitio en vez de dar un 404.
+
+    ``resto`` viene de la dirección, así que se limpia: ``/tienda//otro-sitio``
+    acababa redirigiendo fuera de la casa (``//otro-sitio`` es otro dominio).
     """
-    primero = resto.split("/")[0]
-    destino = "/" + resto
+    limpio = resto.lstrip("/")
+    primero = limpio.split("/")[0]
+    destino = "/" + limpio
     if primero in DE_LA_TRASTIENDA:
-        destino = "/wadmin/tienda/" + resto
+        destino = "/wadmin/tienda/" + limpio
     return redirect(destino, permanent=True)
 
 

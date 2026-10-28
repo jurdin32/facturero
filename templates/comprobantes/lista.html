@@ -6,7 +6,7 @@
 
 <div class="titulo-fila">
   <h1 class="titulo"><span class="mif-{{ documento.icono }}" aria-hidden="true"></span> {{ documento.plural }}</h1>
-  {% puede_escribir clave as puede_crear %}
+  {% puede_escribir documento.opcion as puede_crear %}
   {% if puede_crear %}
     <a class="button primary" href="{% url 'comprobantes:nuevo' documento.clave %}">
       <span class="mif-plus" aria-hidden="true"></span> Nuevo

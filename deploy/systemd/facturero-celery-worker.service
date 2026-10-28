@@ -27,6 +27,11 @@
 # (También puede dejar que el paquete lo haga solo, ya con las rutas del
 #  servidor:  sudo python manage.py servicios_celery)
 
+# OJO con los ajustes: estos servicios usan facturero.settings_prod, el mismo que
+# la web. Si apuntaran a facturero.settings (el de desarrollo, con DEBUG y SQLite),
+# el worker firmaría y enviaría contra otra base distinta de la que ve la
+# aplicación. En una máquina de desarrollo, cámbielo a facturero.settings.
+
 [Unit]
 Description=Celery worker de facturero (facturación electrónica SRI)
 Documentation=https://github.com/jurdin32/factec
@@ -43,7 +48,7 @@ Group=__GRUPO__
 WorkingDirectory=__PROYECTO__
 
 # Ajustes de Django y del proceso.
-Environment="DJANGO_SETTINGS_MODULE=facturero.settings"
+Environment="DJANGO_SETTINGS_MODULE=facturero.settings_prod"
 Environment="PYTHONUNBUFFERED=1"
 Environment="FORKED_BY_MULTIPROCESSING=1"
 # Secretos fuera del código (opcional): SRI_CLAVE_CIFRADO, CELERY_BROKER_URL…
