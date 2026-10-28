@@ -72,5 +72,9 @@ LOGGING = {
     "root": {"handlers": ["consola"], "level": "INFO"},
     "loggers": {
         "django.request": {"handlers": ["consola"], "level": "ERROR", "propagate": False},
+        # WeasyPrint y fontTools cuentan cada paso al armar un PDF: con el nivel
+        # de información llenan el registro de ruido en cada reporte.
+        "fontTools": {"handlers": ["consola"], "level": "WARNING"},
+        "weasyprint": {"handlers": ["consola"], "level": "WARNING"},
     },
 }
